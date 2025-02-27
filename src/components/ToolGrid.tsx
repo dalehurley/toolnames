@@ -110,7 +110,8 @@ export const ToolGrid = () => {
             {categoryNames[filterCategory] || filterCategory}
           </h2>
           <p className="text-muted-foreground">
-            {filteredTools.length} tools available in this category
+            {filteredTools.length} tools available in the{" "}
+            {categoryNames[filterCategory] || filterCategory} category
           </p>
         </div>
       )}

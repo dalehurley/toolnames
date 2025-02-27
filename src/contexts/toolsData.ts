@@ -2,6 +2,7 @@ import { MortgageCalculator } from "@/components/tools/calculators/MortgageCalcu
 import { CompoundInterestCalculator } from "@/components/tools/calculators/CompoundInterestCalculator";
 import { BMICalculator } from "@/components/tools/calculators/BMICalculator";
 import { TipCalculator } from "@/components/tools/calculators/TipCalculator";
+import { DiscountCalculator } from "@/components/tools/calculators/DiscountCalculator";
 import { ImageConverter } from "@/components/tools/converters/ImageConverter";
 import { UnitConverter } from "@/components/tools/converters/UnitConverter";
 import { Base64ImageConverter } from "@/components/tools/converters/Base64ImageConverter";
@@ -51,9 +52,29 @@ import {
   Calculator,
   Hash,
   Shield,
+  Percent,
+  Car,
+  Timer,
+  CalendarDays,
+  HeartPulse,
+  Utensils,
+  Truck,
+  Coins,
+  BatteryCharging,
+  CalendarClock,
 } from "lucide-react";
 import { NetworkLatencySimulator } from "@/components/tools/utilities/NetworkLatencySimulator";
 import LotteryPickerGenerator from "@/components/tools/generators/LotteryPickerGenerator";
+import { PercentageCalculator } from "@/components/tools/calculators/PercentageCalculator";
+import { FuelCalculator } from "@/components/tools/calculators/FuelCalculator";
+import { TimeCalculator } from "@/components/tools/calculators/TimeCalculator";
+import { AgeCalculator } from "@/components/tools/calculators/AgeCalculator";
+import { DateCalculator } from "@/components/tools/calculators/DateCalculator";
+import { HealthCalculator } from "@/components/tools/calculators/HealthCalculator";
+import { CalorieCalculator } from "@/components/tools/calculators/CalorieCalculator";
+import { ShippingCalculator } from "@/components/tools/calculators/ShippingCalculator";
+import { InvestmentCalculator } from "@/components/tools/calculators/InvestmentCalculator";
+import { ElectricityCalculator } from "@/components/tools/calculators/ElectricityCalculator";
 
 // Tool type definition
 export interface Tool {
@@ -409,6 +430,134 @@ export const availableTools: Tool[] = [
     pageTitle: "Hash Generator - SHA-1, SHA-256, SHA-384, SHA-512 | ToolNames",
     metaDescription: "Generate secure cryptographic hashes from text using SHA-1, SHA-256, SHA-384, and SHA-512 algorithms with our free hash generator tool.",
     baseUrl: "/generators/hash-generator",
+  },
+  {
+    id: "discount-calculator",
+    title: "Discount Calculator",
+    description: "Calculate sale prices, savings, and discounts for shopping",
+    icon: Percent,
+    category: "calculators",
+    component: DiscountCalculator,
+    url: "/calculators/discount-calculator",
+    pageTitle: "Discount Calculator - Calculate Sale Prices & Savings | ToolNames",
+    metaDescription: "Calculate sale prices, savings amounts, and discount percentages with our free discount calculator tool. Perfect for shopping and deal evaluation.",
+  },
+  {
+    id: "percentage-calculator",
+    title: "Percentage Calculator",
+    description: "Calculate percentages, increases, and decreases.",
+    icon: Percent,
+    category: "calculators",
+    component: PercentageCalculator,
+    url: "/tools/percentage-calculator",
+    pageTitle: "Percentage Calculator - Calculate Percentages & Proportions",
+    metaDescription:
+      "Calculate percentages with ease. Find what percentage one number is of another, calculate percentage increases or decreases, and solve other percentage-based problems.",
+  },
+  {
+    id: "fuel-calculator",
+    title: "Fuel Efficiency Calculator",
+    description: "Calculate MPG and fuel costs for trips.",
+    icon: Car,
+    category: "calculators",
+    component: FuelCalculator,
+    url: "/tools/fuel-calculator",
+    pageTitle: "Fuel Efficiency Calculator - Calculate MPG & Trip Costs",
+    metaDescription:
+      "Easily calculate your vehicle's fuel efficiency in MPG or L/100km, estimate fuel costs for trips, and analyze your fuel consumption patterns with our user-friendly calculator.",
+  },
+  {
+    id: "time-calculator",
+    title: "Time Calculator",
+    description: "Add and subtract time intervals.",
+    icon: Timer,
+    category: "calculators",
+    component: TimeCalculator,
+    url: "/tools/time-calculator",
+    pageTitle: "Time Calculator - Calculate Time Intervals",
+    metaDescription:
+      "Add or subtract time intervals, calculate duration between times, and convert between time formats with our easy-to-use time calculator.",
+  },
+  {
+    id: "age-calculator",
+    title: "Age Calculator",
+    description: "Calculate your exact age in years, months, and days.",
+    icon: CalendarClock,
+    category: "calculators",
+    component: AgeCalculator,
+    url: "/tools/age-calculator",
+    pageTitle: "Age Calculator - Calculate Your Exact Age",
+    metaDescription:
+      "Calculate your exact age in years, months, and days. See how many days you've been alive and when your next birthday is with our precise age calculator.",
+  },
+  {
+    id: "date-calculator",
+    title: "Date Calculator",
+    description: "Calculate days between dates and add/subtract days.",
+    icon: CalendarDays,
+    category: "calculators",
+    component: DateCalculator,
+    url: "/tools/date-calculator",
+    pageTitle: "Date Calculator - Calculate Days Between Dates",
+    metaDescription:
+      "Calculate the number of days between two dates or add/subtract days from a date with our easy-to-use date calculator.",
+  },
+  {
+    id: "health-calculator",
+    title: "Health Metrics Calculator",
+    description: "Calculate BMI, BMR, TDEE, and ideal weight.",
+    icon: HeartPulse,
+    category: "calculators",
+    component: HealthCalculator,
+    url: "/tools/health-calculator",
+    pageTitle: "Health Metrics Calculator - BMI, BMR & Ideal Weight",
+    metaDescription:
+      "Calculate your BMI, BMR, TDEE, and ideal weight with our comprehensive health metrics calculator. Get insights into your body composition and calorie needs.",
+  },
+  {
+    id: "calorie-calculator",
+    title: "Calorie Calculator",
+    description: "Calculate daily calorie needs and macronutrients.",
+    icon: Utensils,
+    category: "calculators",
+    component: CalorieCalculator,
+    url: "/tools/calorie-calculator",
+    pageTitle: "Calorie Calculator - Calculate Daily Calorie Needs",
+    metaDescription:
+      "Calculate your daily calorie needs based on your body metrics, activity level, and goals. Get personalized macronutrient recommendations for weight loss, maintenance, or gain.",
+  },
+  {
+    id: "shipping-calculator",
+    title: "Shipping Cost Calculator",
+    description: "Calculate shipping costs based on weight, dimensions, and distance",
+    icon: Truck,
+    category: "calculators",
+    component: ShippingCalculator,
+    url: "/calculators/shipping-calculator",
+    pageTitle: "Shipping Cost Calculator - Estimate Shipping Expenses | ToolNames",
+    metaDescription: "Calculate shipping costs based on package weight, dimensions, and distance with our shipping cost calculator. Compare rates and estimate expenses for logistics planning.",
+  },
+  {
+    id: "investment-calculator",
+    title: "Investment Returns Calculator",
+    description: "Calculate potential returns on investments with customizable parameters",
+    icon: Coins,
+    category: "calculators",
+    component: InvestmentCalculator,
+    url: "/calculators/investment-calculator",
+    pageTitle: "Investment Returns Calculator - Project Investment Growth | ToolNames",
+    metaDescription: "Calculate potential returns on investments with customizable parameters including initial investment, monthly contributions, interest rate, and investment horizon.",
+  },
+  {
+    id: "electricity-calculator",
+    title: "Electricity Cost Calculator",
+    description: "Calculate electricity costs for appliances and devices",
+    icon: BatteryCharging,
+    category: "calculators",
+    component: ElectricityCalculator,
+    url: "/calculators/electricity-calculator",
+    pageTitle: "Electricity Cost Calculator - Appliance Energy Usage | ToolNames",
+    metaDescription: "Calculate electricity costs for household appliances and devices based on usage time and power consumption. Identify energy savings opportunities and reduce your bills.",
   },
   // Add more tools here as they are created
 ];
