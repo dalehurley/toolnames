@@ -1,5 +1,6 @@
 import { useEffect } from "react";
-import { useTools, getCategoryName } from "@/contexts/ToolsContext";
+import { useTools } from "@/contexts/ToolsContext";
+import { getCategoryName } from "@/contexts/toolsData";
 import { ToolGrid } from "@/components/ToolGrid";
 
 interface CategoryPageProps {

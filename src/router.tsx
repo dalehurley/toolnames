@@ -6,7 +6,7 @@ import ToolPage from "@/pages/ToolPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 import SitemapPage from "@/pages/SitemapPage";
 import CSVExplorer from "@/pages/CSVExplorer";
-import { availableTools } from "@/contexts/ToolsContext";
+import { availableTools } from "@/contexts/toolsData";
 import { UnitConverterPage } from "@/pages/converters/UnitConverterPage";
 
 // Create an array of all unit conversion routes

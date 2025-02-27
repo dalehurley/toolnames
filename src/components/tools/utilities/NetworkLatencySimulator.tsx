@@ -1,49 +1,35 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
+import { Toggle } from "@/components/ui/toggle";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea as UiScrollArea } from "@/components/ui/scroll-area";
 import {
+  Wifi,
   Activity,
   Download,
-  Gauge,
-  Globe,
-  Save,
-  Trash2,
-  Wifi,
-  WifiOff,
-  ShieldAlert,
   AlertTriangle,
+  Trash2,
+  Globe,
   Info,
+  Save,
 } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  NetworkProfile,
+  NetworkRequest,
+  IframeErrorType,
+  predefinedProfiles,
+  regionalProfiles,
+  formatBytes,
+  formatBandwidth,
+} from "./networkLatencyUtils";
 
-// Define custom ScrollArea component if not available
+// Custom ScrollArea component for internal use
 const ScrollArea = ({
   children,
   className,
@@ -52,231 +38,98 @@ const ScrollArea = ({
   className?: string;
 }) => {
   return (
-    <div className={className} style={{ overflowY: "auto" }}>
-      {children}
-    </div>
+    <UiScrollArea className={className}>
+      <div className="p-4">{children}</div>
+    </UiScrollArea>
   );
 };
 
-// Add a type for iframe load errors
-type IframeErrorType =
-  | "x-frame-options"
-  | "csp"
-  | "unavailable"
-  | "unknown"
-  | null;
-
-// Define network profile types
-interface NetworkProfile {
-  id: string;
-  name: string;
-  downloadSpeed: number; // in kbps
-  uploadSpeed: number; // in kbps
-  latency: number; // in ms
-  packetLoss: number; // percentage
-  region?: string;
-}
-
-// Predefined network profiles
-const PREDEFINED_PROFILES: NetworkProfile[] = [
-  {
-    id: "2g",
-    name: "Slow 2G",
-    downloadSpeed: 50,
-    uploadSpeed: 20,
-    latency: 1000,
-    packetLoss: 3,
-  },
-  {
-    id: "3g",
-    name: "Good 3G",
-    downloadSpeed: 1500,
-    uploadSpeed: 750,
-    latency: 200,
-    packetLoss: 1,
-  },
-  {
-    id: "4g",
-    name: "4G LTE",
-    downloadSpeed: 12000,
-    uploadSpeed: 6000,
-    latency: 50,
-    packetLoss: 0.1,
-  },
-  {
-    id: "dsl",
-    name: "DSL",
-    downloadSpeed: 2000,
-    uploadSpeed: 1000,
-    latency: 30,
-    packetLoss: 0.5,
-  },
-  {
-    id: "fiber",
-    name: "Fiber",
-    downloadSpeed: 100000,
-    uploadSpeed: 50000,
-    latency: 5,
-    packetLoss: 0,
-  },
-];
-
-// Regional network profiles
-const REGIONAL_PROFILES: NetworkProfile[] = [
-  {
-    id: "rural-us",
-    name: "Rural US",
-    downloadSpeed: 5000,
-    uploadSpeed: 1000,
-    latency: 100,
-    packetLoss: 1,
-    region: "United States (Rural)",
-  },
-  {
-    id: "india-mobile",
-    name: "India Mobile",
-    downloadSpeed: 7000,
-    uploadSpeed: 2000,
-    latency: 150,
-    packetLoss: 2,
-    region: "India",
-  },
-  {
-    id: "eu-avg",
-    name: "EU Average",
-    downloadSpeed: 20000,
-    uploadSpeed: 10000,
-    latency: 25,
-    packetLoss: 0.2,
-    region: "Europe",
-  },
-  {
-    id: "sea-mobile",
-    name: "SEA Mobile",
-    downloadSpeed: 8000,
-    uploadSpeed: 3000,
-    latency: 120,
-    packetLoss: 1.5,
-    region: "Southeast Asia",
-  },
-];
-
-// Network request interface for timeline
-interface NetworkRequest {
-  id: string;
-  url: string;
-  method: string;
-  startTime: number;
-  endTime?: number;
-  size?: number;
-  status?: number;
-  latencyApplied: number;
-}
-
-export const NetworkLatencySimulator = () => {
+export const NetworkLatencySimulator: React.FC = () => {
   const [isSimulationActive, setIsSimulationActive] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<NetworkProfile>(
-    PREDEFINED_PROFILES[2]
-  ); // Default to 4G
+    predefinedProfiles.find((p) => p.id === "4g-lte") || predefinedProfiles[0]
+  );
   const [customProfile, setCustomProfile] = useState<NetworkProfile>({
     id: "custom",
-    name: "Custom Profile",
-    downloadSpeed: 5000,
-    uploadSpeed: 2000,
+    name: "Custom",
+    downloadSpeed: 4000,
+    uploadSpeed: 3000,
     latency: 100,
     packetLoss: 0.5,
   });
   const [savedProfiles, setSavedProfiles] = useState<NetworkProfile[]>([]);
-  const [activeTab, setActiveTab] = useState("predefined");
+  const [selectedTabId, setSelectedTabId] = useState("predefined");
   const [urlToTest, setUrlToTest] = useState("https://example.com");
-  const [isRecording, setIsRecording] = useState(false);
+  const [isLoadingWebsite, setIsLoadingWebsite] = useState(false);
   const [networkRequests, setNetworkRequests] = useState<NetworkRequest[]>([]);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const serviceWorkerActive = useRef<boolean>(false);
   const [showUnsupportedAlert, setShowUnsupportedAlert] = useState(false);
-  const [newProfileName, setNewProfileName] = useState("");
-  const [showSaveDialog, setShowSaveDialog] = useState(false);
-
-  // Add new state for iframe error handling
   const [iframeError, setIframeError] = useState<IframeErrorType>(null);
-  const [isIframeLoading, setIsIframeLoading] = useState(false);
 
-  // Check if Service Workers are supported
+  // Refs
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const serviceWorkerActive = useRef(false);
+
+  // Effect to register service worker and load saved profiles
   useEffect(() => {
+    // Check if service worker is supported
     if (!("serviceWorker" in navigator)) {
       setShowUnsupportedAlert(true);
-    } else {
-      // Register service worker
-      registerServiceWorker();
+      return;
     }
 
-    // Check for IndexedDB support and load saved profiles
-    if ("indexedDB" in window) {
-      loadSavedProfiles();
-    }
+    // Register service worker
+    registerServiceWorker();
 
+    // Load saved profiles from IndexedDB
+    loadSavedProfiles();
+
+    // Cleanup when component unmounts
     return () => {
-      // Clean up when component unmounts
-      if (isSimulationActive) {
-        toggleSimulation(false);
+      if (serviceWorkerActive.current && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: "STOP_SIMULATION",
+        });
       }
     };
   }, []);
 
-  // Handle iframe load events
-  useEffect(() => {
-    const iframe = iframeRef.current;
+  // Handle iframe loading and errors
+  const handleLoad = () => {
+    setIsLoadingWebsite(false);
+    setIframeError(null);
+  };
 
-    if (!iframe) return;
+  const handleError = () => {
+    setIsLoadingWebsite(false);
 
-    const handleLoad = () => {
-      setIsIframeLoading(false);
-
-      // Try to access iframe content to check if it loaded properly
-      try {
-        // This will throw an error if the iframe is blocked by X-Frame-Options
-        const iframeDocument =
-          iframe.contentDocument || iframe.contentWindow?.document;
-
-        if (!iframeDocument) {
-          setIframeError("unknown");
-        } else {
-          // Successfully loaded
-          setIframeError(null);
-        }
-      } catch (error) {
-        // Security error - likely X-Frame-Options or CSP
-        setIframeError("x-frame-options");
-        console.error("Iframe access error:", error);
+    // Try to determine the type of error
+    // For X-Frame-Options errors, we can't directly detect them due to browser security,
+    // but we can infer from the combination of onError firing and certain patterns
+    try {
+      // Check for X-Frame-Options or Content-Security-Policy errors
+      if (iframeRef.current) {
+        setIframeError("x-frame-options"); // Most common reason for iframe load failures
       }
-    };
+    } catch (e) {
+      // If we get a security error when trying to access iframe contents
+      setIframeError("x-frame-options");
+      console.error("Error loading website:", e);
+    }
+  };
 
-    const handleError = () => {
-      setIsIframeLoading(false);
-      setIframeError("unavailable");
-    };
-
-    iframe.addEventListener("load", handleLoad);
-    iframe.addEventListener("error", handleError);
-
-    return () => {
-      iframe.removeEventListener("load", handleLoad);
-      iframe.removeEventListener("error", handleError);
-    };
-  }, []);
-
-  // Register service worker for network interception
+  // Register service worker
   const registerServiceWorker = async () => {
     try {
       const registration = await navigator.serviceWorker.register(
         "/network-simulator-sw.js"
       );
-      console.log("Service Worker registered:", registration);
 
-      // Set up communication with service worker
+      console.log("Service Worker registered:", registration.scope);
+
+      // Listen for messages from service worker
       navigator.serviceWorker.addEventListener("message", (event) => {
         if (event.data.type === "REQUEST_COMPLETED") {
-          // Update the network request in our timeline
+          // Update request in timeline
           setNetworkRequests((prev) =>
             prev.map((req) => {
               if (req.id === event.data.requestId) {
@@ -324,151 +177,144 @@ export const NetworkLatencySimulator = () => {
         profile: active ? selectedProfile : null,
       });
       setIsSimulationActive(active);
-
-      // Clear network requests when stopping simulation
-      if (!active) {
-        setNetworkRequests([]);
-        setIsRecording(false);
-      }
     }
   };
 
-  // Load website in iframe - UPDATED
+  // Load website in iframe
   const loadWebsite = () => {
-    if (iframeRef.current && urlToTest) {
-      // Reset network requests and error state
-      setNetworkRequests([]);
-      setIframeError(null);
-      setIsIframeLoading(true);
+    if (!urlToTest.trim()) return;
 
-      // Load URL in iframe
-      iframeRef.current.src = urlToTest;
+    // Reset state
+    setIsLoadingWebsite(true);
+    setIframeError(null);
+    setNetworkRequests([]);
+
+    // Ensure URL has protocol
+    let url = urlToTest;
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      url = "https://" + url;
+      setUrlToTest(url);
     }
   };
 
-  // Create a helper function for displaying the appropriate error message
+  // Get error message based on iframe error type
   const getIframeErrorMessage = () => {
     switch (iframeError) {
       case "x-frame-options":
         return (
-          <Alert variant="destructive" className="my-2">
-            <ShieldAlert className="h-4 w-4" />
-            <AlertTitle>X-Frame-Options Restriction</AlertTitle>
-            <AlertDescription>
-              <p>
-                This website cannot be loaded in an iframe because it has set
-                <code className="mx-1 px-1 py-0.5 bg-destructive/10 rounded">
-                  X-Frame-Options: SAMEORIGIN
-                </code>
-                which is a security measure to prevent clickjacking attacks.
-              </p>
-              <div className="mt-2">
-                <h4 className="font-medium">Alternative approaches:</h4>
-                <ul className="list-disc pl-5 mt-1 text-sm">
-                  <li>Use browser DevTools Network throttling instead</li>
-                  <li>
-                    Test your own applications that don't have this restriction
-                  </li>
-                  <li>
-                    Use a proxy server that strips these headers (not
-                    implemented in this tool)
-                  </li>
-                </ul>
-              </div>
-            </AlertDescription>
-          </Alert>
-        );
-      case "csp":
-        return (
-          <Alert variant="destructive" className="my-2">
-            <ShieldAlert className="h-4 w-4" />
-            <AlertTitle>Content Security Policy Restriction</AlertTitle>
-            <AlertDescription>
-              This website cannot be loaded in an iframe due to Content Security
-              Policy restrictions.
-            </AlertDescription>
-          </Alert>
+          <div className="space-y-2 text-sm">
+            <div className="font-semibold text-base flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-yellow-500" />
+              This website cannot be loaded in an iframe
+            </div>
+            <p>
+              The website has implemented security headers (X-Frame-Options or
+              Content-Security-Policy) that prevent it from being loaded in an
+              iframe.
+            </p>
+            <p className="font-semibold mt-2">Why this happens:</p>
+            <p>
+              Many websites use this security measure to protect against
+              clickjacking attacks. This is a common and recommended security
+              practice.
+            </p>
+            <p className="font-semibold mt-2">Alternative approaches:</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>
+                Use your browser's DevTools Network throttling to test this
+                website
+              </li>
+              <li>
+                Test with applications you control that don't have
+                X-Frame-Options restrictions
+              </li>
+              <li>Try a simpler website like example.com or httpbin.org</li>
+            </ul>
+          </div>
         );
       case "unavailable":
         return (
-          <Alert variant="destructive" className="my-2">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Website Unavailable</AlertTitle>
-            <AlertDescription>
-              Unable to load the website. Please check if the URL is correct and
-              the website is accessible.
-            </AlertDescription>
-          </Alert>
+          <div className="text-sm">
+            <div className="font-semibold text-base flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-yellow-500" />
+              Website unavailable
+            </div>
+            <p>
+              The website could not be reached. Please check the URL and your
+              internet connection.
+            </p>
+          </div>
         );
       case "unknown":
-        return (
-          <Alert variant="destructive" className="my-2">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Unknown Error</AlertTitle>
-            <AlertDescription>
-              An unknown error occurred while loading the website.
-            </AlertDescription>
-          </Alert>
-        );
       default:
-        return null;
+        return (
+          <div className="text-sm">
+            <div className="font-semibold text-base flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-yellow-500" />
+              Error loading website
+            </div>
+            <p>
+              An unknown error occurred while trying to load the website. This
+              could be due to security restrictions or network issues.
+            </p>
+          </div>
+        );
     }
   };
 
   // Save custom profile to IndexedDB
   const saveCustomProfile = () => {
-    if (!newProfileName.trim()) {
-      alert("Please enter a profile name");
-      return;
-    }
-
+    // Create a unique ID for the profile
+    const profileId = `custom-${Date.now()}`;
     const profileToSave: NetworkProfile = {
       ...customProfile,
-      id: `custom-${Date.now()}`,
-      name: newProfileName,
+      id: profileId,
+      name: customProfile.name || `Custom Profile ${savedProfiles.length + 1}`,
     };
 
     // Save to IndexedDB
-    const request = indexedDB.open("NetworkSimulatorDB", 1);
+    const openRequest = indexedDB.open("NetworkSimulatorDB", 1);
 
-    request.onupgradeneeded = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
+    openRequest.onupgradeneeded = () => {
+      const db = openRequest.result;
       if (!db.objectStoreNames.contains("profiles")) {
         db.createObjectStore("profiles", { keyPath: "id" });
       }
     };
 
-    request.onsuccess = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-      const transaction = db.transaction(["profiles"], "readwrite");
+    openRequest.onsuccess = () => {
+      const db = openRequest.result;
+      const transaction = db.transaction("profiles", "readwrite");
       const store = transaction.objectStore("profiles");
       store.add(profileToSave);
 
-      // Update local state
-      setSavedProfiles((prev) => [...prev, profileToSave]);
-      setShowSaveDialog(false);
-      setNewProfileName("");
-    };
+      transaction.oncomplete = () => {
+        // Update state with the new profile
+        setSavedProfiles((prev) => [...prev, profileToSave]);
 
-    request.onerror = () => {
-      alert("Failed to save profile");
+        // Switch to saved profiles tab
+        setSelectedTabId("saved");
+
+        // Select the newly saved profile
+        setSelectedProfile(profileToSave);
+      };
     };
   };
 
   // Load saved profiles from IndexedDB
   const loadSavedProfiles = () => {
-    const request = indexedDB.open("NetworkSimulatorDB", 1);
+    const openRequest = indexedDB.open("NetworkSimulatorDB", 1);
 
-    request.onupgradeneeded = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
+    openRequest.onupgradeneeded = () => {
+      const db = openRequest.result;
       if (!db.objectStoreNames.contains("profiles")) {
         db.createObjectStore("profiles", { keyPath: "id" });
       }
     };
 
-    request.onsuccess = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-      const transaction = db.transaction(["profiles"], "readonly");
+    openRequest.onsuccess = () => {
+      const db = openRequest.result;
+      const transaction = db.transaction("profiles", "readonly");
       const store = transaction.objectStore("profiles");
       const getAllRequest = store.getAll();
 
@@ -480,29 +326,28 @@ export const NetworkLatencySimulator = () => {
 
   // Delete a saved profile
   const deleteProfile = (profileId: string) => {
-    const request = indexedDB.open("NetworkSimulatorDB", 1);
+    const openRequest = indexedDB.open("NetworkSimulatorDB", 1);
 
-    request.onsuccess = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-      const transaction = db.transaction(["profiles"], "readwrite");
+    openRequest.onsuccess = () => {
+      const db = openRequest.result;
+      const transaction = db.transaction("profiles", "readwrite");
       const store = transaction.objectStore("profiles");
       store.delete(profileId);
 
-      // Update local state
-      setSavedProfiles((prev) =>
-        prev.filter((profile) => profile.id !== profileId)
-      );
+      transaction.oncomplete = () => {
+        setSavedProfiles((prev) => prev.filter((p) => p.id !== profileId));
+
+        // If the deleted profile was selected, switch to a default profile
+        if (selectedProfile.id === profileId) {
+          setSelectedProfile(predefinedProfiles[0]);
+          setSelectedTabId("predefined");
+        }
+      };
     };
   };
 
-  // Export HAR file
+  // Export network activity as HAR file
   const exportHAR = () => {
-    if (networkRequests.length === 0) {
-      alert("No network requests to export");
-      return;
-    }
-
-    // Create HAR format
     const har = {
       log: {
         version: "1.2",
@@ -513,7 +358,7 @@ export const NetworkLatencySimulator = () => {
         pages: [
           {
             startedDateTime: new Date(
-              networkRequests[0].startTime
+              Math.min(...networkRequests.map((r) => r.startTime))
             ).toISOString(),
             id: "page_1",
             title: urlToTest,
@@ -523,12 +368,12 @@ export const NetworkLatencySimulator = () => {
             },
           },
         ],
-        entries: networkRequests.map((req) => ({
-          startedDateTime: new Date(req.startTime).toISOString(),
-          time: req.endTime ? req.endTime - req.startTime : 0,
+        entries: networkRequests.map((request) => ({
+          startedDateTime: new Date(request.startTime).toISOString(),
+          time: request.endTime ? request.endTime - request.startTime : 0,
           request: {
-            method: req.method,
-            url: req.url,
+            method: request.method,
+            url: request.url,
             httpVersion: "HTTP/1.1",
             headers: [],
             queryString: [],
@@ -537,18 +382,18 @@ export const NetworkLatencySimulator = () => {
             bodySize: -1,
           },
           response: {
-            status: req.status || 0,
-            statusText: req.status ? `${req.status}` : "",
+            status: request.status || 0,
+            statusText: request.status ? `${request.status}` : "",
             httpVersion: "HTTP/1.1",
             headers: [],
             cookies: [],
             content: {
-              size: req.size || 0,
+              size: request.size || 0,
               mimeType: "",
             },
             redirectURL: "",
             headersSize: -1,
-            bodySize: req.size || 0,
+            bodySize: request.size || 0,
           },
           cache: {},
           timings: {
@@ -556,9 +401,9 @@ export const NetworkLatencySimulator = () => {
             dns: -1,
             connect: -1,
             send: 0,
-            wait: req.latencyApplied,
-            receive: req.endTime
-              ? req.endTime - req.startTime - req.latencyApplied
+            wait: request.latencyApplied,
+            receive: request.endTime
+              ? request.endTime - request.startTime - request.latencyApplied
               : 0,
             ssl: -1,
           },
@@ -568,164 +413,203 @@ export const NetworkLatencySimulator = () => {
       },
     };
 
-    // Create and download file
+    // Create and download the HAR file
     const blob = new Blob([JSON.stringify(har, null, 2)], {
       type: "application/json",
     });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `network-simulation-${new Date()
+    a.download = `network-capture-${new Date()
       .toISOString()
-      .slice(0, 19)}.har`;
+      .slice(0, 19)
+      .replace(/:/g, "-")}.har`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
 
-  // Get relative time for display
+  // Calculate relative time for display
   const getRelativeTime = (time: number) => {
-    const firstRequestTime =
-      networkRequests.length > 0 ? networkRequests[0].startTime : 0;
-    return ((time - firstRequestTime) / 1000).toFixed(2) + "s";
+    const startTime = Math.min(...networkRequests.map((r) => r.startTime));
+    return `${((time - startTime) / 1000).toFixed(2)}s`;
   };
 
-  // Select a profile to use
+  // Select a network profile
   const selectProfile = (profile: NetworkProfile) => {
     setSelectedProfile(profile);
-    if (isSimulationActive) {
-      // Update active simulation with new profile
-      toggleSimulation(false);
-      setTimeout(() => toggleSimulation(true), 100);
+
+    // If simulation is active, update it immediately
+    if (isSimulationActive && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: "START_SIMULATION",
+        profile,
+      });
     }
   };
 
   return (
-    <Card className="w-full max-w-5xl mx-auto">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-2xl">
-              Network Latency Simulator
-            </CardTitle>
-            <CardDescription>
-              Simulate network conditions for testing web applications
-            </CardDescription>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="flex items-center space-x-2">
-              <Switch
-                checked={isSimulationActive}
-                onCheckedChange={(checked) => toggleSimulation(checked)}
-                disabled={showUnsupportedAlert}
-              />
-              <Label>
-                {isSimulationActive ? (
-                  <span className="flex items-center text-green-600">
-                    <Wifi className="h-4 w-4 mr-1" /> Simulation Active
-                  </span>
-                ) : (
-                  <span className="flex items-center text-gray-500">
-                    <WifiOff className="h-4 w-4 mr-1" /> Simulation Off
-                  </span>
-                )}
-              </Label>
+    <div className="space-y-4 max-w-5xl mx-auto">
+      {/* Alerts for unsupported browsers */}
+      {showUnsupportedAlert && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Browser compatibility issue</AlertTitle>
+          <AlertDescription>
+            Your browser doesn't support Service Workers, which are required for
+            network simulation. Please use Chrome, Firefox, Edge, or Safari.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Network Profile Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Wifi className="h-5 w-5" /> Network Profile
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            {/* Simulation toggle */}
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="text-lg font-medium">
+                  Network Simulation: {isSimulationActive ? "Active" : "Off"}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {isSimulationActive
+                    ? `Simulating ${selectedProfile.name} network conditions`
+                    : "Click the button to start simulation"}
+                </p>
+              </div>
+              <Toggle
+                aria-label="Toggle network simulation"
+                pressed={isSimulationActive}
+                onPressedChange={toggleSimulation}
+                size="lg"
+              >
+                <Activity className="h-5 w-5" />
+              </Toggle>
             </div>
-          </div>
-        </div>
-      </CardHeader>
 
-      <CardContent className="space-y-6">
-        {showUnsupportedAlert && (
-          <Alert variant="destructive">
-            <Activity className="h-4 w-4" />
-            <AlertTitle>Browser Compatibility Issue</AlertTitle>
-            <AlertDescription>
-              Your browser doesn't fully support Service Workers or other
-              features needed for network simulation. Please use a modern
-              browser like Chrome, Firefox, or Edge.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Left column - Network Profiles */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Network Profiles</h3>
-
-            <Tabs onValueChange={setActiveTab} value={activeTab}>
-              <TabsList className="grid grid-cols-3 mb-4">
+            {/* Profile selection tabs */}
+            <Tabs
+              value={selectedTabId}
+              onValueChange={setSelectedTabId}
+              className="space-y-4"
+            >
+              <TabsList className="grid grid-cols-3">
                 <TabsTrigger value="predefined">Predefined</TabsTrigger>
                 <TabsTrigger value="regional">Regional</TabsTrigger>
-                <TabsTrigger value="custom">Custom</TabsTrigger>
+                <TabsTrigger value="saved">Saved / Custom</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="predefined" className="mt-0">
-                <div className="space-y-2">
-                  {PREDEFINED_PROFILES.map((profile) => (
-                    <div
+              {/* Predefined profiles */}
+              <TabsContent value="predefined" className="space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {predefinedProfiles.map((profile) => (
+                    <Button
                       key={profile.id}
-                      className={`p-3 border rounded-md cursor-pointer flex justify-between items-center ${
+                      variant={
                         selectedProfile.id === profile.id
-                          ? "border-primary bg-primary/5"
-                          : "hover:bg-gray-50"
-                      }`}
+                          ? "default"
+                          : "outline"
+                      }
+                      className="justify-start"
                       onClick={() => selectProfile(profile)}
                     >
-                      <div>
-                        <div className="font-medium">{profile.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {profile.downloadSpeed / 1000}↓/
-                          {profile.uploadSpeed / 1000}↑ Mbps, {profile.latency}
-                          ms
-                        </div>
-                      </div>
-                      <Gauge className="h-5 w-5 text-muted-foreground" />
-                    </div>
+                      {profile.name}
+                    </Button>
                   ))}
                 </div>
               </TabsContent>
 
-              <TabsContent value="regional" className="mt-0">
-                <div className="space-y-2">
-                  {REGIONAL_PROFILES.map((profile) => (
-                    <div
+              {/* Regional profiles */}
+              <TabsContent value="regional" className="space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {regionalProfiles.map((profile) => (
+                    <Button
                       key={profile.id}
-                      className={`p-3 border rounded-md cursor-pointer flex justify-between items-center ${
+                      variant={
                         selectedProfile.id === profile.id
-                          ? "border-primary bg-primary/5"
-                          : "hover:bg-gray-50"
-                      }`}
+                          ? "default"
+                          : "outline"
+                      }
+                      className="justify-start"
                       onClick={() => selectProfile(profile)}
                     >
-                      <div>
-                        <div className="font-medium flex items-center">
-                          {profile.name}
-                          <Badge variant="outline" className="ml-2 text-xs">
-                            <Globe className="h-3 w-3 mr-1" />
-                            {profile.region}
-                          </Badge>
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {profile.downloadSpeed / 1000}↓/
-                          {profile.uploadSpeed / 1000}↑ Mbps, {profile.latency}
-                          ms
-                        </div>
-                      </div>
-                      <Gauge className="h-5 w-5 text-muted-foreground" />
-                    </div>
+                      {profile.name}
+                    </Button>
                   ))}
                 </div>
               </TabsContent>
 
-              <TabsContent value="custom" className="mt-0">
-                <div className="space-y-4">
+              {/* Saved and custom profiles */}
+              <TabsContent value="saved" className="space-y-4">
+                {savedProfiles.length > 0 && (
                   <div className="space-y-2">
-                    <Label htmlFor="downloadSpeed">Download Speed (kbps)</Label>
-                    <div className="flex space-x-2 items-center">
+                    <h3 className="text-sm font-medium">Saved Profiles</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {savedProfiles.map((profile) => (
+                        <div
+                          key={profile.id}
+                          className="flex items-center justify-between border rounded p-2"
+                        >
+                          <Button
+                            variant={
+                              selectedProfile.id === profile.id
+                                ? "default"
+                                : "ghost"
+                            }
+                            className="justify-start w-full mr-1"
+                            onClick={() => selectProfile(profile)}
+                          >
+                            {profile.name}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => deleteProfile(profile.id)}
+                            title="Delete profile"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-3 pt-4 border-t">
+                  <h3 className="text-sm font-medium">Create Custom Profile</h3>
+
+                  <div className="space-y-5">
+                    <div className="space-y-1">
+                      <Label htmlFor="profile-name">Profile Name</Label>
+                      <Input
+                        id="profile-name"
+                        value={customProfile.name}
+                        onChange={(e) =>
+                          setCustomProfile({
+                            ...customProfile,
+                            name: e.target.value,
+                          })
+                        }
+                        placeholder="My Custom Profile"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex justify-between mb-1">
+                        <Label htmlFor="download-speed">
+                          Download Speed (
+                          {formatBandwidth(customProfile.downloadSpeed)})
+                        </Label>
+                      </div>
                       <Slider
-                        id="downloadSpeed"
+                        id="download-speed"
                         min={50}
                         max={100000}
                         step={50}
@@ -737,20 +621,20 @@ export const NetworkLatencySimulator = () => {
                           })
                         }
                       />
-                      <span className="w-16 text-right">
-                        {(customProfile.downloadSpeed / 1000).toFixed(1)} Mbps
-                      </span>
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="uploadSpeed">Upload Speed (kbps)</Label>
-                    <div className="flex space-x-2 items-center">
+                    <div className="space-y-1">
+                      <div className="flex justify-between mb-1">
+                        <Label htmlFor="upload-speed">
+                          Upload Speed (
+                          {formatBandwidth(customProfile.uploadSpeed)})
+                        </Label>
+                      </div>
                       <Slider
-                        id="uploadSpeed"
-                        min={10}
+                        id="upload-speed"
+                        min={50}
                         max={50000}
-                        step={10}
+                        step={50}
                         value={[customProfile.uploadSpeed]}
                         onValueChange={(value) =>
                           setCustomProfile({
@@ -759,19 +643,18 @@ export const NetworkLatencySimulator = () => {
                           })
                         }
                       />
-                      <span className="w-16 text-right">
-                        {(customProfile.uploadSpeed / 1000).toFixed(1)} Mbps
-                      </span>
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="latency">Latency (ms)</Label>
-                    <div className="flex space-x-2 items-center">
+                    <div className="space-y-1">
+                      <div className="flex justify-between mb-1">
+                        <Label htmlFor="latency">
+                          Latency ({customProfile.latency} ms)
+                        </Label>
+                      </div>
                       <Slider
                         id="latency"
                         min={0}
-                        max={2000}
+                        max={3000}
                         step={5}
                         value={[customProfile.latency]}
                         onValueChange={(value) =>
@@ -781,17 +664,16 @@ export const NetworkLatencySimulator = () => {
                           })
                         }
                       />
-                      <span className="w-16 text-right">
-                        {customProfile.latency} ms
-                      </span>
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="packetLoss">Packet Loss (%)</Label>
-                    <div className="flex space-x-2 items-center">
+                    <div className="space-y-1">
+                      <div className="flex justify-between mb-1">
+                        <Label htmlFor="packet-loss">
+                          Packet Loss ({customProfile.packetLoss}%)
+                        </Label>
+                      </div>
                       <Slider
-                        id="packetLoss"
+                        id="packet-loss"
                         min={0}
                         max={10}
                         step={0.1}
@@ -803,284 +685,204 @@ export const NetworkLatencySimulator = () => {
                           })
                         }
                       />
-                      <span className="w-16 text-right">
-                        {customProfile.packetLoss.toFixed(1)}%
-                      </span>
+                    </div>
+
+                    <div className="flex justify-between">
+                      <Button
+                        variant="outline"
+                        onClick={() => selectProfile(customProfile)}
+                      >
+                        Try Without Saving
+                      </Button>
+                      <Button onClick={saveCustomProfile}>
+                        <Save className="h-4 w-4 mr-2" /> Save Profile
+                      </Button>
                     </div>
                   </div>
-
-                  <div className="flex justify-between mt-4">
-                    <Button
-                      variant="outline"
-                      onClick={() => selectProfile(customProfile)}
-                    >
-                      Apply Custom Settings
-                    </Button>
-                    <Dialog
-                      open={showSaveDialog}
-                      onOpenChange={setShowSaveDialog}
-                    >
-                      <DialogTrigger asChild>
-                        <Button variant="default">
-                          <Save className="h-4 w-4 mr-2" />
-                          Save Profile
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Save Network Profile</DialogTitle>
-                          <DialogDescription>
-                            Enter a name for this network profile. It will be
-                            saved for future use.
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-2 py-4">
-                          <Label htmlFor="profileName">Profile Name</Label>
-                          <Input
-                            id="profileName"
-                            value={newProfileName}
-                            onChange={(e) => setNewProfileName(e.target.value)}
-                            placeholder="e.g., My Home Network"
-                          />
-                        </div>
-                        <DialogFooter>
-                          <Button
-                            variant="outline"
-                            onClick={() => setShowSaveDialog(false)}
-                          >
-                            Cancel
-                          </Button>
-                          <Button onClick={saveCustomProfile}>
-                            Save Profile
-                          </Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
-
-                  {savedProfiles.length > 0 && (
-                    <div className="mt-6">
-                      <h4 className="text-sm font-medium mb-2">
-                        Saved Profiles
-                      </h4>
-                      <div className="space-y-2">
-                        {savedProfiles.map((profile) => (
-                          <div
-                            key={profile.id}
-                            className={`p-3 border rounded-md flex justify-between items-center ${
-                              selectedProfile.id === profile.id
-                                ? "border-primary bg-primary/5"
-                                : "hover:bg-gray-50"
-                            }`}
-                          >
-                            <div
-                              className="cursor-pointer flex-grow"
-                              onClick={() => selectProfile(profile)}
-                            >
-                              <div className="font-medium">{profile.name}</div>
-                              <div className="text-sm text-muted-foreground">
-                                {profile.downloadSpeed / 1000}↓/
-                                {profile.uploadSpeed / 1000}↑ Mbps,{" "}
-                                {profile.latency}ms
-                              </div>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => deleteProfile(profile.id)}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
               </TabsContent>
             </Tabs>
-          </div>
 
-          {/* Right column - Website Testing - UPDATED WITH ERROR HANDLING */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Test Website</h3>
-
-            <div className="space-y-2">
-              <div className="flex space-x-2">
-                <div className="flex-grow">
-                  <Label htmlFor="url" className="sr-only">
-                    URL to Test
-                  </Label>
-                  <Input
-                    id="url"
-                    value={urlToTest}
-                    onChange={(e) => setUrlToTest(e.target.value)}
-                    placeholder="https://example.com"
-                  />
+            {/* Current profile details */}
+            <div className="border rounded-lg p-4 space-y-3">
+              <h3 className="text-sm font-medium">
+                Selected Profile: {selectedProfile.name}
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="space-y-1">
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <Download className="h-4 w-4 mr-1" /> Download
+                  </div>
+                  <div className="font-medium">
+                    {formatBandwidth(selectedProfile.downloadSpeed)}
+                  </div>
                 </div>
-                <Button
-                  onClick={loadWebsite}
-                  disabled={!urlToTest || isIframeLoading}
-                >
-                  {isIframeLoading ? "Loading..." : "Load"}
-                </Button>
+                <div className="space-y-1">
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <Download className="h-4 w-4 mr-1" /> Upload
+                  </div>
+                  <div className="font-medium">
+                    {formatBandwidth(selectedProfile.uploadSpeed)}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <Download className="h-4 w-4 mr-1" /> Latency
+                  </div>
+                  <div className="font-medium">
+                    {selectedProfile.latency} ms
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <Download className="h-4 w-4 mr-1" /> Packet Loss
+                  </div>
+                  <div className="font-medium">
+                    {selectedProfile.packetLoss}%
+                  </div>
+                </div>
               </div>
             </div>
+          </div>
+        </CardContent>
+      </Card>
 
-            {iframeError && getIframeErrorMessage()}
-
-            <div className="border rounded-md h-[300px] overflow-hidden relative">
-              {isIframeLoading && (
-                <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-                  <div className="flex flex-col items-center">
-                    <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      Loading website...
-                    </p>
-                  </div>
-                </div>
-              )}
-              {!iframeError && !isSimulationActive && (
-                <div className="absolute inset-0 bg-background/80 flex items-center justify-center p-4 text-center">
-                  <div className="max-w-md">
-                    <Info className="h-6 w-6 text-primary mx-auto mb-2" />
-                    <h3 className="text-sm font-medium">
-                      Activate Simulation First
-                    </h3>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Toggle simulation on at the top of the page before loading
-                      a website to ensure proper network interception.
-                    </p>
-                  </div>
-                </div>
-              )}
-              <iframe
-                ref={iframeRef}
-                className="w-full h-full border-0"
-                title="Website preview"
-                sandbox="allow-same-origin allow-scripts"
-              />
-            </div>
-
-            <div className="flex justify-between items-center">
-              <div className="flex items-center space-x-2">
-                <Switch
-                  checked={isRecording}
-                  onCheckedChange={(checked) => setIsRecording(checked)}
-                  disabled={!isSimulationActive}
+      {/* Website Testing Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="h-5 w-5" /> Test Website
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <Input
+                  placeholder="Enter URL (e.g., https://example.com)"
+                  value={urlToTest}
+                  onChange={(e) => setUrlToTest(e.target.value)}
+                  disabled={isLoadingWebsite}
                 />
-                <Label>Record Network Activity</Label>
               </div>
               <Button
-                variant="outline"
-                onClick={exportHAR}
-                disabled={networkRequests.length === 0}
+                onClick={loadWebsite}
+                disabled={isLoadingWebsite || !urlToTest.trim()}
               >
-                <Download className="h-4 w-4 mr-2" />
-                Export HAR
+                Load Website
               </Button>
+              {networkRequests.length > 0 && (
+                <Button
+                  variant="outline"
+                  onClick={exportHAR}
+                  title="Export as HAR file"
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+              )}
             </div>
-          </div>
-        </div>
 
-        {/* Network Request Timeline */}
-        <div className="mt-6">
-          <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="timeline">
-              <AccordionTrigger>
-                <div className="flex items-center">
-                  <Activity className="h-4 w-4 mr-2" />
-                  Network Request Timeline
-                  {networkRequests.length > 0 && (
-                    <Badge variant="secondary" className="ml-2">
-                      {networkRequests.length}
-                    </Badge>
-                  )}
+            <div className="border rounded-lg min-h-[200px] flex flex-col">
+              {!isLoadingWebsite &&
+                networkRequests.length === 0 &&
+                !iframeError && (
+                  <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
+                    <Info className="h-10 w-10 mb-2" />
+                    <p className="text-center max-w-sm">
+                      Enter a URL above and click "Load Website" to start
+                      testing.
+                      <br />
+                      <br />
+                      <span className="text-sm">
+                        Note: Some websites may not load due to security
+                        restrictions.
+                      </span>
+                    </p>
+                  </div>
+                )}
+
+              {isLoadingWebsite && (
+                <div className="flex items-center justify-center h-64">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2 mx-auto"></div>
+                    <p className="text-sm">Loading website...</p>
+                  </div>
                 </div>
-              </AccordionTrigger>
-              <AccordionContent>
-                <ScrollArea className="h-[300px] w-full rounded-md border">
-                  {networkRequests.length === 0 ? (
-                    <div className="p-4 text-center text-muted-foreground">
-                      No network requests recorded. Activate simulation and load
-                      a website to begin.
-                    </div>
-                  ) : (
-                    <div className="space-y-2 p-3">
-                      {networkRequests.map((req) => (
-                        <div
-                          key={req.id}
-                          className="border rounded-md p-3 text-sm"
-                        >
-                          <div className="flex justify-between">
-                            <div className="font-medium truncate max-w-[300px]">
-                              {req.url.split("/").pop() || req.url}
-                            </div>
-                            <Badge
-                              variant={
-                                req.status
-                                  ? req.status < 400
-                                    ? "secondary"
-                                    : "destructive"
-                                  : "secondary"
-                              }
-                            >
-                              {req.method} {req.status || "Pending"}
-                            </Badge>
-                          </div>
-                          <div className="text-xs text-muted-foreground truncate mt-1">
-                            {req.url}
-                          </div>
-                          <div className="flex justify-between items-center mt-2 text-xs">
-                            <div className="flex items-center space-x-2">
-                              <span>
-                                Started: {getRelativeTime(req.startTime)}
-                              </span>
-                              {req.endTime && (
-                                <span>
-                                  Duration:{" "}
-                                  {(
-                                    (req.endTime - req.startTime) /
-                                    1000
-                                  ).toFixed(2)}
-                                  s
-                                </span>
-                              )}
-                            </div>
-                            <div>
-                              <Badge
-                                variant="outline"
-                                className="text-amber-600 border-amber-200 bg-amber-50"
-                              >
-                                +{req.latencyApplied}ms latency
-                              </Badge>
-                            </div>
-                          </div>
+              )}
 
-                          {/* Visual timeline bar */}
-                          {req.endTime && (
-                            <div className="mt-2 h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-primary rounded-full"
-                                style={{
-                                  width: `${Math.min(
-                                    100,
-                                    ((req.endTime - req.startTime) / 2000) * 100
-                                  )}%`,
-                                }}
-                              />
-                            </div>
+              {iframeError && (
+                <div className="p-4">{getIframeErrorMessage()}</div>
+              )}
+
+              {!isLoadingWebsite && !iframeError && (
+                <iframe
+                  ref={iframeRef}
+                  src={urlToTest}
+                  className="w-full h-[400px] border-none"
+                  title="Website Test"
+                  onLoad={handleLoad}
+                  onError={handleError}
+                />
+              )}
+            </div>
+
+            {/* Network activity timeline */}
+            {networkRequests.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium">Network Activity</h3>
+                <ScrollArea className="h-[200px] border rounded-lg">
+                  {networkRequests.map((request) => (
+                    <div
+                      key={request.id}
+                      className="border-b last:border-b-0 py-2 flex items-start justify-between"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center">
+                          <Badge
+                            variant="outline"
+                            className="mr-2 font-mono text-xs"
+                          >
+                            {request.method}
+                          </Badge>
+                          <span className="text-sm truncate max-w-[400px]">
+                            {new URL(request.url).pathname}
+                          </span>
+                        </div>
+                        <div className="text-xs text-muted-foreground space-x-3">
+                          <span>
+                            Start: {getRelativeTime(request.startTime)}
+                          </span>
+                          {request.endTime && (
+                            <>
+                              <span>
+                                Duration:{" "}
+                                {(
+                                  (request.endTime - request.startTime) /
+                                  1000
+                                ).toFixed(2)}
+                                s
+                              </span>
+                              <span>Status: {request.status || "pending"}</span>
+                              {request.size && (
+                                <span>Size: {formatBytes(request.size)}</span>
+                              )}
+                            </>
                           )}
                         </div>
-                      ))}
+                      </div>
+                      {!request.endTime && (
+                        <Badge variant="secondary" className="animate-pulse">
+                          Pending
+                        </Badge>
+                      )}
                     </div>
-                  )}
+                  ))}
                 </ScrollArea>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </div>
-      </CardContent>
-    </Card>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };

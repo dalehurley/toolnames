@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Copy, RefreshCw, Check, FileBadge, Download } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
@@ -23,6 +23,10 @@ export const JSONFormatter = () => {
     valid: boolean;
     message?: string;
   } | null>(null);
+
+  useEffect(() => {
+    console.log(error);
+  }, [error]);
 
   // Parse and format JSON
   const formatJSON = () => {

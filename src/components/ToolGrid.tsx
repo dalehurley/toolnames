@@ -10,7 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useTools } from "@/contexts/ToolsContext";
 import { groupBy } from "lodash";
-import { Tool } from "@/contexts/ToolsContext";
+import { Tool } from "@/contexts/toolsData";
 
 export const ToolGrid = () => {
   const { filteredTools, filterCategory } = useTools();
