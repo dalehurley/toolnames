@@ -19,6 +19,7 @@ import { CharacterCounter } from "@/components/tools/utilities/CharacterCounter"
 import { SchemaVisualizer } from "@/components/tools/utilities/SchemaVisualizer";
 import { ChartBuilder } from "@/components/tools/utilities/ChartBuilder";
 import CSVExplorer from "@/pages/CSVExplorer";
+import { JSONSchemaCreator } from "@/components/tools/utilities/JSONSchemaCreator";
 import {
   LucideIcon,
   DollarSign,
@@ -43,6 +44,7 @@ import {
   BarChart3,
   Wifi,
   Dices,
+  FileJson,
 } from "lucide-react";
 import { NetworkLatencySimulator } from "@/components/tools/utilities/NetworkLatencySimulator";
 import LotteryPickerGenerator from "@/components/tools/generators/LotteryPickerGenerator";
@@ -229,6 +231,18 @@ export const availableTools: Tool[] = [
       "JSON Formatter & Validator - Format and Beautify JSON | ToolNames",
     metaDescription:
       "Format, validate, and beautify your JSON data with our free JSON formatter and validator tool. Copy formatted JSON directly to your clipboard.",
+  },
+  {
+    id: "json-schema-creator",
+    title: "JSON Schema Creator",
+    description: "Generate JSON Schema from your JSON data for documentation and validation",
+    icon: FileJson,
+    category: "utilities",
+    component: JSONSchemaCreator,
+    url: "/utilities/json-schema-creator",
+    pageTitle: "JSON Schema Creator - Generate Schema from JSON | ToolNames",
+    metaDescription:
+      "Generate JSON Schema from your JSON data with our free schema creator tool. Perfect for API documentation, data validation, and code generation.",
   },
   {
     id: "emoji-smuggler",
