@@ -8,6 +8,7 @@ import SitemapPage from "@/pages/SitemapPage";
 import CSVExplorer from "@/pages/CSVExplorer";
 import { availableTools } from "@/contexts/toolsData";
 import { UnitConverterPage } from "@/pages/converters/UnitConverterPage";
+import { HashGeneratorPage } from "@/components/pages/HashGeneratorPage";
 
 // Create an array of all unit conversion routes
 const unitConverterRoutes = [
@@ -83,6 +84,14 @@ const unitConverterRoutes = [
   { from: "months", to: "years", category: "time" },
 ];
 
+// Create an array of hash algorithm routes
+const hashGeneratorRoutes = [
+  { algorithm: "sha1" },
+  { algorithm: "sha256" },
+  { algorithm: "sha384" },
+  { algorithm: "sha512" },
+];
+
 // Create the router
 export const router = createBrowserRouter([
   {
@@ -144,6 +153,16 @@ export const router = createBrowserRouter([
             category={route.category}
           />
         ),
+      })),
+
+      // Special routes for hash generator with specific algorithms
+      {
+        path: "/generators/hash-generator/:algorithm",
+        element: <HashGeneratorPage />,
+      },
+      ...hashGeneratorRoutes.map((route) => ({
+        path: `/generators/hash-generator/${route.algorithm}`,
+        element: <HashGeneratorPage algorithm={route.algorithm} />,
       })),
 
       // Redirect legacy paths

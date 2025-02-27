@@ -139,6 +139,52 @@ const generateUnitConverterRoutes = (): ConverterRoute[] => {
   return routes;
 };
 
+// Handle hash generator specific routes
+const generateHashGeneratorRoutes = (): ConverterRoute[] => {
+  const routes: ConverterRoute[] = [];
+
+  // Define the hash algorithms
+  const hashAlgorithms = [
+    {
+      name: "sha1",
+      title: "SHA-1",
+      description: "160-bit hash, use with caution",
+    },
+    {
+      name: "sha256",
+      title: "SHA-256",
+      description: "256-bit hash, widely used and recommended",
+    },
+    {
+      name: "sha384",
+      title: "SHA-384",
+      description: "384-bit hash, stronger than SHA-256",
+    },
+    {
+      name: "sha512",
+      title: "SHA-512",
+      description: "512-bit hash, most secure",
+    },
+  ];
+
+  hashAlgorithms.forEach(({ name, title, description }) => {
+    const url = `/generators/hash-generator/${name}`;
+    const pageTitle = `${title} Hash Generator - Create ${title} Hashes | ToolNames`;
+    const metaDescription = `Generate secure ${title} cryptographic hashes from text with our free online ${title} hash generator tool. ${description}.`;
+
+    routes.push({
+      url,
+      title: `${title} Hash Generator`,
+      description: `Generate secure cryptographic hashes using the ${title} algorithm`,
+      category: "Hash Generator",
+      pageTitle,
+      metaDescription,
+    });
+  });
+
+  return routes;
+};
+
 // Define a type for the combined pages
 type SitemapItem = Tool | ConverterRoute;
 
@@ -223,6 +269,7 @@ const SitemapPage = () => {
         "Complete list of all tools and pages available on ToolNames. Browse our calculators, converters, generators, utilities and more.",
     } as SitemapItem,
     ...generateUnitConverterRoutes(),
+    ...generateHashGeneratorRoutes(),
   ];
 
   // Group pages by category

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -6,20 +7,82 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Check, Copy, RefreshCw, Lock, Shield } from "lucide-react";
+import {
+  Check,
+  Copy,
+  RefreshCw,
+  Lock,
+  Shield,
+  ExternalLink,
+} from "lucide-react";
 
-type HashAlgorithm = "md5" | "sha1" | "sha256" | "sha512";
+type HashAlgorithm = "sha1" | "sha256" | "sha384" | "sha512";
 
-export const HashGenerator = () => {
+interface HashGeneratorProps {
+  initialAlgorithm?: string;
+}
+
+const algorithmDetails: Record<
+  HashAlgorithm,
+  {
+    title: string;
+    description: string;
+    cardTitle: string;
+  }
+> = {
+  sha1: {
+    title: "SHA-1",
+    description: "160-bit hash, no longer considered secure (Use with caution)",
+    cardTitle: "SHA-1 Hash Generator",
+  },
+  sha256: {
+    title: "SHA-256",
+    description: "256-bit hash from SHA-2 family, widely used (Recommended)",
+    cardTitle: "SHA-256 Hash Generator",
+  },
+  sha384: {
+    title: "SHA-384",
+    description:
+      "384-bit hash from SHA-2 family, stronger than SHA-256 (Recommended)",
+    cardTitle: "SHA-384 Hash Generator",
+  },
+  sha512: {
+    title: "SHA-512",
+    description:
+      "512-bit hash from SHA-2 family, most secure (Recommended for high security)",
+    cardTitle: "SHA-512 Hash Generator",
+  },
+};
+
+const isValidAlgorithm = (alg?: string): alg is HashAlgorithm => {
+  return !!alg && ["sha1", "sha256", "sha384", "sha512"].includes(alg);
+};
+
+export const HashGenerator = ({ initialAlgorithm }: HashGeneratorProps) => {
+  const location = useLocation();
+
+  // Set the default algorithm value only once at component initialization
+  const defaultAlgo = isValidAlgorithm(initialAlgorithm)
+    ? initialAlgorithm
+    : "sha256";
+
   const [input, setInput] = useState<string>("");
-  const [algorithm, setAlgorithm] = useState<HashAlgorithm>("sha256");
+  const [algorithm, setAlgorithm] = useState<HashAlgorithm>(defaultAlgo);
   const [hashOutput, setHashOutput] = useState<string>("");
   const [copied, setCopied] = useState<boolean>(false);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
+
+  // When initialAlgorithm changes (from URL changes), update the algorithm
+  useEffect(() => {
+    if (isValidAlgorithm(initialAlgorithm)) {
+      setAlgorithm(initialAlgorithm);
+    }
+  }, [initialAlgorithm, location.pathname]);
 
   // Generate hash when input or algorithm changes
   useEffect(() => {
@@ -46,21 +109,16 @@ export const HashGenerator = () => {
 
       // Different algorithms
       switch (algorithm) {
-        case "md5":
-          // Note: Web Crypto API doesn't support MD5 as it's considered insecure
-          // This is a simplified implementation for demonstration
-          setHashOutput(
-            "MD5 is not supported by the Web Crypto API as it's considered insecure"
-          );
-          setIsGenerating(false);
-          return;
-
         case "sha1":
           digest = await crypto.subtle.digest("SHA-1", data);
           break;
 
         case "sha256":
           digest = await crypto.subtle.digest("SHA-256", data);
+          break;
+
+        case "sha384":
+          digest = await crypto.subtle.digest("SHA-384", data);
           break;
 
         case "sha512":
@@ -100,13 +158,19 @@ export const HashGenerator = () => {
     setCopied(false);
   };
 
+  // Get the current algorithm details
+  const currentAlgorithmDetails = algorithmDetails[algorithm];
+
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
-        <CardTitle className="text-2xl">Hash Generator</CardTitle>
+        <CardTitle className="text-2xl">
+          {currentAlgorithmDetails.cardTitle || "Hash Generator"}
+        </CardTitle>
         <CardDescription>
-          Generate secure cryptographic hashes from text using various
-          algorithms
+          {algorithm === "sha1"
+            ? "Generate SHA-1 hashes from text (Note: SHA-1 is no longer considered secure)"
+            : `Generate secure ${currentAlgorithmDetails.title} cryptographic hashes from text`}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -125,13 +189,14 @@ export const HashGenerator = () => {
           <Label>Hash Algorithm</Label>
           <Tabs
             value={algorithm}
+            defaultValue={algorithm}
             onValueChange={(value) => setAlgorithm(value as HashAlgorithm)}
             className="w-full"
           >
             <TabsList className="grid grid-cols-4 w-full">
-              <TabsTrigger value="md5">MD5</TabsTrigger>
               <TabsTrigger value="sha1">SHA-1</TabsTrigger>
               <TabsTrigger value="sha256">SHA-256</TabsTrigger>
+              <TabsTrigger value="sha384">SHA-384</TabsTrigger>
               <TabsTrigger value="sha512">SHA-512</TabsTrigger>
             </TabsList>
           </Tabs>
@@ -197,12 +262,6 @@ export const HashGenerator = () => {
             </div>
             <ul className="text-sm space-y-1 list-disc pl-4 text-muted-foreground">
               <li>
-                <strong>MD5:</strong> Fast but insecure, 128-bit hash
-                <span className="text-red-500 ml-1">
-                  (Not recommended for security purposes)
-                </span>
-              </li>
-              <li>
                 <strong>SHA-1:</strong> 160-bit hash, no longer considered
                 secure
                 <span className="text-yellow-500 ml-1">(Use with caution)</span>
@@ -210,6 +269,11 @@ export const HashGenerator = () => {
               <li>
                 <strong>SHA-256:</strong> 256-bit hash from SHA-2 family, widely
                 used
+                <span className="text-green-500 ml-1">(Recommended)</span>
+              </li>
+              <li>
+                <strong>SHA-384:</strong> 384-bit hash from SHA-2 family,
+                stronger than SHA-256
                 <span className="text-green-500 ml-1">(Recommended)</span>
               </li>
               <li>
@@ -242,6 +306,39 @@ export const HashGenerator = () => {
           </div>
         </div>
       </CardContent>
+      <CardFooter>
+        <div className="w-full">
+          <h3 className="text-sm font-medium mb-2">
+            Direct Links to Specific Hash Algorithms:
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <Link
+              to="/generators/hash-generator/sha1"
+              className="text-xs flex items-center p-2 border rounded-md hover:bg-muted"
+            >
+              SHA-1 Hash Generator <ExternalLink className="ml-1 h-3 w-3" />
+            </Link>
+            <Link
+              to="/generators/hash-generator/sha256"
+              className="text-xs flex items-center p-2 border rounded-md hover:bg-muted"
+            >
+              SHA-256 Hash Generator <ExternalLink className="ml-1 h-3 w-3" />
+            </Link>
+            <Link
+              to="/generators/hash-generator/sha384"
+              className="text-xs flex items-center p-2 border rounded-md hover:bg-muted"
+            >
+              SHA-384 Hash Generator <ExternalLink className="ml-1 h-3 w-3" />
+            </Link>
+            <Link
+              to="/generators/hash-generator/sha512"
+              className="text-xs flex items-center p-2 border rounded-md hover:bg-muted"
+            >
+              SHA-512 Hash Generator <ExternalLink className="ml-1 h-3 w-3" />
+            </Link>
+          </div>
+        </div>
+      </CardFooter>
     </Card>
   );
 };

@@ -1,12 +1,15 @@
 import { MortgageCalculator } from "@/components/tools/calculators/MortgageCalculator";
 import { CompoundInterestCalculator } from "@/components/tools/calculators/CompoundInterestCalculator";
 import { BMICalculator } from "@/components/tools/calculators/BMICalculator";
+import { TipCalculator } from "@/components/tools/calculators/TipCalculator";
 import { ImageConverter } from "@/components/tools/converters/ImageConverter";
 import { UnitConverter } from "@/components/tools/converters/UnitConverter";
 import { Base64ImageConverter } from "@/components/tools/converters/Base64ImageConverter";
+import { NumberBaseConverter } from "@/components/tools/converters/NumberBaseConverter";
 import { PasswordGenerator } from "@/components/tools/generators/PasswordGenerator";
 import { QRCodeGenerator } from "@/components/tools/generators/QRCodeGenerator";
 import { LoremIpsumGenerator } from "@/components/tools/generators/LoremIpsumGenerator";
+import { HashGenerator } from "@/components/tools/generators/HashGenerator";
 import { ColorConverter } from "@/components/tools/converters/ColorConverter";
 import { TextCaseConverter } from "@/components/tools/utilities/TextCaseConverter";
 import { Base64Tool } from "@/components/tools/utilities/Base64Tool";
@@ -45,6 +48,9 @@ import {
   Wifi,
   Dices,
   FileJson,
+  Calculator,
+  Hash,
+  Shield,
 } from "lucide-react";
 import { NetworkLatencySimulator } from "@/components/tools/utilities/NetworkLatencySimulator";
 import LotteryPickerGenerator from "@/components/tools/generators/LotteryPickerGenerator";
@@ -369,6 +375,40 @@ export const availableTools: Tool[] = [
     url: "/generators/lottery-picker",
     pageTitle: "Lottery Number Picker - Random Number Generator | ToolNames",
     metaDescription: "Generate random lottery numbers for various lottery games including Powerball, Mega Millions, and custom formats with our free lottery number picker tool.",
+  },
+  {
+    id: "tip-calculator",
+    title: "Tip Calculator",
+    description: "Calculate tip amount and split bills among people",
+    icon: Calculator,
+    category: "calculators",
+    component: TipCalculator,
+    url: "/calculators/tip-calculator",
+    pageTitle: "Tip Calculator - Calculate Tips & Split Bills | ToolNames",
+    metaDescription: "Calculate tip amounts and split bills among people with our free, easy-to-use tip calculator. Perfect for dining out and sharing expenses.",
+  },
+  {
+    id: "number-base-converter",
+    title: "Number Base Converter",
+    description: "Convert between binary, octal, decimal, and hexadecimal number systems",
+    icon: Hash,
+    category: "converters",
+    component: NumberBaseConverter,
+    url: "/converters/number-base-converter",
+    pageTitle: "Number Base Converter - Binary, Octal, Decimal, Hex | ToolNames",
+    metaDescription: "Convert between binary, octal, decimal, and hexadecimal number systems with our free number base converter tool. Perfect for programmers and students.",
+  },
+  {
+    id: "hash-generator",
+    title: "Hash Generator",
+    description: "Generate secure cryptographic hashes from text using various algorithms",
+    icon: Shield,
+    category: "generators",
+    component: HashGenerator,
+    url: "/generators/hash-generator",
+    pageTitle: "Hash Generator - SHA-1, SHA-256, SHA-384, SHA-512 | ToolNames",
+    metaDescription: "Generate secure cryptographic hashes from text using SHA-1, SHA-256, SHA-384, and SHA-512 algorithms with our free hash generator tool.",
+    baseUrl: "/generators/hash-generator",
   },
   // Add more tools here as they are created
 ];
