@@ -49,7 +49,9 @@ import {
   ActivitySquare,
   Table,
   BarChart3,
+  Wifi,
 } from "lucide-react";
+import { NetworkLatencySimulator } from "@/components/tools/utilities/NetworkLatencySimulator";
 
 // Tool type definition
 export interface Tool {
@@ -335,6 +337,19 @@ export const availableTools: Tool[] = [
       "Chart Builder - Create Custom Charts without Coding | ToolNames",
     metaDescription:
       "Create beautiful, customizable charts without coding using our free chart builder tool. Build bar, line, pie, scatter and radar charts with ease and export them as images.",
+  },
+  {
+    id: "network-latency-simulator",
+    title: "Network Latency Simulator",
+    description: "Simulate network conditions for testing web applications",
+    icon: Wifi,
+    category: "utilities",
+    component: NetworkLatencySimulator,
+    url: "/utilities/network-latency-simulator",
+    pageTitle:
+      "Network Latency Simulator - Test Under Various Network Conditions | ToolNames",
+    metaDescription:
+      "Simulate different network conditions to test how your web applications perform under varying connection speeds, latency, and packet loss. Perfect for developers and QA engineers.",
   },
   // Add more tools here as they are created
 ];
