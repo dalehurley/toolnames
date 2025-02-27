@@ -99,7 +99,9 @@ export const ToolGrid = () => {
         <div className="mb-6">
           <h2 className="text-3xl font-bold">All Tools</h2>
           <p className="text-muted-foreground">
-            Select a tool or use the navigation to filter by category
+            Browse our collection of free browser-based tools including
+            calculators, converters, generators, and utilities - all running
+            locally for your privacy
           </p>
         </div>
       ) : (

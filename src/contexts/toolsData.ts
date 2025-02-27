@@ -19,7 +19,6 @@ import { CharacterCounter } from "@/components/tools/utilities/CharacterCounter"
 import { SchemaVisualizer } from "@/components/tools/utilities/SchemaVisualizer";
 import { ChartBuilder } from "@/components/tools/utilities/ChartBuilder";
 import CSVExplorer from "@/pages/CSVExplorer";
-import LotteryPickerPage from "@/pages/LotteryPickerPage";
 import {
   LucideIcon,
   DollarSign,
@@ -46,6 +45,7 @@ import {
   Dices,
 } from "lucide-react";
 import { NetworkLatencySimulator } from "@/components/tools/utilities/NetworkLatencySimulator";
+import LotteryPickerGenerator from "@/components/tools/generators/LotteryPickerGenerator";
 
 // Tool type definition
 export interface Tool {
@@ -351,7 +351,7 @@ export const availableTools: Tool[] = [
     description: "Generate random lottery numbers for various lottery games",
     icon: Dices,
     category: "generators",
-    component: LotteryPickerPage,
+    component: LotteryPickerGenerator,
     url: "/generators/lottery-picker",
     pageTitle: "Lottery Number Picker - Random Number Generator | ToolNames",
     metaDescription: "Generate random lottery numbers for various lottery games including Powerball, Mega Millions, and custom formats with our free lottery number picker tool.",

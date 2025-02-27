@@ -15,13 +15,6 @@ const HomePage = () => {
 
   return (
     <div className="space-y-8">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">All Tools</h1>
-        <p className="text-muted-foreground">
-          Browse our collection of free tools and utilities
-        </p>
-      </div>
-
       <ToolGrid />
     </div>
   );
