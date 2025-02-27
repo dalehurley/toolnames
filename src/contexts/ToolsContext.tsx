@@ -24,6 +24,7 @@ import { UrlEncoder } from "@/components/tools/utilities/UrlEncoder";
 import { UuidGenerator } from "@/components/tools/generators/UuidGenerator";
 import { TemperatureConverter } from "@/components/tools/converters/TemperatureConverter";
 import { CharacterCounter } from "@/components/tools/utilities/CharacterCounter";
+import { SchemaVisualizer } from "@/components/tools/utilities/SchemaVisualizer";
 import {
   LucideIcon,
   DollarSign,
@@ -43,6 +44,7 @@ import {
   Link,
   Fingerprint,
   Thermometer,
+  ActivitySquare,
 } from "lucide-react";
 
 // Tool type definition
@@ -265,6 +267,19 @@ export const availableTools: Tool[] = [
     pageTitle: "Character Counter - Count Words & Characters | ToolNames",
     metaDescription:
       "Count characters, words, sentences, and paragraphs in your text with our free character counter tool. Perfect for writers and content creators.",
+  },
+  {
+    id: "schema-visualizer",
+    title: "Schema Visualizer",
+    description:
+      "Generate interactive visual diagrams from JSON, YAML, or database schema files",
+    icon: ActivitySquare,
+    category: "utilities",
+    component: SchemaVisualizer,
+    url: "/utilities/schema-visualizer",
+    pageTitle: "Schema Visualizer - Visualize Data Relationships | ToolNames",
+    metaDescription:
+      "Generate interactive visual diagrams from JSON, YAML, or database schema files with our free schema visualizer tool. Understand complex data structures at a glance.",
   },
   {
     id: "uuid-generator",
