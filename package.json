@@ -41,6 +41,7 @@
     "dayjs": "^1.11.13",
     "file-saver": "^2.0.5",
     "framer-motion": "^12.4.7",
+    "html-to-image": "^1.11.13",
     "jszip": "^3.10.1",
     "lucide-react": "^0.476.0",
     "mathjs": "^14.2.1",

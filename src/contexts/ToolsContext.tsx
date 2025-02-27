@@ -25,6 +25,7 @@ import { UuidGenerator } from "@/components/tools/generators/UuidGenerator";
 import { TemperatureConverter } from "@/components/tools/converters/TemperatureConverter";
 import { CharacterCounter } from "@/components/tools/utilities/CharacterCounter";
 import { SchemaVisualizer } from "@/components/tools/utilities/SchemaVisualizer";
+import { ChartBuilder } from "@/components/tools/utilities/ChartBuilder";
 import CSVExplorer from "@/pages/CSVExplorer";
 import {
   LucideIcon,
@@ -47,6 +48,7 @@ import {
   Thermometer,
   ActivitySquare,
   Table,
+  BarChart3,
 } from "lucide-react";
 
 // Tool type definition
@@ -320,6 +322,19 @@ export const availableTools: Tool[] = [
     pageTitle: "CSV Explorer - Analyze & Visualize CSV Data | ToolNames",
     metaDescription:
       "Upload and explore CSV files with our powerful data analysis tool. Clean data, create charts, and export results - all running directly in your browser for privacy.",
+  },
+  {
+    id: "chart-builder",
+    title: "Chart Builder",
+    description: "Create and customize charts without coding using Chart.js",
+    icon: BarChart3,
+    category: "utilities",
+    component: ChartBuilder,
+    url: "/utilities/chart-builder",
+    pageTitle:
+      "Chart Builder - Create Custom Charts without Coding | ToolNames",
+    metaDescription:
+      "Create beautiful, customizable charts without coding using our free chart builder tool. Build bar, line, pie, scatter and radar charts with ease and export them as images.",
   },
   // Add more tools here as they are created
 ];
