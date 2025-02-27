@@ -5,6 +5,7 @@ import CategoryPage from "@/pages/CategoryPage";
 import ToolPage from "@/pages/ToolPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 import SitemapPage from "@/pages/SitemapPage";
+import CSVExplorer from "@/pages/CSVExplorer";
 import { availableTools } from "@/contexts/ToolsContext";
 import { UnitConverterPage } from "@/pages/converters/UnitConverterPage";
 
@@ -113,6 +114,12 @@ export const router = createBrowserRouter([
       {
         path: "/file-tools",
         element: <CategoryPage category="file-tools" />,
+      },
+
+      // CSV Explorer route
+      {
+        path: "/file-tools/csv-explorer",
+        element: <CSVExplorer />,
       },
 
       // Sitemap route

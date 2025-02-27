@@ -25,6 +25,7 @@ import { UuidGenerator } from "@/components/tools/generators/UuidGenerator";
 import { TemperatureConverter } from "@/components/tools/converters/TemperatureConverter";
 import { CharacterCounter } from "@/components/tools/utilities/CharacterCounter";
 import { SchemaVisualizer } from "@/components/tools/utilities/SchemaVisualizer";
+import CSVExplorer from "@/pages/CSVExplorer";
 import {
   LucideIcon,
   DollarSign,
@@ -45,6 +46,7 @@ import {
   Fingerprint,
   Thermometer,
   ActivitySquare,
+  Table,
 } from "lucide-react";
 
 // Tool type definition
@@ -305,6 +307,19 @@ export const availableTools: Tool[] = [
     pageTitle: "Temperature Converter - Convert Between C, F, K | ToolNames",
     metaDescription:
       "Convert temperatures between Celsius, Fahrenheit, and Kelvin with our free, easy-to-use temperature converter tool. Get instant accurate conversions.",
+  },
+  {
+    id: "csv-explorer",
+    title: "CSV Explorer",
+    description:
+      "Analyze, visualize, clean, and export CSV data with interactive charts and data grid",
+    icon: Table,
+    category: "file-tools",
+    component: CSVExplorer,
+    url: "/file-tools/csv-explorer",
+    pageTitle: "CSV Explorer - Analyze & Visualize CSV Data | ToolNames",
+    metaDescription:
+      "Upload and explore CSV files with our powerful data analysis tool. Clean data, create charts, and export results - all running directly in your browser for privacy.",
   },
   // Add more tools here as they are created
 ];
