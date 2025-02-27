@@ -37,8 +37,7 @@ export const DataGrid: React.FC<DataGridProps> = ({
   data,
   columns,
   setColumns,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  parseResult,
+  // parseResult is defined in the interface but not used in this component
 }) => {
   const [visibleColumns, setVisibleColumns] = useState<Column[]>(columns);
   const [searchTerm, setSearchTerm] = useState("");

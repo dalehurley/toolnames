@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Check, Copy, RefreshCw, Lock, Shield } from "lucide-react";
 
 type HashAlgorithm = "md5" | "sha1" | "sha256" | "sha512";

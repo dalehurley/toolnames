@@ -27,7 +27,7 @@ export const Base64ImageConverter = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [base64Output, setBase64Output] = useState<string>("");
-  const [imageFormat, setImageFormat] = useState<string>("image/png");
+  const [imageFormat] = useState<string>("image/png");
   const [encodeError, setEncodeError] = useState<string | null>(null);
 
   // Decode (Base64 to Image) state
@@ -109,14 +109,14 @@ export const Base64ImageConverter = () => {
         try {
           atob(cleanInput); // This will throw if not valid base64
           cleanInput = `data:image/png;base64,${cleanInput}`;
-        } catch (e) {
+        } catch {
           setDecodeError("Invalid Base64 encoding");
           return;
         }
       }
 
       setDecodedImage(cleanInput);
-    } catch (error) {
+    } catch {
       setDecodeError("Failed to decode Base64 to image");
     }
   };

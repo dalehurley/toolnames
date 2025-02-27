@@ -14,6 +14,19 @@ import * as d3 from "d3";
 import * as dagreD3 from "dagre-d3";
 import Editor from "@monaco-editor/react";
 
+// Define types for d3 and dagreD3 to avoid 'any'
+interface GraphObject {
+  width: number;
+  height: number;
+}
+
+interface SchemaObject {
+  type: string;
+  properties?: Record<string, SchemaObject>;
+  items?: SchemaObject;
+  [key: string]: unknown;
+}
+
 type SchemaFormat = "json" | "yaml" | "database";
 
 // Sample schemas for demo purposes
@@ -361,14 +374,14 @@ export const SchemaVisualizer = () => {
       const render = new dagreD3.render();
 
       // Run the renderer
-      render(svgGroup, g);
+      (render as unknown)(svgGroup, g);
 
       // Configure the zoom behavior
       const initialScale = 0.75;
       const svgWidth = containerWidth;
       const svgHeight = containerHeight;
-      const graphWidth = g.graph().width || 0;
-      const graphHeight = g.graph().height || 0;
+      const graphWidth = (g.graph() as GraphObject).width || 0;
+      const graphHeight = (g.graph() as GraphObject).height || 0;
 
       // Center the graph
       const xCenterOffset = Math.max(
@@ -382,16 +395,16 @@ export const SchemaVisualizer = () => {
 
       // Initialize zoom behavior
       const zoom = d3
-        .zoom()
+        .zoom<SVGSVGElement, unknown>()
         .on("zoom", (event: d3.D3ZoomEvent<SVGSVGElement, unknown>) => {
           svgGroup.attr("transform", event.transform.toString());
         });
 
       // Apply zoom to the SVG
       svg
-        .call(zoom)
+        .call(zoom as unknown)
         .call(
-          zoom.transform,
+          zoom.transform as unknown,
           d3.zoomIdentity
             .translate(xCenterOffset, yCenterOffset)
             .scale(initialScale)
@@ -404,15 +417,19 @@ export const SchemaVisualizer = () => {
       );
 
       setError(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Visualization error:", err);
-      setError(`Error parsing schema: ${err.message}`);
+      setError(
+        `Error parsing schema: ${
+          err instanceof Error ? err.message : String(err)
+        }`
+      );
     }
   };
 
   const createNodesForJsonSchema = (
     g: dagreD3.graphlib.Graph,
-    schema: any,
+    schema: SchemaObject,
     prefix = ""
   ) => {
     if (schema.type === "object" && schema.properties) {

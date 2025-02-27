@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -121,7 +121,7 @@ export const NumberBaseConverter = () => {
       if (base !== "hexadecimal") {
         setHexadecimal(decimalValue.toString(16).toUpperCase());
       }
-    } catch (err) {
+    } catch {
       setError("Invalid conversion");
     }
   };

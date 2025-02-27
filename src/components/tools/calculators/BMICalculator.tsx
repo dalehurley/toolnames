@@ -9,11 +9,10 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Scale } from "lucide-react";
 
 export const BMICalculator = () => {
   const [unit, setUnit] = useState<"metric" | "imperial">("metric");
@@ -85,7 +84,7 @@ export const BMICalculator = () => {
       } else {
         setCategory("Obesity");
       }
-    } catch (err) {
+    } catch {
       setError(
         "An error occurred during calculation. Please check your inputs."
       );

@@ -1017,9 +1017,13 @@ export function ChartBuilder() {
                       max={32}
                       step={1}
                       value={[
-                        // @ts-expect-error - font is not defined on size
-                        (chartConfig.options.plugins?.title?.font
-                          ?.size as number) || 16,
+                        // Use optional chaining and type checking
+                        typeof chartConfig.options.plugins?.title?.font ===
+                          "object" &&
+                        "size" in (chartConfig.options.plugins.title.font || {})
+                          ? (chartConfig.options.plugins.title.font
+                              .size as number)
+                          : 16,
                       ]}
                       onValueChange={([value]) => {
                         setChartConfig((prev) => ({
