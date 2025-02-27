@@ -14,10 +14,12 @@ import * as d3 from "d3";
 import * as dagreD3 from "dagre-d3";
 import Editor from "@monaco-editor/react";
 
-// Define types for d3 and dagreD3 to avoid 'any'
-interface GraphObject {
-  width: number;
-  height: number;
+// Define types for d3 and dagreD3
+// Update graph interface to match what dagre-d3 actually returns
+interface DagreGraph {
+  width?: number;
+  height?: number;
+  [key: string]: unknown;
 }
 
 interface SchemaObject {
@@ -373,15 +375,19 @@ export const SchemaVisualizer = () => {
       // Create the renderer
       const render = new dagreD3.render();
 
-      // Run the renderer
-      (render as unknown)(svgGroup, g);
+      // Run the renderer - use 'any' since typing the exact d3/dagre-d3 interface is complex
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (render as any)(svgGroup, g);
 
       // Configure the zoom behavior
       const initialScale = 0.75;
       const svgWidth = containerWidth;
       const svgHeight = containerHeight;
-      const graphWidth = (g.graph() as GraphObject).width || 0;
-      const graphHeight = (g.graph() as GraphObject).height || 0;
+
+      // Get the graph dimensions with proper type casting
+      const graphObj = g.graph() as unknown as DagreGraph;
+      const graphWidth = graphObj.width || 0;
+      const graphHeight = graphObj.height || 0;
 
       // Center the graph
       const xCenterOffset = Math.max(
@@ -400,15 +406,16 @@ export const SchemaVisualizer = () => {
           svgGroup.attr("transform", event.transform.toString());
         });
 
-      // Apply zoom to the SVG
-      svg
-        .call(zoom as unknown)
-        .call(
-          zoom.transform as unknown,
-          d3.zoomIdentity
-            .translate(xCenterOffset, yCenterOffset)
-            .scale(initialScale)
-        );
+      // Apply zoom to the SVG - use 'any' for d3 zoom functions due to complex typings
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      svg.call(zoom as any);
+      svg.call(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        zoom.transform as any,
+        d3.zoomIdentity
+          .translate(xCenterOffset, yCenterOffset)
+          .scale(initialScale)
+      );
 
       // Make sure the graph is centered initially
       svgGroup.attr(
@@ -445,7 +452,7 @@ export const SchemaVisualizer = () => {
 
       // Process properties
       Object.entries(schema.properties).forEach(
-        ([propName, propSchema]: [string, any]) => {
+        ([propName, propSchema]: [string, SchemaObject]) => {
           const propId = `${prefix}${prefix ? "." : ""}${propName}`;
           if (propSchema.type === "object" && propSchema.properties) {
             // Recursively process nested objects
