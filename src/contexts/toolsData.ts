@@ -19,6 +19,7 @@ import { CharacterCounter } from "@/components/tools/utilities/CharacterCounter"
 import { SchemaVisualizer } from "@/components/tools/utilities/SchemaVisualizer";
 import { ChartBuilder } from "@/components/tools/utilities/ChartBuilder";
 import CSVExplorer from "@/pages/CSVExplorer";
+import LotteryPickerPage from "@/pages/LotteryPickerPage";
 import {
   LucideIcon,
   DollarSign,
@@ -42,6 +43,7 @@ import {
   Table,
   BarChart3,
   Wifi,
+  Dices,
 } from "lucide-react";
 import { NetworkLatencySimulator } from "@/components/tools/utilities/NetworkLatencySimulator";
 
@@ -342,6 +344,17 @@ export const availableTools: Tool[] = [
       "Network Latency Simulator - Test Under Various Network Conditions | ToolNames",
     metaDescription:
       "Simulate different network conditions to test how your web applications perform under varying connection speeds, latency, and packet loss. Perfect for developers and QA engineers.",
+  },
+  {
+    id: "lottery-picker",
+    title: "Lottery Number Picker",
+    description: "Generate random lottery numbers for various lottery games",
+    icon: Dices,
+    category: "generators",
+    component: LotteryPickerPage,
+    url: "/generators/lottery-picker",
+    pageTitle: "Lottery Number Picker - Random Number Generator | ToolNames",
+    metaDescription: "Generate random lottery numbers for various lottery games including Powerball, Mega Millions, and custom formats with our free lottery number picker tool.",
   },
   // Add more tools here as they are created
 ];
