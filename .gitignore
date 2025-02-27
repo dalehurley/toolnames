@@ -64,3 +64,4 @@ tmp/
 .Trashes
 ehthumbs.db
 Thumbs.db
+vite.config.d.ts
