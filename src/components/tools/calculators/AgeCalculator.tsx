@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CalendarClock, Calculator, RefreshCw, Calendar } from "lucide-react";
+import { CalendarClock, RefreshCw, Calendar } from "lucide-react";
 import {
   format,
   differenceInDays,
@@ -45,14 +45,20 @@ export const AgeCalculator = () => {
     setError(null);
   };
 
-  const calculateAge = () => {
-    if (!birthDate) {
+  const handleDateChange = (field: "birthDate" | "asOfDate", value: string) => {
+    if (field === "birthDate") {
+      setBirthDate(value);
+    } else {
+      setAsOfDate(value);
+    }
+
+    if (!value && field === "birthDate") {
       setError("Please enter your birth date");
       return;
     }
 
-    const birthDateObj = new Date(birthDate);
-    const asOfDateObj = asOfDate ? new Date(asOfDate) : new Date();
+    const birthDateObj = new Date(field === "birthDate" ? value : birthDate);
+    const asOfDateObj = new Date(field === "asOfDate" ? value : asOfDate);
 
     if (!isValid(birthDateObj)) {
       setError("Invalid birth date");
@@ -100,7 +106,7 @@ export const AgeCalculator = () => {
     );
 
     if (thisYearBirthday < asOfDateObj) {
-      nextBirthdayYear += 1;
+      nextBirthdayYear++;
     }
 
     const nextBirthdayDate = new Date(
@@ -109,19 +115,14 @@ export const AgeCalculator = () => {
       birthDateObj.getDate()
     );
 
-    const daysUntilNextBirthday = differenceInDays(
-      nextBirthdayDate,
-      asOfDateObj
-    );
-
     setAgeResult({
       years,
       months: remainingMonths,
       days: remainingDays,
       totalDays,
       nextBirthday: {
-        date: format(nextBirthdayDate, "MMMM d, yyyy"),
-        daysRemaining: daysUntilNextBirthday,
+        date: format(nextBirthdayDate, "MMMM do, yyyy"),
+        daysRemaining: differenceInDays(nextBirthdayDate, asOfDateObj),
       },
     });
   };
@@ -147,7 +148,7 @@ export const AgeCalculator = () => {
                 id="birth-date"
                 type="date"
                 value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
+                onChange={(e) => handleDateChange("birthDate", e.target.value)}
                 className="pl-10"
               />
               <Calendar className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
@@ -161,7 +162,7 @@ export const AgeCalculator = () => {
                 id="as-of-date"
                 type="date"
                 value={asOfDate}
-                onChange={(e) => setAsOfDate(e.target.value)}
+                onChange={(e) => handleDateChange("asOfDate", e.target.value)}
                 className="pl-10"
               />
               <Calendar className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
@@ -179,11 +180,6 @@ export const AgeCalculator = () => {
           <Button variant="outline" onClick={handleClear}>
             <RefreshCw className="mr-2 h-4 w-4" />
             Clear
-          </Button>
-
-          <Button onClick={calculateAge}>
-            <Calculator className="mr-2 h-4 w-4" />
-            Calculate Age
           </Button>
         </div>
 

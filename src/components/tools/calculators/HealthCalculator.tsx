@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { HeartPulse, Calculator, RefreshCw } from "lucide-react";
+import { HeartPulse, RefreshCw } from "lucide-react";
 
 export const HealthCalculator = () => {
   // Active tab state
@@ -47,14 +47,15 @@ export const HealthCalculator = () => {
   } | null>(null);
 
   // Ideal Weight calculator states
-  const [idealHeight, setIdealHeight] = useState<string>("");
-  const [idealGender, setIdealGender] = useState<"male" | "female">("male");
-  const [idealHeightUnit, setIdealHeightUnit] = useState<"cm" | "ft">("cm");
+  const [idealWeightHeight, setIdealWeightHeight] = useState<string>("");
+  const [idealWeightGender, setIdealWeightGender] = useState<"male" | "female">(
+    "male"
+  );
   const [idealWeightResult, setIdealWeightResult] = useState<{
-    miller: string;
-    devine: string;
-    hamwi: string;
-    robinson: string;
+    devine: number;
+    hamwi: number;
+    robinson: number;
+    miller: number;
   } | null>(null);
 
   // Error handling
@@ -64,7 +65,8 @@ export const HealthCalculator = () => {
     bmrAge?: string;
     bmrHeight?: string;
     bmrWeight?: string;
-    idealHeight?: string;
+    idealWeightHeight?: string;
+    idealWeightGender?: string;
   }>({});
 
   // Handle clearing form fields
@@ -79,7 +81,8 @@ export const HealthCalculator = () => {
       setBmrWeight("");
       setBmrResult(null);
     } else if (activeTab === "ideal-weight") {
-      setIdealHeight("");
+      setIdealWeightHeight("");
+      setIdealWeightGender("male");
       setIdealWeightResult(null);
     }
 
@@ -108,191 +111,283 @@ export const HealthCalculator = () => {
     }
   };
 
-  // Calculate BMI
-  const calculateBMI = () => {
-    const newErrors: typeof errors = {};
-
-    if (!height) {
-      newErrors.height = "Height is required";
-    } else if (parseFloat(height) <= 0) {
-      newErrors.height = "Height must be greater than 0";
+  // Handle BMI input changes
+  const handleBmiChange = (field: string, value: string) => {
+    switch (field) {
+      case "height":
+        setHeight(value);
+        if (!value) {
+          setErrors((prev) => ({ ...prev, height: "Height is required" }));
+        } else if (parseFloat(value) <= 0) {
+          setErrors((prev) => ({
+            ...prev,
+            height: "Height must be greater than 0",
+          }));
+        } else {
+          setErrors((prev) => ({ ...prev, height: "" }));
+        }
+        break;
+      case "weight":
+        setWeight(value);
+        if (!value) {
+          setErrors((prev) => ({ ...prev, weight: "Weight is required" }));
+        } else if (parseFloat(value) <= 0) {
+          setErrors((prev) => ({
+            ...prev,
+            weight: "Weight must be greater than 0",
+          }));
+        } else {
+          setErrors((prev) => ({ ...prev, weight: "" }));
+        }
+        break;
+      case "heightUnit":
+        setHeightUnit(value as "cm" | "ft");
+        break;
+      case "weightUnit":
+        setWeightUnit(value as "kg" | "lb");
+        break;
     }
 
-    if (!weight) {
-      newErrors.weight = "Weight is required";
-    } else if (parseFloat(weight) <= 0) {
-      newErrors.weight = "Weight must be greater than 0";
-    }
+    // Calculate BMI if both values are valid
+    const heightVal = field === "height" ? value : height;
+    const weightVal = field === "weight" ? value : weight;
+    const heightUnitVal =
+      field === "heightUnit" ? (value as "cm" | "ft") : heightUnit;
+    const weightUnitVal =
+      field === "weightUnit" ? (value as "kg" | "lb") : weightUnit;
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
+    if (
+      heightVal &&
+      weightVal &&
+      parseFloat(heightVal) > 0 &&
+      parseFloat(weightVal) > 0
+    ) {
+      // Convert height to meters and weight to kg
+      const heightInCm = convertHeightToCm(heightVal, heightUnitVal);
+      const heightInMeters = heightInCm / 100;
+      const weightInKg = convertWeightToKg(weightVal, weightUnitVal);
 
-    setErrors({});
+      // Calculate BMI
+      const bmi = weightInKg / (heightInMeters * heightInMeters);
 
-    // Convert height to meters and weight to kg
-    const heightInCm = convertHeightToCm(height, heightUnit);
-    const heightInMeters = heightInCm / 100;
-    const weightInKg = convertWeightToKg(weight, weightUnit);
+      // Determine BMI category
+      let category = "";
+      if (bmi < 18.5) {
+        category = "Underweight";
+      } else if (bmi >= 18.5 && bmi < 25) {
+        category = "Normal weight";
+      } else if (bmi >= 25 && bmi < 30) {
+        category = "Overweight";
+      } else {
+        category = "Obesity";
+      }
 
-    // Calculate BMI
-    const bmi = weightInKg / (heightInMeters * heightInMeters);
+      // Calculate healthy weight range (BMI 18.5-24.9)
+      const minHealthyWeight = 18.5 * (heightInMeters * heightInMeters);
+      const maxHealthyWeight = 24.9 * (heightInMeters * heightInMeters);
 
-    // Determine BMI category
-    let category = "";
-    if (bmi < 18.5) {
-      category = "Underweight";
-    } else if (bmi >= 18.5 && bmi < 25) {
-      category = "Normal weight";
-    } else if (bmi >= 25 && bmi < 30) {
-      category = "Overweight";
+      const healthyWeightRange =
+        weightUnitVal === "kg"
+          ? `${minHealthyWeight.toFixed(1)} - ${maxHealthyWeight.toFixed(1)} kg`
+          : `${(minHealthyWeight * 2.20462).toFixed(1)} - ${(
+              maxHealthyWeight * 2.20462
+            ).toFixed(1)} lb`;
+
+      setBmiResult({
+        bmi: parseFloat(bmi.toFixed(1)),
+        category,
+        healthyWeightRange,
+      });
     } else {
-      category = "Obesity";
+      setBmiResult(null);
     }
-
-    // Calculate healthy weight range (BMI 18.5-24.9)
-    const minHealthyWeight = 18.5 * (heightInMeters * heightInMeters);
-    const maxHealthyWeight = 24.9 * (heightInMeters * heightInMeters);
-
-    const healthyWeightRange =
-      weightUnit === "kg"
-        ? `${minHealthyWeight.toFixed(1)} - ${maxHealthyWeight.toFixed(1)} kg`
-        : `${(minHealthyWeight * 2.20462).toFixed(1)} - ${(
-            maxHealthyWeight * 2.20462
-          ).toFixed(1)} lb`;
-
-    setBmiResult({
-      bmi: parseFloat(bmi.toFixed(1)),
-      category,
-      healthyWeightRange,
-    });
   };
 
   // Calculate BMR and TDEE
-  const calculateBMR = () => {
-    const newErrors: typeof errors = {};
-
-    if (!bmrAge) {
-      newErrors.bmrAge = "Age is required";
-    } else if (parseInt(bmrAge, 10) <= 0 || parseInt(bmrAge, 10) > 120) {
-      newErrors.bmrAge = "Age must be between 1 and 120";
+  const handleBmrChange = (field: string, value: string) => {
+    switch (field) {
+      case "age":
+        setBmrAge(value);
+        if (!value) {
+          setErrors((prev) => ({ ...prev, bmrAge: "Age is required" }));
+        } else if (parseInt(value, 10) <= 0 || parseInt(value, 10) > 120) {
+          setErrors((prev) => ({
+            ...prev,
+            bmrAge: "Age must be between 1 and 120",
+          }));
+        } else {
+          setErrors((prev) => ({ ...prev, bmrAge: "" }));
+        }
+        break;
+      case "height":
+        setBmrHeight(value);
+        if (!value) {
+          setErrors((prev) => ({ ...prev, bmrHeight: "Height is required" }));
+        } else if (parseFloat(value) <= 0) {
+          setErrors((prev) => ({
+            ...prev,
+            bmrHeight: "Height must be greater than 0",
+          }));
+        } else {
+          setErrors((prev) => ({ ...prev, bmrHeight: "" }));
+        }
+        break;
+      case "weight":
+        setBmrWeight(value);
+        if (!value) {
+          setErrors((prev) => ({ ...prev, bmrWeight: "Weight is required" }));
+        } else if (parseFloat(value) <= 0) {
+          setErrors((prev) => ({
+            ...prev,
+            bmrWeight: "Weight must be greater than 0",
+          }));
+        } else {
+          setErrors((prev) => ({ ...prev, bmrWeight: "" }));
+        }
+        break;
+      case "gender":
+        setBmrGender(value as "male" | "female");
+        break;
+      case "activityLevel":
+        setBmrActivityLevel(value);
+        break;
     }
 
-    if (!bmrHeight) {
-      newErrors.bmrHeight = "Height is required";
-    } else if (parseFloat(bmrHeight) <= 0) {
-      newErrors.bmrHeight = "Height must be greater than 0";
-    }
+    // Calculate BMR if all values are valid
+    const ageVal = field === "age" ? value : bmrAge;
+    const heightVal = field === "height" ? value : bmrHeight;
+    const weightVal = field === "weight" ? value : bmrWeight;
+    const genderVal =
+      field === "gender" ? (value as "male" | "female") : bmrGender;
+    const activityLevelVal =
+      field === "activityLevel" ? value : bmrActivityLevel;
 
-    if (!bmrWeight) {
-      newErrors.bmrWeight = "Weight is required";
-    } else if (parseFloat(bmrWeight) <= 0) {
-      newErrors.bmrWeight = "Weight must be greater than 0";
-    }
+    if (
+      ageVal &&
+      heightVal &&
+      weightVal &&
+      parseInt(ageVal, 10) > 0 &&
+      parseInt(ageVal, 10) <= 120 &&
+      parseFloat(heightVal) > 0 &&
+      parseFloat(weightVal) > 0
+    ) {
+      const age = parseInt(ageVal, 10);
+      const heightInCm = parseFloat(heightVal);
+      const weightInKg = parseFloat(weightVal);
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
+      // Calculate BMR using Mifflin-St Jeor Equation
+      let bmr;
+      if (genderVal === "male") {
+        bmr = 10 * weightInKg + 6.25 * heightInCm - 5 * age + 5;
+      } else {
+        bmr = 10 * weightInKg + 6.25 * heightInCm - 5 * age - 161;
+      }
 
-    setErrors({});
+      // Calculate TDEE based on activity level
+      let tdee;
+      switch (activityLevelVal) {
+        case "sedentary":
+          tdee = bmr * 1.2;
+          break;
+        case "light":
+          tdee = bmr * 1.375;
+          break;
+        case "moderate":
+          tdee = bmr * 1.55;
+          break;
+        case "active":
+          tdee = bmr * 1.725;
+          break;
+        case "very-active":
+          tdee = bmr * 1.9;
+          break;
+        default:
+          tdee = bmr * 1.2;
+      }
 
-    const age = parseInt(bmrAge, 10);
-    const heightInCm = parseFloat(bmrHeight);
-    const weightInKg = parseFloat(bmrWeight);
-
-    // Calculate BMR using Mifflin-St Jeor Equation
-    let bmr;
-    if (bmrGender === "male") {
-      bmr = 10 * weightInKg + 6.25 * heightInCm - 5 * age + 5;
+      setBmrResult({
+        bmr: Math.round(bmr),
+        tdee: Math.round(tdee),
+      });
     } else {
-      bmr = 10 * weightInKg + 6.25 * heightInCm - 5 * age - 161;
+      setBmrResult(null);
     }
-
-    // Calculate TDEE based on activity level
-    let tdee;
-    switch (bmrActivityLevel) {
-      case "sedentary":
-        tdee = bmr * 1.2;
-        break;
-      case "light":
-        tdee = bmr * 1.375;
-        break;
-      case "moderate":
-        tdee = bmr * 1.55;
-        break;
-      case "active":
-        tdee = bmr * 1.725;
-        break;
-      case "very-active":
-        tdee = bmr * 1.9;
-        break;
-      default:
-        tdee = bmr * 1.2;
-    }
-
-    setBmrResult({
-      bmr: Math.round(bmr),
-      tdee: Math.round(tdee),
-    });
   };
 
-  // Calculate Ideal Weight
-  const calculateIdealWeight = () => {
-    const newErrors: typeof errors = {};
-
-    if (!idealHeight) {
-      newErrors.idealHeight = "Height is required";
-    } else if (parseFloat(idealHeight) <= 0) {
-      newErrors.idealHeight = "Height must be greater than 0";
+  // Calculate ideal weight
+  const handleIdealWeightChange = (field: string, value: string) => {
+    switch (field) {
+      case "height":
+        setIdealWeightHeight(value);
+        if (!value) {
+          setErrors((prev) => ({
+            ...prev,
+            idealWeightHeight: "Height is required",
+          }));
+        } else if (parseFloat(value) <= 0) {
+          setErrors((prev) => ({
+            ...prev,
+            idealWeightHeight: "Height must be greater than 0",
+          }));
+        } else {
+          setErrors((prev) => ({ ...prev, idealWeightHeight: "" }));
+        }
+        break;
+      case "gender":
+        setIdealWeightGender(value as "male" | "female");
+        break;
     }
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
+    // Calculate ideal weight if height is valid
+    const heightVal = field === "height" ? value : idealWeightHeight;
+    const genderVal =
+      field === "gender" ? (value as "male" | "female") : idealWeightGender;
 
-    setErrors({});
+    if (heightVal && parseFloat(heightVal) > 0) {
+      const heightInCm = parseFloat(heightVal);
 
-    // Convert height to cm
-    const heightInCm = convertHeightToCm(idealHeight, idealHeightUnit);
+      // Calculate ideal weight using different formulas
+      // Devine formula (most common)
+      let devineWeight;
+      if (genderVal === "male") {
+        devineWeight = 50 + 2.3 * (heightInCm / 2.54 - 60);
+      } else {
+        devineWeight = 45.5 + 2.3 * (heightInCm / 2.54 - 60);
+      }
 
-    // Convert to inches for formulas
-    const heightInInches = heightInCm / 2.54;
+      // Hamwi formula
+      let hamwiWeight;
+      if (genderVal === "male") {
+        hamwiWeight = 48 + 2.7 * (heightInCm / 2.54 - 60);
+      } else {
+        hamwiWeight = 45.5 + 2.2 * (heightInCm / 2.54 - 60);
+      }
 
-    // Calculate ideal weight using different formulas
-    let devine, miller, hamwi, robinson;
+      // Robinson formula
+      let robinsonWeight;
+      if (genderVal === "male") {
+        robinsonWeight = 52 + 1.9 * (heightInCm / 2.54 - 60);
+      } else {
+        robinsonWeight = 49 + 1.7 * (heightInCm / 2.54 - 60);
+      }
 
-    if (idealGender === "male") {
-      // Male formulas
-      devine = 50 + 2.3 * (heightInInches - 60);
-      miller = 56.2 + 1.41 * (heightInInches - 60);
-      hamwi = 48 + 2.7 * (heightInInches - 60);
-      robinson = 52 + 1.9 * (heightInInches - 60);
+      // Miller formula
+      let millerWeight;
+      if (genderVal === "male") {
+        millerWeight = 56.2 + 1.41 * (heightInCm / 2.54 - 60);
+      } else {
+        millerWeight = 53.1 + 1.36 * (heightInCm / 2.54 - 60);
+      }
+
+      setIdealWeightResult({
+        devine: Math.max(0, Math.round(devineWeight * 10) / 10),
+        hamwi: Math.max(0, Math.round(hamwiWeight * 10) / 10),
+        robinson: Math.max(0, Math.round(robinsonWeight * 10) / 10),
+        miller: Math.max(0, Math.round(millerWeight * 10) / 10),
+      });
     } else {
-      // Female formulas
-      devine = 45.5 + 2.3 * (heightInInches - 60);
-      miller = 53.1 + 1.36 * (heightInInches - 60);
-      hamwi = 45.5 + 2.2 * (heightInInches - 60);
-      robinson = 49 + 1.7 * (heightInInches - 60);
+      setIdealWeightResult(null);
     }
-
-    // Ensure values are not negative (for very short heights)
-    devine = Math.max(devine, 0);
-    miller = Math.max(miller, 0);
-    hamwi = Math.max(hamwi, 0);
-    robinson = Math.max(robinson, 0);
-
-    // Format results based on preferred unit
-    const unit = "kg"; // Default to kg
-
-    setIdealWeightResult({
-      devine: `${devine.toFixed(1)} ${unit}`,
-      miller: `${miller.toFixed(1)} ${unit}`,
-      hamwi: `${hamwi.toFixed(1)} ${unit}`,
-      robinson: `${robinson.toFixed(1)} ${unit}`,
-    });
   };
 
   return (
@@ -330,13 +425,13 @@ export const HealthCalculator = () => {
                     placeholder={heightUnit === "cm" ? "175" : "5.9"}
                     step="any"
                     value={height}
-                    onChange={(e) => setHeight(e.target.value)}
+                    onChange={(e) => handleBmiChange("height", e.target.value)}
                     className="flex-1"
                   />
                   <Select
                     value={heightUnit}
                     onValueChange={(value) =>
-                      setHeightUnit(value as "cm" | "ft")
+                      handleBmiChange("heightUnit", value)
                     }
                   >
                     <SelectTrigger className="w-[90px]">
@@ -367,13 +462,13 @@ export const HealthCalculator = () => {
                     placeholder={weightUnit === "kg" ? "70" : "154"}
                     step="any"
                     value={weight}
-                    onChange={(e) => setWeight(e.target.value)}
+                    onChange={(e) => handleBmiChange("weight", e.target.value)}
                     className="flex-1"
                   />
                   <Select
                     value={weightUnit}
                     onValueChange={(value) =>
-                      setWeightUnit(value as "kg" | "lb")
+                      handleBmiChange("weightUnit", value)
                     }
                   >
                     <SelectTrigger className="w-[90px]">
@@ -395,11 +490,6 @@ export const HealthCalculator = () => {
               <Button variant="outline" onClick={handleClear}>
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Clear
-              </Button>
-
-              <Button onClick={calculateBMI}>
-                <Calculator className="mr-2 h-4 w-4" />
-                Calculate BMI
               </Button>
             </div>
 
@@ -447,7 +537,7 @@ export const HealthCalculator = () => {
                   min="1"
                   max="120"
                   value={bmrAge}
-                  onChange={(e) => setBmrAge(e.target.value)}
+                  onChange={(e) => handleBmrChange("age", e.target.value)}
                 />
                 {errors.bmrAge && (
                   <p className="text-sm text-red-500">{errors.bmrAge}</p>
@@ -459,7 +549,7 @@ export const HealthCalculator = () => {
                 <Select
                   value={bmrGender}
                   onValueChange={(value) =>
-                    setBmrGender(value as "male" | "female")
+                    handleBmrChange("gender", value as "male" | "female")
                   }
                 >
                   <SelectTrigger id="bmr-gender">
@@ -480,7 +570,7 @@ export const HealthCalculator = () => {
                   placeholder="175"
                   min="1"
                   value={bmrHeight}
-                  onChange={(e) => setBmrHeight(e.target.value)}
+                  onChange={(e) => handleBmrChange("height", e.target.value)}
                 />
                 {errors.bmrHeight && (
                   <p className="text-sm text-red-500">{errors.bmrHeight}</p>
@@ -495,7 +585,7 @@ export const HealthCalculator = () => {
                   placeholder="70"
                   min="1"
                   value={bmrWeight}
-                  onChange={(e) => setBmrWeight(e.target.value)}
+                  onChange={(e) => handleBmrChange("weight", e.target.value)}
                 />
                 {errors.bmrWeight && (
                   <p className="text-sm text-red-500">{errors.bmrWeight}</p>
@@ -506,7 +596,9 @@ export const HealthCalculator = () => {
                 <Label htmlFor="bmr-activity">Activity Level</Label>
                 <Select
                   value={bmrActivityLevel}
-                  onValueChange={setBmrActivityLevel}
+                  onValueChange={(value) =>
+                    handleBmrChange("activityLevel", value)
+                  }
                 >
                   <SelectTrigger id="bmr-activity">
                     <SelectValue placeholder="Select activity level" />
@@ -532,16 +624,24 @@ export const HealthCalculator = () => {
               </div>
             </div>
 
-            <div className="flex justify-between pt-4">
-              <Button variant="outline" onClick={handleClear}>
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Clear
-              </Button>
-
-              <Button onClick={calculateBMR}>
-                <Calculator className="mr-2 h-4 w-4" />
-                Calculate
-              </Button>
+            <div className="space-y-4">
+              <div className="flex space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setBmrAge("");
+                    setBmrHeight("");
+                    setBmrWeight("");
+                    setBmrGender("male");
+                    setBmrActivityLevel("sedentary");
+                    setBmrResult(null);
+                    setErrors({});
+                  }}
+                >
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Clear
+                </Button>
+              </div>
             </div>
 
             {bmrResult && (
@@ -605,51 +705,34 @@ export const HealthCalculator = () => {
           <TabsContent value="ideal-weight" className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="ideal-height">Height</Label>
+                <Label htmlFor="ideal-weight-height">Height</Label>
                 <div className="flex space-x-2">
                   <Input
-                    id="ideal-height"
+                    id="ideal-weight-height"
                     type="number"
-                    placeholder={idealHeightUnit === "cm" ? "175" : "5.9"}
-                    step="any"
-                    value={idealHeight}
-                    onChange={(e) => setIdealHeight(e.target.value)}
-                    className="flex-1"
-                  />
-                  <Select
-                    value={idealHeightUnit}
-                    onValueChange={(value) =>
-                      setIdealHeightUnit(value as "cm" | "ft")
+                    min="1"
+                    value={idealWeightHeight}
+                    onChange={(e) =>
+                      handleIdealWeightChange("height", e.target.value)
                     }
-                  >
-                    <SelectTrigger className="w-[90px]">
-                      <SelectValue placeholder="Unit" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="cm">cm</SelectItem>
-                      <SelectItem value="ft">ft</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  />
+                  {errors.idealWeightHeight && (
+                    <p className="text-sm text-red-500">
+                      {errors.idealWeightHeight}
+                    </p>
+                  )}
                 </div>
-                {errors.idealHeight && (
-                  <p className="text-sm text-red-500">{errors.idealHeight}</p>
-                )}
-                {idealHeightUnit === "ft" && (
-                  <p className="text-xs text-muted-foreground">
-                    Format: feet.inches (e.g., 5.9 for 5'9")
-                  </p>
-                )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="ideal-gender">Gender</Label>
+                <Label htmlFor="ideal-weight-gender">Gender</Label>
                 <Select
-                  value={idealGender}
+                  value={idealWeightGender}
                   onValueChange={(value) =>
-                    setIdealGender(value as "male" | "female")
+                    handleIdealWeightChange("gender", value)
                   }
                 >
-                  <SelectTrigger id="ideal-gender">
+                  <SelectTrigger id="ideal-weight-gender">
                     <SelectValue placeholder="Select gender" />
                   </SelectTrigger>
                   <SelectContent>
@@ -658,67 +741,72 @@ export const HealthCalculator = () => {
                   </SelectContent>
                 </Select>
               </div>
-            </div>
 
-            <div className="flex justify-between pt-4">
-              <Button variant="outline" onClick={handleClear}>
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Clear
-              </Button>
-
-              <Button onClick={calculateIdealWeight}>
-                <Calculator className="mr-2 h-4 w-4" />
-                Calculate
-              </Button>
-            </div>
-
-            {idealWeightResult && (
-              <div className="pt-6">
-                <div className="bg-muted rounded-lg p-6">
-                  <h3 className="text-lg font-semibold mb-4 text-center">
-                    Ideal Weight Estimates
-                  </h3>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-background rounded p-4">
-                      <p className="font-medium">Devine Formula</p>
-                      <p className="text-2xl font-bold mt-1">
-                        {idealWeightResult.devine}
-                      </p>
-                    </div>
-
-                    <div className="bg-background rounded p-4">
-                      <p className="font-medium">Miller Formula</p>
-                      <p className="text-2xl font-bold mt-1">
-                        {idealWeightResult.miller}
-                      </p>
-                    </div>
-
-                    <div className="bg-background rounded p-4">
-                      <p className="font-medium">Robinson Formula</p>
-                      <p className="text-2xl font-bold mt-1">
-                        {idealWeightResult.robinson}
-                      </p>
-                    </div>
-
-                    <div className="bg-background rounded p-4">
-                      <p className="font-medium">Hamwi Formula</p>
-                      <p className="text-2xl font-bold mt-1">
-                        {idealWeightResult.hamwi}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 pt-4 border-t text-sm text-muted-foreground">
-                    <p>
-                      These formulas provide estimates based on height and
-                      gender. Actual healthy weight varies by body composition,
-                      age, and other factors.
-                    </p>
-                  </div>
+              <div className="space-y-4">
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIdealWeightHeight("");
+                      setIdealWeightGender("male");
+                      setIdealWeightResult(null);
+                      setErrors({});
+                    }}
+                  >
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Clear
+                  </Button>
                 </div>
               </div>
-            )}
+
+              {idealWeightResult && (
+                <div className="pt-6">
+                  <div className="bg-muted rounded-lg p-6">
+                    <h3 className="text-lg font-semibold mb-4 text-center">
+                      Ideal Weight Estimates
+                    </h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-background rounded p-4">
+                        <p className="font-medium">Devine Formula</p>
+                        <p className="text-2xl font-bold mt-1">
+                          {idealWeightResult.devine}
+                        </p>
+                      </div>
+
+                      <div className="bg-background rounded p-4">
+                        <p className="font-medium">Hamwi Formula</p>
+                        <p className="text-2xl font-bold mt-1">
+                          {idealWeightResult.hamwi}
+                        </p>
+                      </div>
+
+                      <div className="bg-background rounded p-4">
+                        <p className="font-medium">Robinson Formula</p>
+                        <p className="text-2xl font-bold mt-1">
+                          {idealWeightResult.robinson}
+                        </p>
+                      </div>
+
+                      <div className="bg-background rounded p-4">
+                        <p className="font-medium">Miller Formula</p>
+                        <p className="text-2xl font-bold mt-1">
+                          {idealWeightResult.miller}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 pt-4 border-t text-sm text-muted-foreground">
+                      <p>
+                        These formulas provide estimates based on height and
+                        gender. Actual healthy weight varies by body
+                        composition, age, and other factors.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </TabsContent>
         </CardContent>
       </Tabs>

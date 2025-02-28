@@ -11,7 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarDays, Calculator, RefreshCw, Plus, Minus } from "lucide-react";
+import { CalendarDays, RefreshCw, Plus, Minus } from "lucide-react";
 import { format, addDays, subDays, differenceInDays, isValid } from "date-fns";
 
 export const DateCalculator = () => {
@@ -58,82 +58,115 @@ export const DateCalculator = () => {
     setErrors({});
   };
 
-  // Calculate difference between two dates
-  const calculateDateDifference = () => {
-    const newErrors: typeof errors = {};
-
-    if (!startDate) {
-      newErrors.startDate = "Start date is required";
-    } else if (!isValid(new Date(startDate))) {
-      newErrors.startDate = "Invalid start date";
+  // Handle date difference input changes
+  const handleDateDifferenceChange = (field: string, value: string) => {
+    if (field === "startDate") {
+      setStartDate(value);
+      if (!value) {
+        setErrors((prev) => ({ ...prev, startDate: "Start date is required" }));
+      } else if (!isValid(new Date(value))) {
+        setErrors((prev) => ({ ...prev, startDate: "Invalid start date" }));
+      } else {
+        setErrors((prev) => ({ ...prev, startDate: "" }));
+      }
+    } else if (field === "endDate") {
+      setEndDate(value);
+      if (!value) {
+        setErrors((prev) => ({ ...prev, endDate: "End date is required" }));
+      } else if (!isValid(new Date(value))) {
+        setErrors((prev) => ({ ...prev, endDate: "Invalid end date" }));
+      } else {
+        setErrors((prev) => ({ ...prev, endDate: "" }));
+      }
     }
 
-    if (!endDate) {
-      newErrors.endDate = "End date is required";
-    } else if (!isValid(new Date(endDate))) {
-      newErrors.endDate = "Invalid end date";
+    // Calculate if both dates are valid
+    if (
+      startDate &&
+      endDate &&
+      (field === "startDate" ? value : startDate) &&
+      (field === "endDate" ? value : endDate) &&
+      isValid(new Date(field === "startDate" ? value : startDate)) &&
+      isValid(new Date(field === "endDate" ? value : endDate))
+    ) {
+      const start = new Date(field === "startDate" ? value : startDate);
+      const end = new Date(field === "endDate" ? value : endDate);
+
+      // Calculate days difference
+      const daysDiff = Math.abs(differenceInDays(end, start));
+
+      // Calculate weeks and remaining days
+      const weeksDiff = Math.floor(daysDiff / 7);
+
+      // Approximate months (not exact due to varying month lengths)
+      const monthsDiff = daysDiff / 30.44; // Average days in a month
+
+      setDateDifferenceResult({
+        days: daysDiff,
+        weeks: weeksDiff,
+        months: parseFloat(monthsDiff.toFixed(1)),
+      });
+    } else {
+      setDateDifferenceResult(null);
     }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    setErrors({});
-
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-
-    // Calculate days difference
-    const daysDiff = Math.abs(differenceInDays(end, start));
-
-    // Calculate weeks and remaining days
-    const weeksDiff = Math.floor(daysDiff / 7);
-
-    // Approximate months (not exact due to varying month lengths)
-    const monthsDiff = daysDiff / 30.44; // Average days in a month
-
-    setDateDifferenceResult({
-      days: daysDiff,
-      weeks: weeksDiff,
-      months: parseFloat(monthsDiff.toFixed(1)),
-    });
   };
 
-  // Add or subtract days from a date
-  const calculateNewDate = () => {
-    const newErrors: typeof errors = {};
-
-    if (!baseDate) {
-      newErrors.baseDate = "Base date is required";
-    } else if (!isValid(new Date(baseDate))) {
-      newErrors.baseDate = "Invalid base date";
+  // Handle add/subtract date input changes
+  const handleAddSubtractChange = (field: string, value: string) => {
+    if (field === "baseDate") {
+      setBaseDate(value);
+      if (!value) {
+        setErrors((prev) => ({ ...prev, baseDate: "Base date is required" }));
+      } else if (!isValid(new Date(value))) {
+        setErrors((prev) => ({ ...prev, baseDate: "Invalid base date" }));
+      } else {
+        setErrors((prev) => ({ ...prev, baseDate: "" }));
+      }
+    } else if (field === "daysToChange") {
+      setDaysToChange(value);
+      if (!value) {
+        setErrors((prev) => ({
+          ...prev,
+          daysToChange: "Number of days is required",
+        }));
+      } else if (isNaN(Number(value)) || Number(value) < 0) {
+        setErrors((prev) => ({
+          ...prev,
+          daysToChange: "Days must be a positive number",
+        }));
+      } else {
+        setErrors((prev) => ({ ...prev, daysToChange: "" }));
+      }
+    } else if (field === "operation") {
+      setOperation(value as "add" | "subtract");
     }
 
-    if (!daysToChange) {
-      newErrors.daysToChange = "Number of days is required";
-    } else if (isNaN(Number(daysToChange)) || Number(daysToChange) < 0) {
-      newErrors.daysToChange = "Days must be a positive number";
-    }
+    // Calculate if both inputs are valid
+    if (
+      (field === "baseDate" ? value : baseDate) &&
+      (field === "daysToChange" ? value : daysToChange) &&
+      isValid(new Date(field === "baseDate" ? value : baseDate)) &&
+      !isNaN(Number(field === "daysToChange" ? value : daysToChange)) &&
+      Number(field === "daysToChange" ? value : daysToChange) >= 0
+    ) {
+      const date = new Date(field === "baseDate" ? value : baseDate);
+      const days = parseInt(
+        field === "daysToChange" ? value : daysToChange,
+        10
+      );
+      const op = field === "operation" ? value : operation;
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
+      let resultDate;
+      if (op === "add") {
+        resultDate = addDays(date, days);
+      } else {
+        resultDate = subDays(date, days);
+      }
 
-    setErrors({});
-
-    const date = new Date(baseDate);
-    const days = parseInt(daysToChange, 10);
-
-    let resultDate;
-    if (operation === "add") {
-      resultDate = addDays(date, days);
+      setDateResult(format(resultDate, "EEEE, MMMM d, yyyy"));
     } else {
-      resultDate = subDays(date, days);
+      setDateResult(null);
     }
-
-    setDateResult(format(resultDate, "EEEE, MMMM d, yyyy"));
   };
 
   return (
@@ -167,7 +200,9 @@ export const DateCalculator = () => {
                   id="start-date"
                   type="date"
                   value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
+                  onChange={(e) =>
+                    handleDateDifferenceChange("startDate", e.target.value)
+                  }
                 />
                 {errors.startDate && (
                   <p className="text-sm text-red-500">{errors.startDate}</p>
@@ -180,7 +215,9 @@ export const DateCalculator = () => {
                   id="end-date"
                   type="date"
                   value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
+                  onChange={(e) =>
+                    handleDateDifferenceChange("endDate", e.target.value)
+                  }
                 />
                 {errors.endDate && (
                   <p className="text-sm text-red-500">{errors.endDate}</p>
@@ -192,11 +229,6 @@ export const DateCalculator = () => {
               <Button variant="outline" onClick={handleClear}>
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Clear
-              </Button>
-
-              <Button onClick={calculateDateDifference}>
-                <Calculator className="mr-2 h-4 w-4" />
-                Calculate
               </Button>
             </div>
 
@@ -235,7 +267,7 @@ export const DateCalculator = () => {
                     type="button"
                     variant={operation === "add" ? "default" : "outline"}
                     className="rounded-none flex-1"
-                    onClick={() => setOperation("add")}
+                    onClick={() => handleAddSubtractChange("operation", "add")}
                   >
                     <Plus className="mr-1 h-4 w-4" />
                     Add
@@ -244,7 +276,9 @@ export const DateCalculator = () => {
                     type="button"
                     variant={operation === "subtract" ? "default" : "outline"}
                     className="rounded-none flex-1"
-                    onClick={() => setOperation("subtract")}
+                    onClick={() =>
+                      handleAddSubtractChange("operation", "subtract")
+                    }
                   >
                     <Minus className="mr-1 h-4 w-4" />
                     Subtract
@@ -260,7 +294,9 @@ export const DateCalculator = () => {
                   id="base-date"
                   type="date"
                   value={baseDate}
-                  onChange={(e) => setBaseDate(e.target.value)}
+                  onChange={(e) =>
+                    handleAddSubtractChange("baseDate", e.target.value)
+                  }
                 />
                 {errors.baseDate && (
                   <p className="text-sm text-red-500">{errors.baseDate}</p>
@@ -275,7 +311,9 @@ export const DateCalculator = () => {
                   min="0"
                   placeholder="30"
                   value={daysToChange}
-                  onChange={(e) => setDaysToChange(e.target.value)}
+                  onChange={(e) =>
+                    handleAddSubtractChange("daysToChange", e.target.value)
+                  }
                 />
                 {errors.daysToChange && (
                   <p className="text-sm text-red-500">{errors.daysToChange}</p>
@@ -287,11 +325,6 @@ export const DateCalculator = () => {
               <Button variant="outline" onClick={handleClear}>
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Clear
-              </Button>
-
-              <Button onClick={calculateNewDate}>
-                <Calculator className="mr-2 h-4 w-4" />
-                Calculate
               </Button>
             </div>
 

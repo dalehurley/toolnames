@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TrendingUp, Calculator, RefreshCw, BarChart2 } from "lucide-react";
+import { TrendingUp, RefreshCw, BarChart2 } from "lucide-react";
 
 export const InvestmentCalculator = () => {
   // State for initial investment
@@ -70,71 +70,104 @@ export const InvestmentCalculator = () => {
     setErrors({});
   };
 
-  // Format currency display
-  const formatCurrency = (value: number): string => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(value);
-  };
+  // Handle input changes and calculate investment in real-time
+  const handleInvestmentChange = (field: string, value: string) => {
+    // Update the state for the changed field
+    switch (field) {
+      case "initialAmount":
+        setInitialAmount(value);
+        break;
+      case "contributionAmount":
+        setContributionAmount(value);
+        break;
+      case "contributionFrequency":
+        setContributionFrequency(value as "monthly" | "quarterly" | "annually");
+        break;
+      case "interestRate":
+        setInterestRate(value);
+        break;
+      case "compoundingFrequency":
+        setCompoundingFrequency(
+          value as "daily" | "monthly" | "quarterly" | "annually"
+        );
+        break;
+      case "investmentDuration":
+        setInvestmentDuration(value);
+        break;
+      default:
+        break;
+    }
 
-  // Calculate investment growth
-  const calculateInvestment = () => {
+    // Prepare values for calculation
+    const newInitialAmount = field === "initialAmount" ? value : initialAmount;
+    const newContributionAmount =
+      field === "contributionAmount" ? value : contributionAmount;
+    const newContributionFrequency =
+      field === "contributionFrequency"
+        ? (value as "monthly" | "quarterly" | "annually")
+        : contributionFrequency;
+    const newInterestRate = field === "interestRate" ? value : interestRate;
+    const newCompoundingFrequency =
+      field === "compoundingFrequency"
+        ? (value as "daily" | "monthly" | "quarterly" | "annually")
+        : compoundingFrequency;
+    const newInvestmentDuration =
+      field === "investmentDuration" ? value : investmentDuration;
+
+    // Validate inputs
     const newErrors: typeof errors = {};
 
     // Validate initial amount
-    if (!initialAmount) {
+    if (!newInitialAmount) {
       newErrors.initialAmount = "Initial investment amount is required";
-    } else if (parseFloat(initialAmount) < 0) {
+    } else if (parseFloat(newInitialAmount) < 0) {
       newErrors.initialAmount = "Initial amount cannot be negative";
     }
 
     // Validate contribution amount (optional)
-    if (contributionAmount && parseFloat(contributionAmount) < 0) {
+    if (newContributionAmount && parseFloat(newContributionAmount) < 0) {
       newErrors.contributionAmount = "Contribution amount cannot be negative";
     }
 
     // Validate interest rate
-    if (!interestRate) {
+    if (!newInterestRate) {
       newErrors.interestRate = "Annual interest rate is required";
-    } else if (parseFloat(interestRate) < 0) {
+    } else if (parseFloat(newInterestRate) < 0) {
       newErrors.interestRate = "Interest rate cannot be negative";
     }
 
     // Validate investment duration
-    if (!investmentDuration) {
+    if (!newInvestmentDuration) {
       newErrors.investmentDuration = "Investment duration is required";
-    } else if (parseInt(investmentDuration, 10) <= 0) {
+    } else if (parseInt(newInvestmentDuration, 10) <= 0) {
       newErrors.investmentDuration = "Duration must be greater than 0";
-    } else if (parseInt(investmentDuration, 10) > 100) {
+    } else if (parseInt(newInvestmentDuration, 10) > 100) {
       newErrors.investmentDuration = "Duration must be 100 years or less";
     }
 
+    setErrors(newErrors);
+
+    // If there are errors, don't calculate
     if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
       return;
     }
 
-    setErrors({});
-
     // Convert inputs to numbers
-    const principal = parseFloat(initialAmount) || 0;
-    const annualRate = parseFloat(interestRate) / 100;
-    const years = parseInt(investmentDuration, 10);
-    const contribution = parseFloat(contributionAmount) || 0;
+    const principal = parseFloat(newInitialAmount) || 0;
+    const annualRate = parseFloat(newInterestRate) / 100;
+    const years = parseInt(newInvestmentDuration, 10);
+    const contribution = parseFloat(newContributionAmount) || 0;
 
     // Calculate compounds per year based on frequency
     let compoundsPerYear = 1; // annually
-    if (compoundingFrequency === "daily") compoundsPerYear = 365;
-    else if (compoundingFrequency === "monthly") compoundsPerYear = 12;
-    else if (compoundingFrequency === "quarterly") compoundsPerYear = 4;
+    if (newCompoundingFrequency === "daily") compoundsPerYear = 365;
+    else if (newCompoundingFrequency === "monthly") compoundsPerYear = 12;
+    else if (newCompoundingFrequency === "quarterly") compoundsPerYear = 4;
 
     // Calculate contributions per year based on frequency
     let contributionsPerYear = 12; // monthly
-    if (contributionFrequency === "quarterly") contributionsPerYear = 4;
-    else if (contributionFrequency === "annually") contributionsPerYear = 1;
+    if (newContributionFrequency === "quarterly") contributionsPerYear = 4;
+    else if (newContributionFrequency === "annually") contributionsPerYear = 1;
 
     // Calculate periodic interest rate
     const periodicRate = annualRate / compoundsPerYear;
@@ -187,6 +220,16 @@ export const InvestmentCalculator = () => {
     });
   };
 
+  // Format currency display
+  const formatCurrency = (value: number): string => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
+  };
+
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
@@ -213,7 +256,9 @@ export const InvestmentCalculator = () => {
                 type="number"
                 placeholder="10000"
                 value={initialAmount}
-                onChange={(e) => setInitialAmount(e.target.value)}
+                onChange={(e) =>
+                  handleInvestmentChange("initialAmount", e.target.value)
+                }
                 className="pl-7"
               />
             </div>
@@ -231,7 +276,9 @@ export const InvestmentCalculator = () => {
                 placeholder="7"
                 step="0.01"
                 value={interestRate}
-                onChange={(e) => setInterestRate(e.target.value)}
+                onChange={(e) =>
+                  handleInvestmentChange("interestRate", e.target.value)
+                }
                 className="pr-7"
               />
               <span className="absolute right-3 top-2.5 text-muted-foreground">
@@ -258,7 +305,9 @@ export const InvestmentCalculator = () => {
                 type="number"
                 placeholder="500"
                 value={contributionAmount}
-                onChange={(e) => setContributionAmount(e.target.value)}
+                onChange={(e) =>
+                  handleInvestmentChange("contributionAmount", e.target.value)
+                }
                 className="pl-7"
               />
             </div>
@@ -276,9 +325,7 @@ export const InvestmentCalculator = () => {
             <Select
               value={contributionFrequency}
               onValueChange={(value: string) =>
-                setContributionFrequency(
-                  value as "monthly" | "quarterly" | "annually"
-                )
+                handleInvestmentChange("contributionFrequency", value)
               }
               disabled={!contributionAmount}
             >
@@ -300,9 +347,7 @@ export const InvestmentCalculator = () => {
             <Select
               value={compoundingFrequency}
               onValueChange={(value: string) =>
-                setCompoundingFrequency(
-                  value as "daily" | "monthly" | "quarterly" | "annually"
-                )
+                handleInvestmentChange("compoundingFrequency", value)
               }
             >
               <SelectTrigger id="compounding-frequency">
@@ -326,7 +371,9 @@ export const InvestmentCalculator = () => {
               type="number"
               placeholder="30"
               value={investmentDuration}
-              onChange={(e) => setInvestmentDuration(e.target.value)}
+              onChange={(e) =>
+                handleInvestmentChange("investmentDuration", e.target.value)
+              }
             />
             {errors.investmentDuration && (
               <p className="text-sm text-red-500">
@@ -340,11 +387,6 @@ export const InvestmentCalculator = () => {
           <Button variant="outline" onClick={handleClear}>
             <RefreshCw className="mr-2 h-4 w-4" />
             Clear
-          </Button>
-
-          <Button onClick={calculateInvestment}>
-            <Calculator className="mr-2 h-4 w-4" />
-            Calculate Returns
           </Button>
         </div>
 

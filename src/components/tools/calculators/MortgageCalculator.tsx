@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -49,6 +48,20 @@ export const MortgageCalculator = () => {
   const [amortizationSchedule, setAmortizationSchedule] = useState<
     AmortizationItem[]
   >([]);
+
+  const handleInputChange = (field: string, value: number) => {
+    switch (field) {
+      case "loanAmount":
+        setLoanAmount(value);
+        break;
+      case "interestRate":
+        setInterestRate(value);
+        break;
+      case "loanTerm":
+        setLoanTerm(value);
+        break;
+    }
+  };
 
   const calculateMortgage = () => {
     // Convert annual rate to monthly rate
@@ -186,7 +199,7 @@ export const MortgageCalculator = () => {
                 type="number"
                 value={loanAmount}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setLoanAmount(Number(e.target.value) || 0)
+                  handleInputChange("loanAmount", Number(e.target.value) || 0)
                 }
               />
             </div>
@@ -198,7 +211,7 @@ export const MortgageCalculator = () => {
                 step="0.01"
                 value={interestRate}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setInterestRate(Number(e.target.value) || 0)
+                  handleInputChange("interestRate", Number(e.target.value) || 0)
                 }
               />
             </div>
@@ -209,15 +222,11 @@ export const MortgageCalculator = () => {
                 type="number"
                 value={loanTerm}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setLoanTerm(Number(e.target.value) || 0)
+                  handleInputChange("loanTerm", Number(e.target.value) || 0)
                 }
               />
             </div>
           </div>
-
-          <Button onClick={calculateMortgage} className="w-full">
-            Calculate
-          </Button>
         </div>
 
         <Separator />

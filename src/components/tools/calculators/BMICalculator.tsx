@@ -24,21 +24,52 @@ export const BMICalculator = () => {
   const [category, setCategory] = useState<string>("");
   const [error, setError] = useState<string>("");
 
-  const calculateBMI = () => {
+  const handleInputChange = (
+    field: "weight" | "height" | "feet" | "inches" | "unit",
+    value: string
+  ) => {
     setError("");
+
+    // Update the state based on the field
+    switch (field) {
+      case "weight":
+        setWeight(value);
+        break;
+      case "height":
+        setHeight(value);
+        break;
+      case "feet":
+        setFeet(value);
+        break;
+      case "inches":
+        setInches(value);
+        break;
+      case "unit":
+        setUnit(value as "metric" | "imperial");
+        // Clear values when switching units
+        setWeight("");
+        setHeight("");
+        setFeet("");
+        setInches("");
+        setBmi(null);
+        setCategory("");
+        return;
+    }
 
     try {
       let bmiValue: number;
 
       if (unit === "metric") {
-        // Validate inputs
-        if (!weight || !height) {
-          setError("Please enter both weight and height.");
+        // Skip calculation if required fields are empty
+        if (
+          (!weight && field !== "weight") ||
+          (!height && field !== "height")
+        ) {
           return;
         }
 
-        const weightVal = parseFloat(weight);
-        const heightVal = parseFloat(height) / 100; // Convert cm to meters
+        const weightVal = parseFloat(field === "weight" ? value : weight);
+        const heightVal = parseFloat(field === "height" ? value : height) / 100; // Convert cm to meters
 
         if (weightVal <= 0 || heightVal <= 0) {
           setError("Weight and height must be positive numbers.");
@@ -48,15 +79,16 @@ export const BMICalculator = () => {
         // BMI = weight(kg) / height(m)²
         bmiValue = weightVal / (heightVal * heightVal);
       } else {
-        // Validate inputs
-        if (!weight || !feet) {
-          setError("Please enter weight, feet, and inches (if applicable).");
+        // Skip calculation if required fields are empty
+        if ((!weight && field !== "weight") || (!feet && field !== "feet")) {
           return;
         }
 
-        const weightVal = parseFloat(weight);
-        const feetVal = parseFloat(feet);
-        const inchesVal = parseFloat(inches || "0");
+        const weightVal = parseFloat(field === "weight" ? value : weight);
+        const feetVal = parseFloat(field === "feet" ? value : feet);
+        const inchesVal = parseFloat(
+          field === "inches" ? value : inches || "0"
+        );
 
         if (weightVal <= 0 || feetVal < 0 || inchesVal < 0) {
           setError("Weight and height must be positive numbers.");
@@ -116,10 +148,7 @@ export const BMICalculator = () => {
           <ToggleGroup
             type="single"
             value={unit}
-            onValueChange={(value) => {
-              if (value) setUnit(value as "metric" | "imperial");
-              clearInputs();
-            }}
+            onValueChange={(value) => handleInputChange("unit", value)}
             className="justify-start"
           >
             <ToggleGroupItem value="metric">Metric (kg, cm)</ToggleGroupItem>
@@ -130,7 +159,7 @@ export const BMICalculator = () => {
 
           <Tabs
             value={unit}
-            onValueChange={(value) => setUnit(value as "metric" | "imperial")}
+            onValueChange={(value) => handleInputChange("unit", value)}
             className="mt-4"
           >
             <TabsContent value="metric" className="space-y-4">
@@ -141,7 +170,9 @@ export const BMICalculator = () => {
                     id="weight-kg"
                     type="number"
                     value={weight}
-                    onChange={(e) => setWeight(e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("weight", e.target.value)
+                    }
                     placeholder="Enter weight in kilograms"
                     min="0"
                     step="0.1"
@@ -153,7 +184,9 @@ export const BMICalculator = () => {
                     id="height-cm"
                     type="number"
                     value={height}
-                    onChange={(e) => setHeight(e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("height", e.target.value)
+                    }
                     placeholder="Enter height in centimeters"
                     min="0"
                     step="0.1"
@@ -170,7 +203,9 @@ export const BMICalculator = () => {
                     id="weight-lb"
                     type="number"
                     value={weight}
-                    onChange={(e) => setWeight(e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("weight", e.target.value)
+                    }
                     placeholder="Enter weight in pounds"
                     min="0"
                     step="0.1"
@@ -184,7 +219,9 @@ export const BMICalculator = () => {
                         id="height-ft"
                         type="number"
                         value={feet}
-                        onChange={(e) => setFeet(e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("feet", e.target.value)
+                        }
                         placeholder="Feet"
                         min="0"
                         step="1"
@@ -195,7 +232,9 @@ export const BMICalculator = () => {
                         id="height-in"
                         type="number"
                         value={inches}
-                        onChange={(e) => setInches(e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("inches", e.target.value)
+                        }
                         placeholder="Inches"
                         min="0"
                         max="11"
@@ -209,7 +248,6 @@ export const BMICalculator = () => {
           </Tabs>
 
           <div className="flex justify-center pt-4 space-x-4">
-            <Button onClick={calculateBMI}>Calculate BMI</Button>
             <Button variant="outline" onClick={clearInputs}>
               Clear
             </Button>

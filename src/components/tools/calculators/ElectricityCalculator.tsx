@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Zap, Calculator, RefreshCw, Plus, Trash2 } from "lucide-react";
+import { Zap, RefreshCw, Plus, Trash2 } from "lucide-react";
 
 interface ApplianceItem {
   id: string;
@@ -125,22 +125,59 @@ export const ElectricityCalculator = () => {
     return `${currency}${value.toFixed(2)}`;
   };
 
-  // Calculate electricity usage and cost
-  const calculateElectricity = () => {
+  // Handle input changes and calculate electricity in real-time
+  const handleElectricityChange = (
+    field: string,
+    value: string,
+    applianceId?: string
+  ) => {
+    // Update the state for the changed field
+    if (applianceId) {
+      // Handle appliance field updates
+      updateAppliance(applianceId, field as keyof ApplianceItem, value);
+    } else {
+      // Handle general field updates
+      switch (field) {
+        case "electricityRate":
+          setElectricityRate(value);
+          break;
+        case "currency":
+          setCurrency(value);
+          break;
+        default:
+          break;
+      }
+    }
+
+    // Gather current data for calculation
+    const newElectricityRate =
+      field === "electricityRate" ? value : electricityRate;
+
+    // Create a copy of appliances with updated value if needed
+    let newAppliances = [...appliances];
+    if (applianceId) {
+      newAppliances = newAppliances.map((appliance) =>
+        appliance.id === applianceId
+          ? { ...appliance, [field]: value }
+          : appliance
+      );
+    }
+
+    // Validate inputs
     const newErrors: typeof errors = {
       appliances: {},
     };
 
     // Validate electricity rate
-    if (!electricityRate) {
+    if (!newElectricityRate) {
       newErrors.electricityRate = "Electricity rate is required";
-    } else if (parseFloat(electricityRate) <= 0) {
+    } else if (parseFloat(newElectricityRate) <= 0) {
       newErrors.electricityRate = "Rate must be greater than 0";
     }
 
     // Validate appliances
     let hasErrors = false;
-    appliances.forEach((appliance) => {
+    newAppliances.forEach((appliance) => {
       newErrors.appliances![appliance.id] = {};
 
       if (!appliance.watts) {
@@ -174,18 +211,18 @@ export const ElectricityCalculator = () => {
       }
     });
 
+    setErrors(newErrors);
+
+    // If there are errors, don't calculate
     if (hasErrors || newErrors.electricityRate) {
-      setErrors(newErrors);
       return;
     }
 
-    setErrors({});
-
     // Convert rate to number
-    const rate = parseFloat(electricityRate);
+    const rate = parseFloat(newElectricityRate);
 
     // Calculate costs for each appliance
-    const applianceCosts = appliances.map((appliance) => {
+    const applianceCosts = newAppliances.map((appliance) => {
       const watts = parseFloat(appliance.watts);
       const hoursPerDay = parseFloat(appliance.hoursPerDay);
       const daysPerWeek = parseFloat(appliance.daysPerWeek);
@@ -258,7 +295,9 @@ export const ElectricityCalculator = () => {
             <div className="flex space-x-2">
               <Select
                 value={currency}
-                onValueChange={(value: string) => setCurrency(value)}
+                onValueChange={(value: string) =>
+                  handleElectricityChange("currency", value)
+                }
               >
                 <SelectTrigger className="w-[80px]">
                   <SelectValue placeholder="Currency" />
@@ -277,7 +316,9 @@ export const ElectricityCalculator = () => {
                   step="0.01"
                   placeholder="0.15"
                   value={electricityRate}
-                  onChange={(e) => setElectricityRate(e.target.value)}
+                  onChange={(e) =>
+                    handleElectricityChange("electricityRate", e.target.value)
+                  }
                 />
               </div>
             </div>
@@ -320,7 +361,11 @@ export const ElectricityCalculator = () => {
                     placeholder="Refrigerator"
                     value={appliance.name}
                     onChange={(e) =>
-                      updateAppliance(appliance.id, "name", e.target.value)
+                      handleElectricityChange(
+                        "name",
+                        e.target.value,
+                        appliance.id
+                      )
                     }
                   />
                 </div>
@@ -331,7 +376,11 @@ export const ElectricityCalculator = () => {
                     placeholder="150"
                     value={appliance.watts}
                     onChange={(e) =>
-                      updateAppliance(appliance.id, "watts", e.target.value)
+                      handleElectricityChange(
+                        "watts",
+                        e.target.value,
+                        appliance.id
+                      )
                     }
                     className={
                       errors.appliances?.[appliance.id]?.watts
@@ -354,10 +403,10 @@ export const ElectricityCalculator = () => {
                     max="24"
                     value={appliance.hoursPerDay}
                     onChange={(e) =>
-                      updateAppliance(
-                        appliance.id,
+                      handleElectricityChange(
                         "hoursPerDay",
-                        e.target.value
+                        e.target.value,
+                        appliance.id
                       )
                     }
                     className={
@@ -381,10 +430,10 @@ export const ElectricityCalculator = () => {
                     max="7"
                     value={appliance.daysPerWeek}
                     onChange={(e) =>
-                      updateAppliance(
-                        appliance.id,
+                      handleElectricityChange(
                         "daysPerWeek",
-                        e.target.value
+                        e.target.value,
+                        appliance.id
                       )
                     }
                     className={
@@ -421,11 +470,6 @@ export const ElectricityCalculator = () => {
           <Button variant="outline" onClick={handleClear}>
             <RefreshCw className="mr-2 h-4 w-4" />
             Reset Form
-          </Button>
-
-          <Button onClick={calculateElectricity}>
-            <Calculator className="mr-2 h-4 w-4" />
-            Calculate Costs
           </Button>
         </div>
 

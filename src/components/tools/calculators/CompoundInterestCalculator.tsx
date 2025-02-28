@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -51,6 +50,26 @@ export const CompoundInterestCalculator = () => {
   const [totalContributions, setTotalContributions] = useState<number>(0);
   const [totalInterest, setTotalInterest] = useState<number>(0);
   const [yearlyData, setYearlyData] = useState<YearlyData[]>([]);
+
+  const handleInputChange = (field: string, value: string | number) => {
+    switch (field) {
+      case "principal":
+        setPrincipal(Number(value) || 0);
+        break;
+      case "monthlyContribution":
+        setMonthlyContribution(Number(value) || 0);
+        break;
+      case "annualInterestRate":
+        setAnnualInterestRate(Number(value) || 0);
+        break;
+      case "years":
+        setYears(Number(value) || 0);
+        break;
+      case "compoundFrequency":
+        setCompoundFrequency(value.toString());
+        break;
+    }
+  };
 
   const calculateCompoundInterest = () => {
     let balance = principal;
@@ -200,7 +219,7 @@ export const CompoundInterestCalculator = () => {
                 type="number"
                 value={principal}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setPrincipal(Number(e.target.value) || 0)
+                  handleInputChange("principal", e.target.value)
                 }
               />
             </div>
@@ -212,7 +231,7 @@ export const CompoundInterestCalculator = () => {
                 type="number"
                 value={monthlyContribution}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setMonthlyContribution(Number(e.target.value) || 0)
+                  handleInputChange("monthlyContribution", e.target.value)
                 }
               />
             </div>
@@ -227,7 +246,7 @@ export const CompoundInterestCalculator = () => {
                 step="0.1"
                 value={annualInterestRate}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setAnnualInterestRate(Number(e.target.value) || 0)
+                  handleInputChange("annualInterestRate", e.target.value)
                 }
               />
             </div>
@@ -239,7 +258,7 @@ export const CompoundInterestCalculator = () => {
                 type="number"
                 value={years}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setYears(Number(e.target.value) || 0)
+                  handleInputChange("years", e.target.value)
                 }
               />
             </div>
@@ -251,7 +270,7 @@ export const CompoundInterestCalculator = () => {
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 value={compoundFrequency}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                  setCompoundFrequency(e.target.value)
+                  handleInputChange("compoundFrequency", e.target.value)
                 }
               >
                 <option value="annually">Annually</option>
@@ -262,10 +281,6 @@ export const CompoundInterestCalculator = () => {
               </select>
             </div>
           </div>
-
-          <Button onClick={calculateCompoundInterest} className="w-full">
-            Calculate
-          </Button>
         </div>
 
         <Separator />

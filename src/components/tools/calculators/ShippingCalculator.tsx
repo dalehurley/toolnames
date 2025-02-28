@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Package, Calculator, RefreshCw } from "lucide-react";
+import { Package, RefreshCw } from "lucide-react";
 
 export const ShippingCalculator = () => {
   // State for calculator inputs
@@ -66,72 +66,115 @@ export const ShippingCalculator = () => {
     setErrors({});
   };
 
-  // Convert weight to pounds
-  const convertWeightToLbs = (value: string, unit: "lb" | "kg"): number => {
-    const numValue = parseFloat(value);
-    return unit === "lb" ? numValue : numValue * 2.20462;
-  };
+  // Handle input changes and calculate shipping in real-time
+  const handleShippingChange = (field: string, value: string) => {
+    // Update the state for the changed field
+    switch (field) {
+      case "weight":
+        setWeight(value);
+        break;
+      case "length":
+        setLength(value);
+        break;
+      case "width":
+        setWidth(value);
+        break;
+      case "height":
+        setHeight(value);
+        break;
+      case "shippingDistance":
+        setShippingDistance(value);
+        break;
+      case "calculatorType":
+        setCalculatorType(value as "standard" | "dimensional");
+        break;
+      case "weightUnit":
+        setWeightUnit(value as "lb" | "kg");
+        break;
+      case "dimensionUnit":
+        setDimensionUnit(value as "in" | "cm");
+        break;
+      case "shippingDistanceUnit":
+        setShippingDistanceUnit(value as "mi" | "km");
+        break;
+      case "shippingType":
+        setShippingType(value as "standard" | "express" | "overnight");
+        break;
+      default:
+        break;
+    }
 
-  // Convert dimensions to inches
-  const convertToInches = (value: string, unit: "in" | "cm"): number => {
-    const numValue = parseFloat(value);
-    return unit === "in" ? numValue : numValue / 2.54;
-  };
+    // Prepare values for calculation
+    const newWeight = field === "weight" ? value : weight;
+    const newLength = field === "length" ? value : length;
+    const newWidth = field === "width" ? value : width;
+    const newHeight = field === "height" ? value : height;
+    const newShippingDistance =
+      field === "shippingDistance" ? value : shippingDistance;
+    const newCalculatorType =
+      field === "calculatorType"
+        ? (value as "standard" | "dimensional")
+        : calculatorType;
+    const newWeightUnit =
+      field === "weightUnit" ? (value as "lb" | "kg") : weightUnit;
+    const newDimensionUnit =
+      field === "dimensionUnit" ? (value as "in" | "cm") : dimensionUnit;
+    const newShippingDistanceUnit =
+      field === "shippingDistanceUnit"
+        ? (value as "mi" | "km")
+        : shippingDistanceUnit;
+    const newShippingType =
+      field === "shippingType"
+        ? (value as "standard" | "express" | "overnight")
+        : shippingType;
 
-  // Convert distance to miles
-  const convertToMiles = (value: string, unit: "mi" | "km"): number => {
-    const numValue = parseFloat(value);
-    return unit === "mi" ? numValue : numValue * 0.621371;
-  };
-
-  // Calculate shipping cost
-  const calculateShipping = () => {
+    // Validate inputs
     const newErrors: typeof errors = {};
 
-    if (!weight) {
+    if (!newWeight) {
       newErrors.weight = "Weight is required";
-    } else if (parseFloat(weight) <= 0) {
+    } else if (parseFloat(newWeight) <= 0) {
       newErrors.weight = "Weight must be greater than 0";
     }
 
-    if (calculatorType === "dimensional") {
-      if (!length) {
+    if (newCalculatorType === "dimensional") {
+      if (!newLength) {
         newErrors.length = "Length is required";
-      } else if (parseFloat(length) <= 0) {
+      } else if (parseFloat(newLength) <= 0) {
         newErrors.length = "Length must be greater than 0";
       }
 
-      if (!width) {
+      if (!newWidth) {
         newErrors.width = "Width is required";
-      } else if (parseFloat(width) <= 0) {
+      } else if (parseFloat(newWidth) <= 0) {
         newErrors.width = "Width must be greater than 0";
       }
 
-      if (!height) {
+      if (!newHeight) {
         newErrors.height = "Height is required";
-      } else if (parseFloat(height) <= 0) {
+      } else if (parseFloat(newHeight) <= 0) {
         newErrors.height = "Height must be greater than 0";
       }
     }
 
-    if (!shippingDistance) {
+    if (!newShippingDistance) {
       newErrors.shippingDistance = "Shipping distance is required";
-    } else if (parseFloat(shippingDistance) <= 0) {
+    } else if (parseFloat(newShippingDistance) <= 0) {
       newErrors.shippingDistance = "Distance must be greater than 0";
     }
 
+    setErrors(newErrors);
+
+    // If there are errors, don't calculate
     if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
       return;
     }
 
-    setErrors({});
-
     // Convert all measurements to standard units (lbs and inches)
-    const weightInLbs = convertWeightToLbs(weight, weightUnit);
+    const weightInLbs = convertWeightToLbs(newWeight, newWeightUnit);
     const distanceInMiles = convertToMiles(
-      shippingDistance,
-      shippingDistanceUnit
+      newShippingDistance,
+      newShippingDistanceUnit
     );
 
     // Base rate calculations
@@ -140,19 +183,19 @@ export const ShippingCalculator = () => {
 
     // Shipping type multipliers
     const shippingTypeMultiplier =
-      shippingType === "express"
+      newShippingType === "express"
         ? 1.5
-        : shippingType === "overnight"
+        : newShippingType === "overnight"
         ? 2.5
         : 1.0; // standard
 
     let calculatedCost = 0;
     let calculatedDimensionalWeight = 0;
 
-    if (calculatorType === "dimensional") {
-      const lengthInInches = convertToInches(length, dimensionUnit);
-      const widthInInches = convertToInches(width, dimensionUnit);
-      const heightInInches = convertToInches(height, dimensionUnit);
+    if (newCalculatorType === "dimensional") {
+      const lengthInInches = convertToInches(newLength, newDimensionUnit);
+      const widthInInches = convertToInches(newWidth, newDimensionUnit);
+      const heightInInches = convertToInches(newHeight, newDimensionUnit);
 
       // Calculate dimensional weight (L × W × H / 166 = dimensional weight in lbs)
       calculatedDimensionalWeight =
@@ -177,6 +220,24 @@ export const ShippingCalculator = () => {
 
     // Set the estimated cost (rounded to 2 decimal places)
     setEstimatedCost(parseFloat(calculatedCost.toFixed(2)));
+  };
+
+  // Convert weight to pounds
+  const convertWeightToLbs = (value: string, unit: "lb" | "kg"): number => {
+    const numValue = parseFloat(value);
+    return unit === "lb" ? numValue : numValue * 2.20462;
+  };
+
+  // Convert dimensions to inches
+  const convertToInches = (value: string, unit: "in" | "cm"): number => {
+    const numValue = parseFloat(value);
+    return unit === "in" ? numValue : numValue / 2.54;
+  };
+
+  // Convert distance to miles
+  const convertToMiles = (value: string, unit: "mi" | "km"): number => {
+    const numValue = parseFloat(value);
+    return unit === "mi" ? numValue : numValue * 0.621371;
   };
 
   return (
@@ -212,13 +273,15 @@ export const ShippingCalculator = () => {
                   type="number"
                   placeholder="10"
                   value={weight}
-                  onChange={(e) => setWeight(e.target.value)}
+                  onChange={(e) =>
+                    handleShippingChange("weight", e.target.value)
+                  }
                   className="flex-1"
                 />
                 <Select
                   value={weightUnit}
                   onValueChange={(value: string) =>
-                    setWeightUnit(value as "lb" | "kg")
+                    handleShippingChange("weightUnit", value)
                   }
                 >
                   <SelectTrigger className="w-[80px]">
@@ -245,13 +308,15 @@ export const ShippingCalculator = () => {
                   type="number"
                   placeholder="10"
                   value={weight}
-                  onChange={(e) => setWeight(e.target.value)}
+                  onChange={(e) =>
+                    handleShippingChange("weight", e.target.value)
+                  }
                   className="flex-1"
                 />
                 <Select
                   value={weightUnit}
                   onValueChange={(value: string) =>
-                    setWeightUnit(value as "lb" | "kg")
+                    handleShippingChange("weightUnit", value)
                   }
                 >
                   <SelectTrigger className="w-[80px]">
@@ -276,7 +341,9 @@ export const ShippingCalculator = () => {
                   type="number"
                   placeholder="12"
                   value={length}
-                  onChange={(e) => setLength(e.target.value)}
+                  onChange={(e) =>
+                    handleShippingChange("length", e.target.value)
+                  }
                 />
                 {errors.length && (
                   <p className="text-sm text-red-500">{errors.length}</p>
@@ -289,7 +356,9 @@ export const ShippingCalculator = () => {
                   type="number"
                   placeholder="10"
                   value={width}
-                  onChange={(e) => setWidth(e.target.value)}
+                  onChange={(e) =>
+                    handleShippingChange("width", e.target.value)
+                  }
                 />
                 {errors.width && (
                   <p className="text-sm text-red-500">{errors.width}</p>
@@ -302,7 +371,9 @@ export const ShippingCalculator = () => {
                   type="number"
                   placeholder="8"
                   value={height}
-                  onChange={(e) => setHeight(e.target.value)}
+                  onChange={(e) =>
+                    handleShippingChange("height", e.target.value)
+                  }
                 />
                 {errors.height && (
                   <p className="text-sm text-red-500">{errors.height}</p>
@@ -315,7 +386,7 @@ export const ShippingCalculator = () => {
               <Select
                 value={dimensionUnit}
                 onValueChange={(value: string) =>
-                  setDimensionUnit(value as "in" | "cm")
+                  handleShippingChange("dimensionUnit", value)
                 }
               >
                 <SelectTrigger id="dimension-unit">
@@ -338,13 +409,15 @@ export const ShippingCalculator = () => {
               type="number"
               placeholder="500"
               value={shippingDistance}
-              onChange={(e) => setShippingDistance(e.target.value)}
+              onChange={(e) =>
+                handleShippingChange("shippingDistance", e.target.value)
+              }
               className="flex-1"
             />
             <Select
               value={shippingDistanceUnit}
               onValueChange={(value: string) =>
-                setShippingDistanceUnit(value as "mi" | "km")
+                handleShippingChange("shippingDistanceUnit", value)
               }
             >
               <SelectTrigger className="w-[80px]">
@@ -366,7 +439,7 @@ export const ShippingCalculator = () => {
           <Select
             value={shippingType}
             onValueChange={(value: string) =>
-              setShippingType(value as "standard" | "express" | "overnight")
+              handleShippingChange("shippingType", value)
             }
           >
             <SelectTrigger id="shipping-type">
@@ -384,11 +457,6 @@ export const ShippingCalculator = () => {
           <Button variant="outline" onClick={handleClear}>
             <RefreshCw className="mr-2 h-4 w-4" />
             Clear
-          </Button>
-
-          <Button onClick={calculateShipping}>
-            <Calculator className="mr-2 h-4 w-4" />
-            Calculate Shipping Cost
           </Button>
         </div>
 

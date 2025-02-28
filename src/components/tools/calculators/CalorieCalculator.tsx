@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Utensils, Calculator, RefreshCw } from "lucide-react";
+import { Utensils, RefreshCw } from "lucide-react";
 
 export const CalorieCalculator = () => {
   // Form state
@@ -61,61 +61,88 @@ export const CalorieCalculator = () => {
     setErrors({});
   };
 
-  // Convert height to cm
-  const convertHeightToCm = (value: string, unit: "cm" | "in"): number => {
-    if (unit === "cm") {
-      return parseFloat(value);
-    } else {
-      return parseFloat(value) * 2.54; // inches to cm
+  // Handle input changes and calculate calories in real-time
+  const handleCalorieChange = (field: string, value: string) => {
+    // Update the state for the changed field
+    switch (field) {
+      case "age":
+        setAge(value);
+        break;
+      case "gender":
+        setGender(value as "male" | "female");
+        break;
+      case "height":
+        setHeight(value);
+        break;
+      case "weight":
+        setWeight(value);
+        break;
+      case "heightUnit":
+        setHeightUnit(value as "cm" | "in");
+        break;
+      case "weightUnit":
+        setWeightUnit(value as "kg" | "lb");
+        break;
+      case "activityLevel":
+        setActivityLevel(value);
+        break;
+      case "goal":
+        setGoal(value as "maintain" | "lose" | "gain");
+        break;
+      default:
+        break;
     }
-  };
 
-  // Convert weight to kg
-  const convertWeightToKg = (value: string, unit: "kg" | "lb"): number => {
-    if (unit === "kg") {
-      return parseFloat(value);
-    } else {
-      return parseFloat(value) * 0.453592; // lb to kg
-    }
-  };
+    // Prepare values for calculation
+    const newAge = field === "age" ? value : age;
+    const newGender =
+      field === "gender" ? (value as "male" | "female") : gender;
+    const newHeight = field === "height" ? value : height;
+    const newWeight = field === "weight" ? value : weight;
+    const newHeightUnit =
+      field === "heightUnit" ? (value as "cm" | "in") : heightUnit;
+    const newWeightUnit =
+      field === "weightUnit" ? (value as "kg" | "lb") : weightUnit;
+    const newActivityLevel = field === "activityLevel" ? value : activityLevel;
+    const newGoal =
+      field === "goal" ? (value as "maintain" | "lose" | "gain") : goal;
 
-  // Calculate calories
-  const calculateCalories = () => {
+    // Validate inputs
     const newErrors: typeof errors = {};
 
-    if (!age) {
+    if (!newAge) {
       newErrors.age = "Age is required";
-    } else if (parseInt(age, 10) <= 0 || parseInt(age, 10) > 120) {
+    } else if (parseInt(newAge, 10) <= 0 || parseInt(newAge, 10) > 120) {
       newErrors.age = "Age must be between 1 and 120";
     }
 
-    if (!height) {
+    if (!newHeight) {
       newErrors.height = "Height is required";
-    } else if (parseFloat(height) <= 0) {
+    } else if (parseFloat(newHeight) <= 0) {
       newErrors.height = "Height must be greater than 0";
     }
 
-    if (!weight) {
+    if (!newWeight) {
       newErrors.weight = "Weight is required";
-    } else if (parseFloat(weight) <= 0) {
+    } else if (parseFloat(newWeight) <= 0) {
       newErrors.weight = "Weight must be greater than 0";
     }
 
+    setErrors(newErrors);
+
+    // If there are errors, don't calculate
     if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
       return;
     }
 
-    setErrors({});
-
     // Convert height and weight to metric
-    const heightInCm = convertHeightToCm(height, heightUnit);
-    const weightInKg = convertWeightToKg(weight, weightUnit);
-    const ageValue = parseInt(age, 10);
+    const heightInCm = convertHeightToCm(newHeight, newHeightUnit);
+    const weightInKg = convertWeightToKg(newWeight, newWeightUnit);
+    const ageValue = parseInt(newAge, 10);
 
     // Calculate BMR using Mifflin-St Jeor Equation
     let bmr;
-    if (gender === "male") {
+    if (newGender === "male") {
       bmr = 10 * weightInKg + 6.25 * heightInCm - 5 * ageValue + 5;
     } else {
       bmr = 10 * weightInKg + 6.25 * heightInCm - 5 * ageValue - 161;
@@ -123,7 +150,7 @@ export const CalorieCalculator = () => {
 
     // Calculate maintenance calories based on activity level
     let activityMultiplier;
-    switch (activityLevel) {
+    switch (newActivityLevel) {
       case "sedentary":
         activityMultiplier = 1.2;
         break;
@@ -147,7 +174,7 @@ export const CalorieCalculator = () => {
 
     // Calculate target calories based on goal
     let targetCalories;
-    switch (goal) {
+    switch (newGoal) {
       case "lose":
         targetCalories = maintenanceCalories * 0.8; // 20% deficit
         break;
@@ -194,6 +221,24 @@ export const CalorieCalculator = () => {
     });
   };
 
+  // Convert height to cm
+  const convertHeightToCm = (value: string, unit: "cm" | "in"): number => {
+    if (unit === "cm") {
+      return parseFloat(value);
+    } else {
+      return parseFloat(value) * 2.54; // inches to cm
+    }
+  };
+
+  // Convert weight to kg
+  const convertWeightToKg = (value: string, unit: "kg" | "lb"): number => {
+    if (unit === "kg") {
+      return parseFloat(value);
+    } else {
+      return parseFloat(value) * 0.453592; // lb to kg
+    }
+  };
+
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
@@ -218,7 +263,7 @@ export const CalorieCalculator = () => {
               min="1"
               max="120"
               value={age}
-              onChange={(e) => setAge(e.target.value)}
+              onChange={(e) => handleCalorieChange("age", e.target.value)}
             />
             {errors.age && <p className="text-sm text-red-500">{errors.age}</p>}
           </div>
@@ -228,7 +273,7 @@ export const CalorieCalculator = () => {
             <Select
               value={gender}
               onValueChange={(value: string) =>
-                setGender(value as "male" | "female")
+                handleCalorieChange("gender", value)
               }
             >
               <SelectTrigger id="gender">
@@ -250,13 +295,13 @@ export const CalorieCalculator = () => {
                 placeholder={heightUnit === "cm" ? "175" : "69"}
                 step="any"
                 value={height}
-                onChange={(e) => setHeight(e.target.value)}
+                onChange={(e) => handleCalorieChange("height", e.target.value)}
                 className="flex-1"
               />
               <Select
                 value={heightUnit}
                 onValueChange={(value: string) =>
-                  setHeightUnit(value as "cm" | "in")
+                  handleCalorieChange("heightUnit", value)
                 }
               >
                 <SelectTrigger className="w-[90px]">
@@ -282,13 +327,13 @@ export const CalorieCalculator = () => {
                 placeholder={weightUnit === "kg" ? "70" : "154"}
                 step="any"
                 value={weight}
-                onChange={(e) => setWeight(e.target.value)}
+                onChange={(e) => handleCalorieChange("weight", e.target.value)}
                 className="flex-1"
               />
               <Select
                 value={weightUnit}
                 onValueChange={(value: string) =>
-                  setWeightUnit(value as "kg" | "lb")
+                  handleCalorieChange("weightUnit", value)
                 }
               >
                 <SelectTrigger className="w-[90px]">
@@ -313,7 +358,7 @@ export const CalorieCalculator = () => {
               type="button"
               variant={activityLevel === "sedentary" ? "default" : "outline"}
               className="justify-start"
-              onClick={() => setActivityLevel("sedentary")}
+              onClick={() => handleCalorieChange("activityLevel", "sedentary")}
             >
               Sedentary (little or no exercise)
             </Button>
@@ -386,11 +431,6 @@ export const CalorieCalculator = () => {
           <Button variant="outline" onClick={handleClear}>
             <RefreshCw className="mr-2 h-4 w-4" />
             Clear
-          </Button>
-
-          <Button onClick={calculateCalories}>
-            <Calculator className="mr-2 h-4 w-4" />
-            Calculate Calories
           </Button>
         </div>
 

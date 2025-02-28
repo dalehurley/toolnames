@@ -22,7 +22,6 @@ import {
   Download,
   HelpCircle,
 } from "lucide-react";
-// @ts-expect-error - compromise doesn't have type definitions, but it's OK to use
 import nlp from "compromise";
 import * as d3 from "d3";
 

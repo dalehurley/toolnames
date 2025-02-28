@@ -11,7 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Percent, Calculator, RefreshCw, ArrowDownUp } from "lucide-react";
+import { Percent, RefreshCw, ArrowDownUp } from "lucide-react";
 
 export const PercentageCalculator = () => {
   const [activeTab, setActiveTab] = useState<string>("find-percentage");
@@ -58,108 +58,123 @@ export const PercentageCalculator = () => {
       setPercentageChange("");
       setChangeDescription("");
     }
-
     setErrors({});
   };
 
   // Calculate what percentage X is of Y
-  const calculatePercentage = () => {
+  const handlePercentageChange = (field: string, value: string) => {
+    const newValue = value.trim();
+
+    if (field === "percentageValue") {
+      setPercentageValue(newValue);
+    } else if (field === "totalValue") {
+      setTotalValue(newValue);
+    }
+
     const newErrors: typeof errors = {};
 
-    if (!percentageValue) {
+    if (!newValue && field === "percentageValue") {
       newErrors.percentageValue = "This value is required";
-    } else if (Number(percentageValue) < 0) {
+    } else if (Number(newValue) < 0 && field === "percentageValue") {
       newErrors.percentageValue = "Value must be 0 or greater";
     }
 
-    if (!totalValue) {
+    if (!newValue && field === "totalValue") {
       newErrors.totalValue = "This value is required";
-    } else if (Number(totalValue) === 0) {
+    } else if (Number(newValue) === 0 && field === "totalValue") {
       newErrors.totalValue = "Value cannot be 0";
-    } else if (Number(totalValue) < 0) {
+    } else if (Number(newValue) < 0 && field === "totalValue") {
       newErrors.totalValue = "Value must be greater than 0";
     }
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
+    setErrors(newErrors);
+
+    if (percentageValue && totalValue && Object.keys(newErrors).length === 0) {
+      const part = parseFloat(
+        field === "percentageValue" ? newValue : percentageValue
+      );
+      const total = parseFloat(field === "totalValue" ? newValue : totalValue);
+      if (!isNaN(part) && !isNaN(total) && total !== 0) {
+        const percent = (part / total) * 100;
+        setResultPercentage(percent.toFixed(2));
+      }
     }
-
-    setErrors({});
-
-    const part = parseFloat(percentageValue);
-    const total = parseFloat(totalValue);
-    const percent = (part / total) * 100;
-
-    setResultPercentage(percent.toFixed(2));
   };
 
   // Calculate X percent of Y
-  const calculateValue = () => {
-    const newErrors: typeof errors = {};
+  const handleValueChange = (field: string, value: string) => {
+    const newValue = value.trim();
 
-    if (!percentValue) {
-      newErrors.percentValue = "Percentage is required";
-    } else if (Number(percentValue) < 0) {
-      newErrors.percentValue = "Percentage must be 0 or greater";
+    if (field === "percentValue") {
+      setPercentValue(newValue);
+    } else if (field === "baseValue") {
+      setBaseValue(newValue);
     }
 
-    if (!baseValue) {
-      newErrors.baseValue = "Value is required";
-    } else if (Number(baseValue) < 0) {
+    const newErrors: typeof errors = {};
+
+    if (!newValue && field === "percentValue") {
+      newErrors.percentValue = "This value is required";
+    } else if (Number(newValue) < 0 && field === "percentValue") {
+      newErrors.percentValue = "Value must be 0 or greater";
+    }
+
+    if (!newValue && field === "baseValue") {
+      newErrors.baseValue = "This value is required";
+    } else if (Number(newValue) < 0 && field === "baseValue") {
       newErrors.baseValue = "Value must be 0 or greater";
     }
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
+    setErrors(newErrors);
+
+    if (percentValue && baseValue && Object.keys(newErrors).length === 0) {
+      const percent = parseFloat(
+        field === "percentValue" ? newValue : percentValue
+      );
+      const base = parseFloat(field === "baseValue" ? newValue : baseValue);
+      if (!isNaN(percent) && !isNaN(base)) {
+        const result = (percent / 100) * base;
+        setResultValue(result.toFixed(2));
+      }
     }
-
-    setErrors({});
-
-    const percent = parseFloat(percentValue);
-    const base = parseFloat(baseValue);
-    const result = (percent / 100) * base;
-
-    setResultValue(result.toFixed(2));
   };
 
-  // Calculate percentage change between two values
-  const calculateChange = () => {
+  // Calculate percentage change
+  const handleChangeCalculation = (field: string, value: string) => {
+    const newValue = value.trim();
+
+    if (field === "originalValue") {
+      setOriginalValue(newValue);
+    } else if (field === "newValue") {
+      setNewValue(newValue);
+    }
+
     const newErrors: typeof errors = {};
 
-    if (!originalValue) {
-      newErrors.originalValue = "Original value is required";
-    } else if (Number(originalValue) === 0) {
-      newErrors.originalValue = "Original value cannot be 0";
+    if (!newValue && field === "originalValue") {
+      newErrors.originalValue = "This value is required";
+    } else if (Number(newValue) <= 0 && field === "originalValue") {
+      newErrors.originalValue = "Value must be greater than 0";
     }
 
-    if (!newValue) {
-      newErrors.newValue = "New value is required";
-    } else if (Number(newValue) < 0 && Number(originalValue) > 0) {
-      newErrors.newValue =
-        "New value cannot be negative when original is positive";
+    if (!newValue && field === "newValue") {
+      newErrors.newValue = "This value is required";
+    } else if (Number(newValue) < 0 && field === "newValue") {
+      newErrors.newValue = "Value must be 0 or greater";
     }
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
+    setErrors(newErrors);
 
-    setErrors({});
-
-    const original = parseFloat(originalValue);
-    const current = parseFloat(newValue);
-    const change = ((current - original) / Math.abs(original)) * 100;
-
-    setPercentageChange(Math.abs(change).toFixed(2));
-
-    if (change > 0) {
-      setChangeDescription("increase");
-    } else if (change < 0) {
-      setChangeDescription("decrease");
-    } else {
-      setChangeDescription("no change");
+    if (originalValue && newValue && Object.keys(newErrors).length === 0) {
+      const original = parseFloat(
+        field === "originalValue" ? newValue : originalValue
+      );
+      const current = parseFloat(field === "newValue" ? newValue : newValue);
+      if (!isNaN(original) && !isNaN(current) && original !== 0) {
+        const change = ((current - original) / original) * 100;
+        setPercentageChange(change.toFixed(2));
+        setChangeDescription(change >= 0 ? "increase" : "decrease");
+      }
     }
   };
 
@@ -196,7 +211,9 @@ export const PercentageCalculator = () => {
                   placeholder="25"
                   step="any"
                   value={percentageValue}
-                  onChange={(e) => setPercentageValue(e.target.value)}
+                  onChange={(e) =>
+                    handlePercentageChange("percentageValue", e.target.value)
+                  }
                 />
                 {errors.percentageValue && (
                   <p className="text-sm text-red-500">
@@ -213,7 +230,9 @@ export const PercentageCalculator = () => {
                   placeholder="100"
                   step="any"
                   value={totalValue}
-                  onChange={(e) => setTotalValue(e.target.value)}
+                  onChange={(e) =>
+                    handlePercentageChange("totalValue", e.target.value)
+                  }
                 />
                 {errors.totalValue && (
                   <p className="text-sm text-red-500">{errors.totalValue}</p>
@@ -225,11 +244,6 @@ export const PercentageCalculator = () => {
               <Button variant="outline" onClick={handleClear}>
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Clear
-              </Button>
-
-              <Button onClick={calculatePercentage}>
-                <Calculator className="mr-2 h-4 w-4" />
-                Calculate
               </Button>
             </div>
 
@@ -260,7 +274,9 @@ export const PercentageCalculator = () => {
                     placeholder="20"
                     step="any"
                     value={percentValue}
-                    onChange={(e) => setPercentValue(e.target.value)}
+                    onChange={(e) =>
+                      handleValueChange("percentValue", e.target.value)
+                    }
                   />
                   <div className="absolute right-3 top-2.5">%</div>
                 </div>
@@ -277,7 +293,9 @@ export const PercentageCalculator = () => {
                   placeholder="250"
                   step="any"
                   value={baseValue}
-                  onChange={(e) => setBaseValue(e.target.value)}
+                  onChange={(e) =>
+                    handleValueChange("baseValue", e.target.value)
+                  }
                 />
                 {errors.baseValue && (
                   <p className="text-sm text-red-500">{errors.baseValue}</p>
@@ -289,11 +307,6 @@ export const PercentageCalculator = () => {
               <Button variant="outline" onClick={handleClear}>
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Clear
-              </Button>
-
-              <Button onClick={calculateValue}>
-                <Calculator className="mr-2 h-4 w-4" />
-                Calculate
               </Button>
             </div>
 
@@ -321,7 +334,9 @@ export const PercentageCalculator = () => {
                   placeholder="200"
                   step="any"
                   value={originalValue}
-                  onChange={(e) => setOriginalValue(e.target.value)}
+                  onChange={(e) =>
+                    handleChangeCalculation("originalValue", e.target.value)
+                  }
                 />
                 {errors.originalValue && (
                   <p className="text-sm text-red-500">{errors.originalValue}</p>
@@ -336,7 +351,9 @@ export const PercentageCalculator = () => {
                   placeholder="250"
                   step="any"
                   value={newValue}
-                  onChange={(e) => setNewValue(e.target.value)}
+                  onChange={(e) =>
+                    handleChangeCalculation("newValue", e.target.value)
+                  }
                 />
                 {errors.newValue && (
                   <p className="text-sm text-red-500">{errors.newValue}</p>
@@ -348,11 +365,6 @@ export const PercentageCalculator = () => {
               <Button variant="outline" onClick={handleClear}>
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Clear
-              </Button>
-
-              <Button onClick={calculateChange}>
-                <Calculator className="mr-2 h-4 w-4" />
-                Calculate
               </Button>
             </div>
 

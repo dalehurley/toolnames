@@ -77,6 +77,7 @@ import { ShippingCalculator } from "@/components/tools/calculators/ShippingCalcu
 import { InvestmentCalculator } from "@/components/tools/calculators/InvestmentCalculator";
 import { ElectricityCalculator } from "@/components/tools/calculators/ElectricityCalculator";
 import { KeywordDensityAnalyzer } from "@/components/tools/seo/KeywordDensityAnalyzer";
+import { MetaTagAnalyzer } from "@/components/tools/seo/MetaTagAnalyzer";
 
 // Tool type definition
 export interface Tool {
@@ -571,6 +572,17 @@ export const availableTools: Tool[] = [
     url: "/seo/keyword-density-analyzer",
     pageTitle: "Keyword Density Analyzer - Optimize Content for SEO | ToolNames",
     metaDescription: "Analyze the keyword distribution on your web pages to improve SEO performance. Identify potential keyword stuffing and optimization opportunities with our free keyword density tool.",
+  },
+  {
+    id: "meta-tag-analyzer",
+    title: "Meta Tag Analyzer & Generator",
+    description: "Analyze and optimize meta tags for better SEO and social sharing",
+    icon: FileCode,
+    category: "seo",
+    component: MetaTagAnalyzer,
+    url: "/seo/meta-tag-analyzer",
+    pageTitle: "Meta Tag Analyzer & Generator - Optimize Meta Tags for SEO | ToolNames",
+    metaDescription: "Analyze and optimize your website's meta tags for better SEO and social media sharing. Check titles, descriptions, Open Graph tags, and Twitter Cards with our comprehensive meta tag tool.",
   },
   // Add more tools here as they are created
 ];

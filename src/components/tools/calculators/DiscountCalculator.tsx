@@ -11,7 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DollarSign, Percent, Calculator, RefreshCw } from "lucide-react";
+import { DollarSign, Percent, RefreshCw } from "lucide-react";
 
 export const DiscountCalculator = () => {
   const [activeTab, setActiveTab] = useState<string>("find-sale-price");
@@ -52,81 +52,127 @@ export const DiscountCalculator = () => {
     setErrors({});
   };
 
-  // Calculate sale price from original price and discount
-  const calculateSalePrice = () => {
+  // Handle input changes for sale price tab
+  const handleSalePriceChange = (field: string, value: string) => {
+    // Update the corresponding state
+    if (field === "originalPrice") {
+      setOriginalPrice(value);
+    } else if (field === "discountPercent") {
+      setDiscountPercent(value);
+    }
+
     // Validate inputs
     const newErrors: typeof errors = {};
 
-    if (!originalPrice) {
+    if (!value && field === "originalPrice") {
       newErrors.originalPrice = "Original price is required";
-    } else if (Number(originalPrice) <= 0) {
+    } else if (Number(value) <= 0 && field === "originalPrice") {
       newErrors.originalPrice = "Original price must be greater than 0";
     }
 
-    if (!discountPercent) {
+    if (!value && field === "discountPercent") {
       newErrors.discountPercent = "Discount percentage is required";
-    } else if (Number(discountPercent) < 0 || Number(discountPercent) > 100) {
+    } else if (
+      (Number(value) < 0 || Number(value) > 100) &&
+      field === "discountPercent"
+    ) {
       newErrors.discountPercent = "Discount must be between 0 and 100";
     }
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
+    setErrors((prev) => ({ ...prev, ...newErrors }));
+
+    // Calculate if we have both values and no errors
+    if (
+      originalPrice &&
+      discountPercent &&
+      (field === "originalPrice" ? value : originalPrice) &&
+      (field === "discountPercent" ? value : discountPercent)
+    ) {
+      const priceValue = parseFloat(
+        field === "originalPrice" ? value : originalPrice
+      );
+      const discountValue = parseFloat(
+        field === "discountPercent" ? value : discountPercent
+      );
+
+      if (
+        !isNaN(priceValue) &&
+        !isNaN(discountValue) &&
+        priceValue > 0 &&
+        discountValue >= 0 &&
+        discountValue <= 100
+      ) {
+        const calculatedSavings = priceValue * (discountValue / 100);
+        const calculatedSalePrice = priceValue - calculatedSavings;
+
+        // Update state
+        setSalePrice(calculatedSalePrice.toFixed(2));
+        setSavingAmount(calculatedSavings.toFixed(2));
+      }
     }
-
-    // Clear errors
-    setErrors({});
-
-    // Calculate
-    const priceValue = parseFloat(originalPrice);
-    const discountValue = parseFloat(discountPercent);
-
-    const calculatedSavings = priceValue * (discountValue / 100);
-    const calculatedSalePrice = priceValue - calculatedSavings;
-
-    // Update state
-    setSalePrice(calculatedSalePrice.toFixed(2));
-    setSavingAmount(calculatedSavings.toFixed(2));
   };
 
-  // Calculate discount percentage from original and sale price
-  const calculateDiscount = () => {
+  // Handle input changes for discount tab
+  const handleDiscountChange = (field: string, value: string) => {
+    // Update the corresponding state
+    if (field === "knownOriginalPrice") {
+      setKnownOriginalPrice(value);
+    } else if (field === "knownSalePrice") {
+      setKnownSalePrice(value);
+    }
+
     // Validate inputs
     const newErrors: typeof errors = {};
 
-    if (!knownOriginalPrice) {
+    if (!value && field === "knownOriginalPrice") {
       newErrors.knownOriginalPrice = "Original price is required";
-    } else if (Number(knownOriginalPrice) <= 0) {
+    } else if (Number(value) <= 0 && field === "knownOriginalPrice") {
       newErrors.knownOriginalPrice = "Original price must be greater than 0";
     }
 
-    if (!knownSalePrice) {
+    if (!value && field === "knownSalePrice") {
       newErrors.knownSalePrice = "Sale price is required";
-    } else if (Number(knownSalePrice) < 0) {
+    } else if (Number(value) < 0 && field === "knownSalePrice") {
       newErrors.knownSalePrice = "Sale price must be 0 or greater";
-    } else if (Number(knownSalePrice) > Number(knownOriginalPrice)) {
+    } else if (
+      Number(value) > Number(knownOriginalPrice) &&
+      field === "knownSalePrice"
+    ) {
       newErrors.knownSalePrice =
         "Sale price cannot be higher than original price";
     }
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
+    setErrors((prev) => ({ ...prev, ...newErrors }));
+
+    // Calculate if we have both values and no errors
+    if (
+      knownOriginalPrice &&
+      knownSalePrice &&
+      (field === "knownOriginalPrice" ? value : knownOriginalPrice) &&
+      (field === "knownSalePrice" ? value : knownSalePrice)
+    ) {
+      const originalPriceValue = parseFloat(
+        field === "knownOriginalPrice" ? value : knownOriginalPrice
+      );
+      const salePriceValue = parseFloat(
+        field === "knownSalePrice" ? value : knownSalePrice
+      );
+
+      if (
+        !isNaN(originalPriceValue) &&
+        !isNaN(salePriceValue) &&
+        originalPriceValue > 0 &&
+        salePriceValue >= 0 &&
+        salePriceValue <= originalPriceValue
+      ) {
+        const savingAmount = originalPriceValue - salePriceValue;
+        const discountPercentage = (savingAmount / originalPriceValue) * 100;
+
+        // Update state
+        setCalculatedDiscount(discountPercentage.toFixed(2));
+        setCalculatedSaving(savingAmount.toFixed(2));
+      }
     }
-
-    // Clear errors
-    setErrors({});
-
-    // Calculate
-    const originalPriceValue = parseFloat(knownOriginalPrice);
-    const salePriceValue = parseFloat(knownSalePrice);
-
-    const savingAmount = originalPriceValue - salePriceValue;
-    const discountPercentage = (savingAmount / originalPriceValue) * 100;
-
-    // Update state
-    setCalculatedDiscount(discountPercentage.toFixed(2));
-    setCalculatedSaving(savingAmount.toFixed(2));
   };
 
   return (
@@ -166,7 +212,9 @@ export const DiscountCalculator = () => {
                     step="0.01"
                     className="pl-8"
                     value={originalPrice}
-                    onChange={(e) => setOriginalPrice(e.target.value)}
+                    onChange={(e) =>
+                      handleSalePriceChange("originalPrice", e.target.value)
+                    }
                   />
                 </div>
                 {errors.originalPrice && (
@@ -187,7 +235,9 @@ export const DiscountCalculator = () => {
                     step="0.1"
                     className="pl-8"
                     value={discountPercent}
-                    onChange={(e) => setDiscountPercent(e.target.value)}
+                    onChange={(e) =>
+                      handleSalePriceChange("discountPercent", e.target.value)
+                    }
                   />
                 </div>
                 {errors.discountPercent && (
@@ -202,11 +252,6 @@ export const DiscountCalculator = () => {
               <Button variant="outline" onClick={handleClear}>
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Clear
-              </Button>
-
-              <Button onClick={calculateSalePrice}>
-                <Calculator className="mr-2 h-4 w-4" />
-                Calculate
               </Button>
             </div>
 
@@ -261,7 +306,9 @@ export const DiscountCalculator = () => {
                     step="0.01"
                     className="pl-8"
                     value={knownOriginalPrice}
-                    onChange={(e) => setKnownOriginalPrice(e.target.value)}
+                    onChange={(e) =>
+                      handleDiscountChange("knownOriginalPrice", e.target.value)
+                    }
                   />
                 </div>
                 {errors.knownOriginalPrice && (
@@ -283,7 +330,9 @@ export const DiscountCalculator = () => {
                     step="0.01"
                     className="pl-8"
                     value={knownSalePrice}
-                    onChange={(e) => setKnownSalePrice(e.target.value)}
+                    onChange={(e) =>
+                      handleDiscountChange("knownSalePrice", e.target.value)
+                    }
                   />
                 </div>
                 {errors.knownSalePrice && (
@@ -298,11 +347,6 @@ export const DiscountCalculator = () => {
               <Button variant="outline" onClick={handleClear}>
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Clear
-              </Button>
-
-              <Button onClick={calculateDiscount}>
-                <Calculator className="mr-2 h-4 w-4" />
-                Calculate
               </Button>
             </div>
 

@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Clock, Calculator, RefreshCw, Plus, Minus } from "lucide-react";
+import { Clock, RefreshCw, Plus, Minus } from "lucide-react";
 
 export const TimeCalculator = () => {
   // Active tab state
@@ -162,94 +162,141 @@ export const TimeCalculator = () => {
     return `${displayHours}:${minutes.toString().padStart(2, "0")} ${period}`;
   };
 
-  // Add or subtract time
-  const calculateTime = () => {
-    // Validate start time
-    const startErrors = validateTimeInput(startHours, startMinutes, "start");
-
-    // Validate time to add/subtract
-    const addErrors = validateTimeInput(addHours, addMinutes, "add");
-
-    const allErrors = { ...startErrors, ...addErrors };
-
-    if (Object.keys(allErrors).length > 0) {
-      setErrors(allErrors);
-      return;
+  // Handle time input changes for Add/Subtract tab
+  const handleAddSubtractChange = (
+    field:
+      | "startHours"
+      | "startMinutes"
+      | "startPeriod"
+      | "addHours"
+      | "addMinutes"
+      | "operation",
+    value: string
+  ) => {
+    // Update the corresponding state
+    switch (field) {
+      case "startHours":
+        setStartHours(value);
+        break;
+      case "startMinutes":
+        setStartMinutes(value);
+        break;
+      case "startPeriod":
+        setStartPeriod(value);
+        break;
+      case "addHours":
+        setAddHours(value);
+        break;
+      case "addMinutes":
+        setAddMinutes(value);
+        break;
+      case "operation":
+        setOperation(value as "add" | "subtract");
+        break;
     }
 
-    setErrors({});
+    // Validate and calculate if we have all required fields
+    if (startHours && startMinutes && addHours && addMinutes) {
+      const startErrors = validateTimeInput(startHours, startMinutes, "start");
+      const addErrors = validateTimeInput(addHours, addMinutes, "add");
 
-    // Convert start time to minutes since midnight
-    const startTotalMinutes = timeToMinutes(
-      startHours,
-      startMinutes,
-      startPeriod
-    );
+      setErrors({ ...startErrors, ...addErrors });
 
-    // Calculate time to add/subtract in minutes
-    const addHoursNum = parseInt(addHours, 10) || 0;
-    const addMinutesNum = parseInt(addMinutes, 10) || 0;
-    const timeChange = addHoursNum * 60 + addMinutesNum;
+      if (
+        Object.keys(startErrors).length === 0 &&
+        Object.keys(addErrors).length === 0
+      ) {
+        const startTotalMinutes = timeToMinutes(
+          startHours,
+          startMinutes,
+          startPeriod
+        );
+        const addTotalMinutes = Number(addHours) * 60 + Number(addMinutes);
 
-    // Add or subtract based on operation
-    const resultMinutes =
-      operation === "add"
-        ? startTotalMinutes + timeChange
-        : startTotalMinutes - timeChange;
+        const resultTotalMinutes =
+          operation === "add"
+            ? startTotalMinutes + addTotalMinutes
+            : startTotalMinutes - addTotalMinutes;
 
-    // Convert back to 12h time
-    const result = minutesToTime(resultMinutes);
-    setResultTime(result);
+        setResultTime(minutesToTime(resultTotalMinutes));
+      }
+    }
   };
 
-  // Calculate duration between times
-  const calculateDuration = () => {
-    // Validate start time
-    const startErrors = validateTimeInput(
-      startTimeHours,
-      startTimeMinutes,
-      "start"
-    );
-
-    // Validate end time
-    const endErrors = validateTimeInput(endTimeHours, endTimeMinutes, "end");
-
-    const allErrors = {
-      ...startErrors,
-      ...endErrors,
-    };
-
-    if (Object.keys(allErrors).length > 0) {
-      setErrors(allErrors);
-      return;
+  // Handle time input changes for Duration tab
+  const handleDurationChange = (
+    field:
+      | "startTimeHours"
+      | "startTimeMinutes"
+      | "startTimePeriod"
+      | "endTimeHours"
+      | "endTimeMinutes"
+      | "endTimePeriod",
+    value: string
+  ) => {
+    // Update the corresponding state
+    switch (field) {
+      case "startTimeHours":
+        setStartTimeHours(value);
+        break;
+      case "startTimeMinutes":
+        setStartTimeMinutes(value);
+        break;
+      case "startTimePeriod":
+        setStartTimePeriod(value);
+        break;
+      case "endTimeHours":
+        setEndTimeHours(value);
+        break;
+      case "endTimeMinutes":
+        setEndTimeMinutes(value);
+        break;
+      case "endTimePeriod":
+        setEndTimePeriod(value);
+        break;
     }
 
-    setErrors({});
+    // Validate and calculate if we have all required fields
+    if (startTimeHours && startTimeMinutes && endTimeHours && endTimeMinutes) {
+      const startErrors = validateTimeInput(
+        startTimeHours,
+        startTimeMinutes,
+        "start"
+      );
+      const endErrors = validateTimeInput(endTimeHours, endTimeMinutes, "end");
 
-    // Convert both times to minutes since midnight
-    const startMinutes = timeToMinutes(
-      startTimeHours,
-      startTimeMinutes,
-      startTimePeriod
-    );
+      setErrors({ ...startErrors, ...endErrors });
 
-    let endMinutes = timeToMinutes(endTimeHours, endTimeMinutes, endTimePeriod);
+      if (
+        Object.keys(startErrors).length === 0 &&
+        Object.keys(endErrors).length === 0
+      ) {
+        const startTotalMinutes = timeToMinutes(
+          startTimeHours,
+          startTimeMinutes,
+          startTimePeriod
+        );
+        const endTotalMinutes = timeToMinutes(
+          endTimeHours,
+          endTimeMinutes,
+          endTimePeriod
+        );
 
-    // If end time is earlier than start time, assume it's the next day
-    if (endMinutes < startMinutes) {
-      endMinutes += 24 * 60; // Add a full day
+        let diffMinutes = endTotalMinutes - startTotalMinutes;
+        if (diffMinutes < 0) {
+          diffMinutes += 24 * 60; // Add 24 hours if end time is on next day
+        }
+
+        const hours = Math.floor(diffMinutes / 60);
+        const minutes = diffMinutes % 60;
+
+        setDurationResult({
+          hours,
+          minutes,
+          totalMinutes: diffMinutes,
+        });
+      }
     }
-
-    // Calculate duration
-    const totalMinutesDiff = endMinutes - startMinutes;
-    const hoursDiff = Math.floor(totalMinutesDiff / 60);
-    const minutesDiff = totalMinutesDiff % 60;
-
-    setDurationResult({
-      hours: hoursDiff,
-      minutes: minutesDiff,
-      totalMinutes: totalMinutesDiff,
-    });
   };
 
   return (
@@ -317,7 +364,9 @@ export const TimeCalculator = () => {
                       min="1"
                       max="12"
                       value={startHours}
-                      onChange={(e) => setStartHours(e.target.value)}
+                      onChange={(e) =>
+                        handleAddSubtractChange("startHours", e.target.value)
+                      }
                     />
                     {errors.startHours && (
                       <p className="text-sm text-red-500">
@@ -337,7 +386,9 @@ export const TimeCalculator = () => {
                       min="0"
                       max="59"
                       value={startMinutes}
-                      onChange={(e) => setStartMinutes(e.target.value)}
+                      onChange={(e) =>
+                        handleAddSubtractChange("startMinutes", e.target.value)
+                      }
                     />
                     {errors.startMinutes && (
                       <p className="text-sm text-red-500">
@@ -347,7 +398,12 @@ export const TimeCalculator = () => {
                   </div>
 
                   <div>
-                    <Select value={startPeriod} onValueChange={setStartPeriod}>
+                    <Select
+                      value={startPeriod}
+                      onValueChange={(value) =>
+                        handleAddSubtractChange("startPeriod", value)
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="AM/PM" />
                       </SelectTrigger>
@@ -376,7 +432,9 @@ export const TimeCalculator = () => {
                         placeholder="HH"
                         min="0"
                         value={addHours}
-                        onChange={(e) => setAddHours(e.target.value)}
+                        onChange={(e) =>
+                          handleAddSubtractChange("addHours", e.target.value)
+                        }
                       />
                       <span className="text-sm">hrs</span>
                     </div>
@@ -397,7 +455,9 @@ export const TimeCalculator = () => {
                         min="0"
                         max="59"
                         value={addMinutes}
-                        onChange={(e) => setAddMinutes(e.target.value)}
+                        onChange={(e) =>
+                          handleAddSubtractChange("addMinutes", e.target.value)
+                        }
                       />
                       <span className="text-sm">min</span>
                     </div>
@@ -415,11 +475,6 @@ export const TimeCalculator = () => {
               <Button variant="outline" onClick={handleClear}>
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Clear
-              </Button>
-
-              <Button onClick={calculateTime}>
-                <Calculator className="mr-2 h-4 w-4" />
-                Calculate
               </Button>
             </div>
 
@@ -455,7 +510,9 @@ export const TimeCalculator = () => {
                       min="1"
                       max="12"
                       value={startTimeHours}
-                      onChange={(e) => setStartTimeHours(e.target.value)}
+                      onChange={(e) =>
+                        handleDurationChange("startTimeHours", e.target.value)
+                      }
                     />
                     {errors.startTimeHours && (
                       <p className="text-sm text-red-500">
@@ -475,7 +532,9 @@ export const TimeCalculator = () => {
                       min="0"
                       max="59"
                       value={startTimeMinutes}
-                      onChange={(e) => setStartTimeMinutes(e.target.value)}
+                      onChange={(e) =>
+                        handleDurationChange("startTimeMinutes", e.target.value)
+                      }
                     />
                     {errors.startTimeMinutes && (
                       <p className="text-sm text-red-500">
@@ -487,7 +546,9 @@ export const TimeCalculator = () => {
                   <div>
                     <Select
                       value={startTimePeriod}
-                      onValueChange={setStartTimePeriod}
+                      onValueChange={(value) =>
+                        handleDurationChange("startTimePeriod", value)
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="AM/PM" />
@@ -515,7 +576,9 @@ export const TimeCalculator = () => {
                       min="1"
                       max="12"
                       value={endTimeHours}
-                      onChange={(e) => setEndTimeHours(e.target.value)}
+                      onChange={(e) =>
+                        handleDurationChange("endTimeHours", e.target.value)
+                      }
                     />
                     {errors.endTimeHours && (
                       <p className="text-sm text-red-500">
@@ -535,7 +598,9 @@ export const TimeCalculator = () => {
                       min="0"
                       max="59"
                       value={endTimeMinutes}
-                      onChange={(e) => setEndTimeMinutes(e.target.value)}
+                      onChange={(e) =>
+                        handleDurationChange("endTimeMinutes", e.target.value)
+                      }
                     />
                     {errors.endTimeMinutes && (
                       <p className="text-sm text-red-500">
@@ -547,7 +612,9 @@ export const TimeCalculator = () => {
                   <div>
                     <Select
                       value={endTimePeriod}
-                      onValueChange={setEndTimePeriod}
+                      onValueChange={(value) =>
+                        handleDurationChange("endTimePeriod", value)
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="AM/PM" />
@@ -566,11 +633,6 @@ export const TimeCalculator = () => {
               <Button variant="outline" onClick={handleClear}>
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Clear
-              </Button>
-
-              <Button onClick={calculateDuration}>
-                <Calculator className="mr-2 h-4 w-4" />
-                Calculate
               </Button>
             </div>
 
