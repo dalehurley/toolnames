@@ -64,6 +64,7 @@ import {
   CalendarClock,
   Search,
   Layout,
+  Network,
 } from "lucide-react";
 import { NetworkLatencySimulator } from "@/components/tools/utilities/NetworkLatencySimulator";
 import LotteryPickerGenerator from "@/components/tools/generators/LotteryPickerGenerator";
@@ -80,6 +81,7 @@ import { ElectricityCalculator } from "@/components/tools/calculators/Electricit
 import { KeywordDensityAnalyzer } from "@/components/tools/seo/KeywordDensityAnalyzer";
 import { MetaTagAnalyzer } from "@/components/tools/seo/MetaTagAnalyzer";
 import { HeadingStructureVisualizer } from "@/components/tools/seo/HeadingStructureVisualizer";
+import { InternalLinkMapper } from "@/components/tools/seo/InternalLinkMapper";
 
 // Tool type definition
 export interface Tool {
@@ -596,6 +598,17 @@ export const availableTools: Tool[] = [
     url: "/seo/heading-structure-visualizer",
     pageTitle: "Heading Structure Visualizer - Analyze HTML Heading Hierarchy | ToolNames",
     metaDescription: "Visualize your webpage's heading structure to ensure proper semantic organization and SEO-friendly hierarchy. Identify issues like missing H1 tags, skipped heading levels, and improper nesting.",
+  },
+  {
+    id: "internal-link-mapper",
+    title: "Internal Link Mapper",
+    description: "Analyzes internal linking structure within HTML files, identifying orphaned content and optimization opportunities",
+    icon: Network,
+    category: "seo",
+    component: InternalLinkMapper,
+    url: "/seo/internal-link-mapper",
+    pageTitle: "Internal Link Mapper - Analyze Website Structure | ToolNames",
+    metaDescription: "Analyze your website's internal linking structure to identify orphaned content and optimization opportunities. Upload multiple HTML files or a site archive to visualize relationships between pages.",
   },
   // Add more tools here as they are created
 ];
