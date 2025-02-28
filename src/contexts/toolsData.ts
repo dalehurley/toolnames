@@ -63,6 +63,7 @@ import {
   BatteryCharging,
   CalendarClock,
   Search,
+  Layout,
 } from "lucide-react";
 import { NetworkLatencySimulator } from "@/components/tools/utilities/NetworkLatencySimulator";
 import LotteryPickerGenerator from "@/components/tools/generators/LotteryPickerGenerator";
@@ -78,6 +79,7 @@ import { InvestmentCalculator } from "@/components/tools/calculators/InvestmentC
 import { ElectricityCalculator } from "@/components/tools/calculators/ElectricityCalculator";
 import { KeywordDensityAnalyzer } from "@/components/tools/seo/KeywordDensityAnalyzer";
 import { MetaTagAnalyzer } from "@/components/tools/seo/MetaTagAnalyzer";
+import { HeadingStructureVisualizer } from "@/components/tools/seo/HeadingStructureVisualizer";
 
 // Tool type definition
 export interface Tool {
@@ -583,6 +585,17 @@ export const availableTools: Tool[] = [
     url: "/seo/meta-tag-analyzer",
     pageTitle: "Meta Tag Analyzer & Generator - Optimize Meta Tags for SEO | ToolNames",
     metaDescription: "Analyze and optimize your website's meta tags for better SEO and social media sharing. Check titles, descriptions, Open Graph tags, and Twitter Cards with our comprehensive meta tag tool.",
+  },
+  {
+    id: "heading-structure-visualizer",
+    title: "Heading Structure Visualizer",
+    description: "Creates a visual hierarchy of heading tags (H1-H6) to identify structural issues and ensure proper semantic organization",
+    icon: Layout,
+    category: "seo",
+    component: HeadingStructureVisualizer,
+    url: "/seo/heading-structure-visualizer",
+    pageTitle: "Heading Structure Visualizer - Analyze HTML Heading Hierarchy | ToolNames",
+    metaDescription: "Visualize your webpage's heading structure to ensure proper semantic organization and SEO-friendly hierarchy. Identify issues like missing H1 tags, skipped heading levels, and improper nesting.",
   },
   // Add more tools here as they are created
 ];

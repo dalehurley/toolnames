@@ -21,6 +21,7 @@ import {
   AlertCircle,
   Download,
   HelpCircle,
+  Globe,
 } from "lucide-react";
 import nlp from "compromise";
 import * as d3 from "d3";
@@ -34,8 +35,10 @@ interface KeywordResult {
 export const KeywordDensityAnalyzer = () => {
   const [activeTab, setActiveTab] = useState<string>("paste-content");
   const [content, setContent] = useState<string>("");
+  const [url, setUrl] = useState<string>("");
   const [htmlFile, setHtmlFile] = useState<File | null>(null);
   const [analyzing, setAnalyzing] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const [results, setResults] = useState<KeywordResult[]>([]);
   const [totalWords, setTotalWords] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
@@ -157,15 +160,6 @@ export const KeywordDensityAnalyzer = () => {
     "being",
   ];
 
-  // Clear form and results
-  const handleClear = () => {
-    setContent("");
-    setHtmlFile(null);
-    setResults([]);
-    setTotalWords(0);
-    setError(null);
-  };
-
   // Extract text from HTML
   const extractTextFromHtml = (html: string): string => {
     const parser = new DOMParser();
@@ -184,6 +178,36 @@ export const KeywordDensityAnalyzer = () => {
     }
 
     return doc.body.textContent || "";
+  };
+
+  // Fetch HTML from URL
+  const fetchUrl = async () => {
+    if (!url) {
+      setError("Please enter a URL");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Use a CORS proxy to fetch the URL
+      const corsProxy = "https://api.allorigins.win/raw?url=";
+      const response = await fetch(corsProxy + encodeURIComponent(url));
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const html = await response.text();
+      const extractedText = extractTextFromHtml(html);
+      setContent(extractedText);
+      analyzeContent(extractedText);
+    } catch (err) {
+      setError("Error fetching URL: " + (err as Error).message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Handle file upload
@@ -217,6 +241,16 @@ export const KeywordDensityAnalyzer = () => {
       setError("Error processing HTML file. Please try again.");
       console.error(err);
     }
+  };
+
+  // Clear form and results
+  const handleClear = () => {
+    setContent("");
+    setUrl("");
+    setHtmlFile(null);
+    setResults([]);
+    setTotalWords(0);
+    setError(null);
   };
 
   // Analyze content for keyword density
@@ -420,7 +454,7 @@ export const KeywordDensityAnalyzer = () => {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <div className="px-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="paste-content">
               <FileText className="h-4 w-4 mr-2" />
               Paste Content
@@ -428,6 +462,10 @@ export const KeywordDensityAnalyzer = () => {
             <TabsTrigger value="upload-html">
               <Upload className="h-4 w-4 mr-2" />
               Upload HTML
+            </TabsTrigger>
+            <TabsTrigger value="fetch-url">
+              <Globe className="h-4 w-4 mr-2" />
+              Fetch URL
             </TabsTrigger>
           </TabsList>
         </div>
@@ -494,6 +532,33 @@ export const KeywordDensityAnalyzer = () => {
                 >
                   <BarChart3 className="mr-2 h-4 w-4" />
                   {analyzing ? "Analyzing..." : "Analyze HTML"}
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Fetch URL Tab */}
+          <TabsContent value="fetch-url" className="mt-0">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="url-input">Website URL</Label>
+                <Input
+                  id="url-input"
+                  type="url"
+                  placeholder="https://example.com"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                />
+              </div>
+
+              <div className="flex flex-col sm:flex-row justify-between gap-4">
+                <Button variant="outline" onClick={handleClear}>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Clear
+                </Button>
+                <Button onClick={fetchUrl} disabled={loading || !url}>
+                  <Globe className="mr-2 h-4 w-4" />
+                  {loading ? "Fetching..." : "Fetch and Analyze"}
                 </Button>
               </div>
             </div>
@@ -706,6 +771,10 @@ export const KeywordDensityAnalyzer = () => {
             <li>
               <strong>Upload HTML</strong> - Upload an HTML file to analyze
               (content will be extracted automatically)
+            </li>
+            <li>
+              <strong>Fetch URL</strong> - Enter a website URL to fetch and
+              analyze its content
             </li>
             <li>
               Adjust analysis settings to fine-tune your results by changing
