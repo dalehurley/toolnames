@@ -62,6 +62,7 @@ import {
   Coins,
   BatteryCharging,
   CalendarClock,
+  Search,
 } from "lucide-react";
 import { NetworkLatencySimulator } from "@/components/tools/utilities/NetworkLatencySimulator";
 import LotteryPickerGenerator from "@/components/tools/generators/LotteryPickerGenerator";
@@ -75,6 +76,7 @@ import { CalorieCalculator } from "@/components/tools/calculators/CalorieCalcula
 import { ShippingCalculator } from "@/components/tools/calculators/ShippingCalculator";
 import { InvestmentCalculator } from "@/components/tools/calculators/InvestmentCalculator";
 import { ElectricityCalculator } from "@/components/tools/calculators/ElectricityCalculator";
+import { KeywordDensityAnalyzer } from "@/components/tools/seo/KeywordDensityAnalyzer";
 
 // Tool type definition
 export interface Tool {
@@ -559,6 +561,17 @@ export const availableTools: Tool[] = [
     pageTitle: "Electricity Cost Calculator - Appliance Energy Usage | ToolNames",
     metaDescription: "Calculate electricity costs for household appliances and devices based on usage time and power consumption. Identify energy savings opportunities and reduce your bills.",
   },
+  {
+    id: "keyword-density-analyzer",
+    title: "Keyword Density Analyzer",
+    description: "Analyzes the frequency and distribution of keywords on a page, identifying potential keyword stuffing or optimization opportunities",
+    icon: Search,
+    category: "seo",
+    component: KeywordDensityAnalyzer,
+    url: "/seo/keyword-density-analyzer",
+    pageTitle: "Keyword Density Analyzer - Optimize Content for SEO | ToolNames",
+    metaDescription: "Analyze the keyword distribution on your web pages to improve SEO performance. Identify potential keyword stuffing and optimization opportunities with our free keyword density tool.",
+  },
   // Add more tools here as they are created
 ];
 
@@ -571,6 +584,7 @@ export const getCategoryName = (categoryId: string): string => {
     generators: "Generators",
     utilities: "Utilities",
     "file-tools": "File Tools",
+    seo: "SEO Tools",
   };
 
   return categories[categoryId] || categoryId;
