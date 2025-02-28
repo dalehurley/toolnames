@@ -452,7 +452,7 @@ export const availableTools: Tool[] = [
     icon: Percent,
     category: "calculators",
     component: PercentageCalculator,
-    url: "/tools/percentage-calculator",
+    url: "/calculators/percentage-calculator",
     pageTitle: "Percentage Calculator - Calculate Percentages & Proportions",
     metaDescription:
       "Calculate percentages with ease. Find what percentage one number is of another, calculate percentage increases or decreases, and solve other percentage-based problems.",
@@ -464,7 +464,7 @@ export const availableTools: Tool[] = [
     icon: Car,
     category: "calculators",
     component: FuelCalculator,
-    url: "/tools/fuel-calculator",
+    url: "/calculators/fuel-calculator",
     pageTitle: "Fuel Efficiency Calculator - Calculate MPG & Trip Costs",
     metaDescription:
       "Easily calculate your vehicle's fuel efficiency in MPG or L/100km, estimate fuel costs for trips, and analyze your fuel consumption patterns with our user-friendly calculator.",
@@ -476,7 +476,7 @@ export const availableTools: Tool[] = [
     icon: Timer,
     category: "calculators",
     component: TimeCalculator,
-    url: "/tools/time-calculator",
+    url: "/calculators/time-calculator",
     pageTitle: "Time Calculator - Calculate Time Intervals",
     metaDescription:
       "Add or subtract time intervals, calculate duration between times, and convert between time formats with our easy-to-use time calculator.",
@@ -488,7 +488,7 @@ export const availableTools: Tool[] = [
     icon: CalendarClock,
     category: "calculators",
     component: AgeCalculator,
-    url: "/tools/age-calculator",
+    url: "/calculators/age-calculator",
     pageTitle: "Age Calculator - Calculate Your Exact Age",
     metaDescription:
       "Calculate your exact age in years, months, and days. See how many days you've been alive and when your next birthday is with our precise age calculator.",
@@ -500,7 +500,7 @@ export const availableTools: Tool[] = [
     icon: CalendarDays,
     category: "calculators",
     component: DateCalculator,
-    url: "/tools/date-calculator",
+    url: "/calculators/date-calculator",
     pageTitle: "Date Calculator - Calculate Days Between Dates",
     metaDescription:
       "Calculate the number of days between two dates or add/subtract days from a date with our easy-to-use date calculator.",
@@ -512,7 +512,7 @@ export const availableTools: Tool[] = [
     icon: HeartPulse,
     category: "calculators",
     component: HealthCalculator,
-    url: "/tools/health-calculator",
+    url: "/calculators/health-calculator",
     pageTitle: "Health Metrics Calculator - BMI, BMR & Ideal Weight",
     metaDescription:
       "Calculate your BMI, BMR, TDEE, and ideal weight with our comprehensive health metrics calculator. Get insights into your body composition and calorie needs.",
@@ -524,7 +524,7 @@ export const availableTools: Tool[] = [
     icon: Utensils,
     category: "calculators",
     component: CalorieCalculator,
-    url: "/tools/calorie-calculator",
+    url: "/calculators/calorie-calculator",
     pageTitle: "Calorie Calculator - Calculate Daily Calorie Needs",
     metaDescription:
       "Calculate your daily calorie needs based on your body metrics, activity level, and goals. Get personalized macronutrient recommendations for weight loss, maintenance, or gain.",

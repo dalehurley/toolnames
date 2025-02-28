@@ -11,7 +11,7 @@ const UnitConverterPage = () => {
     // Validate the conversion type and update the metadata
     if (!conversionType) {
       // If no conversion type is specified, redirect to the main converter
-      navigate("/tools/unit-converter");
+      navigate("/converters/unit-converter");
       return;
     }
 

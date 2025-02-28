@@ -10,10 +10,12 @@ import {
   Shapes,
   Settings,
   Bug,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useTools } from "@/contexts/ToolsContext";
+import ScrollToTop from "./ScrollToTop";
 
 interface NavItemProps {
   icon: React.ReactNode;
@@ -59,6 +61,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           "generators",
           "utilities",
           "file-tools",
+          "seo",
         ].includes(category)
       ) {
         setFilterCategory(category);
@@ -101,6 +104,12 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       id: "utilities",
       to: "/utilities",
     },
+    {
+      icon: <Search className="h-5 w-5" />,
+      label: "SEO Tools",
+      id: "seo",
+      to: "/seo",
+    },
   ];
 
   // Debug function to check context state
@@ -120,6 +129,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <ScrollToTop />
       {/* Header */}
       <header className="border-b bg-background sticky top-0 z-10">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">

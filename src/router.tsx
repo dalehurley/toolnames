@@ -124,6 +124,10 @@ export const router = createBrowserRouter([
         path: "/file-tools",
         element: <CategoryPage category="file-tools" />,
       },
+      {
+        path: "/seo",
+        element: <CategoryPage category="seo" />,
+      },
 
       // CSV Explorer route
       {
