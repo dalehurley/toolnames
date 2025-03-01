@@ -82,6 +82,7 @@ import { KeywordDensityAnalyzer } from "@/components/tools/seo/KeywordDensityAna
 import { MetaTagAnalyzer } from "@/components/tools/seo/MetaTagAnalyzer";
 import { HeadingStructureVisualizer } from "@/components/tools/seo/HeadingStructureVisualizer";
 import { InternalLinkMapper } from "@/components/tools/seo/InternalLinkMapper";
+import AltTextAnalyzer from "@/components/tools/seo/AltTextAnalyzer";
 
 // Tool type definition
 export interface Tool {
@@ -609,6 +610,17 @@ export const availableTools: Tool[] = [
     url: "/seo/internal-link-mapper",
     pageTitle: "Internal Link Mapper - Analyze Website Structure | ToolNames",
     metaDescription: "Analyze your website's internal linking structure to identify orphaned content and optimization opportunities. Upload multiple HTML files or a site archive to visualize relationships between pages.",
+  },
+  {
+    id: "alt-text-analyzer",
+    title: "Alt Text Analyzer",
+    description: "Analyze and improve image alt text for accessibility.",
+    icon: Network,
+    category: "seo",
+    component: AltTextAnalyzer,
+    url: "/seo/alt-text-analyzer",
+    pageTitle: "Alt Text Analyzer - Improve Image Accessibility | ToolNames",
+    metaDescription: "Analyze and improve image alt text for better accessibility and SEO. Identify issues and optimize alt text across your website.",
   },
   // Add more tools here as they are created
 ];
