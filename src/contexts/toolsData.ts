@@ -58,13 +58,13 @@ import {
   CalendarDays,
   HeartPulse,
   Utensils,
-  Truck,
   Coins,
   BatteryCharging,
   CalendarClock,
   Search,
   Layout,
   Network,
+  CreditCard,
 } from "lucide-react";
 import { NetworkLatencySimulator } from "@/components/tools/utilities/NetworkLatencySimulator";
 import LotteryPickerGenerator from "@/components/tools/generators/LotteryPickerGenerator";
@@ -75,14 +75,18 @@ import { AgeCalculator } from "@/components/tools/calculators/AgeCalculator";
 import { DateCalculator } from "@/components/tools/calculators/DateCalculator";
 import { HealthCalculator } from "@/components/tools/calculators/HealthCalculator";
 import { CalorieCalculator } from "@/components/tools/calculators/CalorieCalculator";
-import { ShippingCalculator } from "@/components/tools/calculators/ShippingCalculator";
 import { InvestmentCalculator } from "@/components/tools/calculators/InvestmentCalculator";
 import { ElectricityCalculator } from "@/components/tools/calculators/ElectricityCalculator";
+import { LoanPaymentCalculator } from "@/components/tools/calculators/LoanPaymentCalculator";
 import { KeywordDensityAnalyzer } from "@/components/tools/seo/KeywordDensityAnalyzer";
 import { MetaTagAnalyzer } from "@/components/tools/seo/MetaTagAnalyzer";
 import { HeadingStructureVisualizer } from "@/components/tools/seo/HeadingStructureVisualizer";
 import { InternalLinkMapper } from "@/components/tools/seo/InternalLinkMapper";
 import AltTextAnalyzer from "@/components/tools/seo/AltTextAnalyzer";
+import { FinancialGoalCalculator } from "@/components/tools/calculators/FinancialGoalCalculator";
+import { InflationCalculator } from "@/components/tools/calculators/InflationCalculator";
+import { LoanPayoffCalculator } from "@/components/tools/calculators/LoanPayoffCalculator";
+// import { TaxBracketCalculator } from "@/components/tools/calculators/TaxBracketCalculator";
 
 // Tool type definition
 export interface Tool {
@@ -113,6 +117,19 @@ export const availableTools: Tool[] = [
       "Mortgage Calculator - Calculate Payments & Interest | ToolNames",
     metaDescription:
       "Calculate mortgage payments, interest, and amortization schedules with our free, privacy-focused mortgage calculator tool. Runs entirely in your browser.",
+  },
+  {
+    id: "loan-payment-calculator",
+    title: "Loan Payment Calculator",
+    description:
+      "Calculate monthly payments, total interest, and amortization schedule for any loan type",
+    icon: CreditCard,
+    category: "calculators",
+    component: LoanPaymentCalculator,
+    url: "/calculators/loan-payment-calculator",
+    pageTitle: "Loan Payment Calculator - Monthly Payments & Amortization | ToolNames",
+    metaDescription:
+      "Calculate monthly payments, total interest, and view the complete amortization schedule for auto loans, mortgages, personal loans, and more with our free loan payment calculator.",
   },
   {
     id: "compound-interest-calculator",
@@ -535,17 +552,6 @@ export const availableTools: Tool[] = [
       "Calculate your daily calorie needs based on your body metrics, activity level, and goals. Get personalized macronutrient recommendations for weight loss, maintenance, or gain.",
   },
   {
-    id: "shipping-calculator",
-    title: "Shipping Cost Calculator",
-    description: "Calculate shipping costs based on weight, dimensions, and distance",
-    icon: Truck,
-    category: "calculators",
-    component: ShippingCalculator,
-    url: "/calculators/shipping-calculator",
-    pageTitle: "Shipping Cost Calculator - Estimate Shipping Expenses | ToolNames",
-    metaDescription: "Calculate shipping costs based on package weight, dimensions, and distance with our shipping cost calculator. Compare rates and estimate expenses for logistics planning.",
-  },
-  {
     id: "investment-calculator",
     title: "Investment Returns Calculator",
     description: "Calculate potential returns on investments with customizable parameters",
@@ -621,6 +627,39 @@ export const availableTools: Tool[] = [
     url: "/seo/alt-text-analyzer",
     pageTitle: "Alt Text Analyzer - Improve Image Accessibility | ToolNames",
     metaDescription: "Analyze and improve image alt text for better accessibility and SEO. Identify issues and optimize alt text across your website.",
+  },
+  {
+    id: "financial-goal-calculator",
+    title: "Financial Goal Calculator",
+    description: "Plan and calculate the savings needed to reach your financial goals",
+    icon: DollarSign,
+    category: "calculators",
+    component: FinancialGoalCalculator,
+    url: "/calculators/financial-goal-calculator",
+    pageTitle: "Financial Goal Calculator - Plan Your Savings | ToolNames",
+    metaDescription: "Plan and calculate the savings needed to reach your financial goals with our free financial goal calculator tool.",
+  },
+  {
+    id: "inflation-calculator",
+    title: "Inflation Calculator",
+    description: "Calculate how inflation affects purchasing power over time",
+    icon: TrendingUp,
+    category: "calculators",
+    component: InflationCalculator,
+    url: "/calculators/inflation-calculator",
+    pageTitle: "Inflation Calculator - Calculate Inflation Impact | ToolNames",
+    metaDescription: "Calculate how inflation affects purchasing power over time with our free inflation calculator tool.",
+  },
+  {
+    id: "loan-payoff-calculator",
+    title: "Loan Payoff Calculator",
+    description: "Compare debt payoff strategies and create a payment plan to become debt-free",
+    icon: DollarSign,
+    category: "calculators",
+    component: LoanPayoffCalculator,
+    url: "/calculators/loan-payoff-calculator",
+    pageTitle: "Loan Payoff Calculator - Plan Debt-Free Journey | ToolNames",
+    metaDescription: "Compare debt payoff strategies and create a payment plan to become debt-free with our free loan payoff calculator tool.",
   },
   // Add more tools here as they are created
 ];
