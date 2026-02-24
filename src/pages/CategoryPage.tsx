@@ -7,25 +7,37 @@ interface CategoryPageProps {
   category: string;
 }
 
+const categoryDescriptions: Record<string, string> = {
+  calculators:
+    "Solve everyday math problems — mortgages, BMI, compound interest, calories, and more. All calculations happen locally in your browser.",
+  converters:
+    "Convert units, colors, number bases, temperatures, and images between formats. Fast, private, and no sign-up required.",
+  generators:
+    "Generate passwords, QR codes, UUIDs, hashes, lorem ipsum text, and lottery numbers with a single click.",
+  utilities:
+    "Developer and power-user tools for formatting JSON, encoding/decoding data, counting characters, building charts, and more.",
+  "file-tools":
+    "Process images and CSV files entirely in your browser — no uploads, no cloud, complete privacy.",
+  seo:
+    "Analyze and improve your website's SEO with keyword density analysis, meta tag inspection, heading structure, and more.",
+};
+
 const CategoryPage = ({ category }: CategoryPageProps) => {
   const { setFilterCategory } = useTools();
 
-  // Set the filter category when the component mounts or category changes
   useEffect(() => {
     setFilterCategory(category);
-
-    // Set the document title directly
-    document.title = getCategoryTitle();
+    const categoryName = getCategoryName(category);
+    document.title = `${categoryName} - Free Online ${categoryName} Tools | ToolNames`;
   }, [category, setFilterCategory]);
 
-  // Generate SEO title based on category
-  const getCategoryTitle = () => {
-    const categoryName = getCategoryName(category);
-    return `${categoryName} - Free Online ${categoryName} Tools | ToolNames`;
-  };
+  const description = categoryDescriptions[category];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
+      {description && (
+        <p className="text-muted-foreground max-w-2xl">{description}</p>
+      )}
       <ToolGrid />
     </div>
   );

@@ -100,6 +100,8 @@ export interface Tool {
   pageTitle: string;
   metaDescription: string;
   baseUrl?: string; // For tools with sub-URLs like unit converter
+  isNew?: boolean;
+  isPopular?: boolean;
 }
 
 // Define all available tools
@@ -113,6 +115,7 @@ export const availableTools: Tool[] = [
     category: "calculators",
     component: MortgageCalculator,
     url: "/calculators/mortgage-calculator",
+    isPopular: true,
     pageTitle:
       "Mortgage Calculator - Calculate Payments & Interest | ToolNames",
     metaDescription:
@@ -153,6 +156,7 @@ export const availableTools: Tool[] = [
     category: "calculators",
     component: BMICalculator,
     url: "/calculators/bmi-calculator",
+    isPopular: true,
     pageTitle: "BMI Calculator - Body Mass Index Calculator | ToolNames",
     metaDescription:
       "Calculate your Body Mass Index (BMI) to evaluate whether you're at a healthy weight with our free BMI calculator tool. Get instant results.",
@@ -191,6 +195,7 @@ export const availableTools: Tool[] = [
     category: "converters",
     component: ColorConverter,
     url: "/converters/color-converter",
+    isPopular: true,
     pageTitle: "Color Converter - HEX, RGB, HSL, HSV, CMYK | ToolNames",
     metaDescription:
       "Convert colors between HEX, RGB, HSL, HSV, and CMYK formats with our free color converter tool. Perfect for web designers and developers.",
@@ -215,6 +220,7 @@ export const availableTools: Tool[] = [
     category: "generators",
     component: PasswordGenerator,
     url: "/generators/password-generator",
+    isPopular: true,
     pageTitle: "Password Generator - Secure, Random Passwords | ToolNames",
     metaDescription:
       "Generate secure, random passwords with customizable options including length, character sets, and more with our free password generator tool.",
@@ -227,6 +233,7 @@ export const availableTools: Tool[] = [
     category: "generators",
     component: QRCodeGenerator,
     url: "/generators/qr-code-generator",
+    isPopular: true,
     pageTitle:
       "QR Code Generator - Create QR Codes for URLs & Text | ToolNames",
     metaDescription:
@@ -279,6 +286,7 @@ export const availableTools: Tool[] = [
     category: "utilities",
     component: JSONFormatter,
     url: "/utilities/json-formatter",
+    isPopular: true,
     pageTitle:
       "JSON Formatter & Validator - Format and Beautify JSON | ToolNames",
     metaDescription:
@@ -419,6 +427,7 @@ export const availableTools: Tool[] = [
     category: "generators",
     component: LotteryPickerGenerator,
     url: "/generators/lottery-picker",
+    isNew: true,
     pageTitle: "Lottery Number Picker - Random Number Generator | ToolNames",
     metaDescription: "Generate random lottery numbers for various lottery games including Powerball, Mega Millions, and custom formats with our free lottery number picker tool.",
   },
@@ -625,6 +634,7 @@ export const availableTools: Tool[] = [
     category: "seo",
     component: AltTextAnalyzer,
     url: "/seo/alt-text-analyzer",
+    isNew: true,
     pageTitle: "Alt Text Analyzer - Improve Image Accessibility | ToolNames",
     metaDescription: "Analyze and improve image alt text for better accessibility and SEO. Identify issues and optimize alt text across your website.",
   },
@@ -636,6 +646,7 @@ export const availableTools: Tool[] = [
     category: "calculators",
     component: FinancialGoalCalculator,
     url: "/calculators/financial-goal-calculator",
+    isNew: true,
     pageTitle: "Financial Goal Calculator - Plan Your Savings | ToolNames",
     metaDescription: "Plan and calculate the savings needed to reach your financial goals with our free financial goal calculator tool.",
   },
@@ -647,6 +658,7 @@ export const availableTools: Tool[] = [
     category: "calculators",
     component: InflationCalculator,
     url: "/calculators/inflation-calculator",
+    isNew: true,
     pageTitle: "Inflation Calculator - Calculate Inflation Impact | ToolNames",
     metaDescription: "Calculate how inflation affects purchasing power over time with our free inflation calculator tool.",
   },
@@ -658,6 +670,7 @@ export const availableTools: Tool[] = [
     category: "calculators",
     component: LoanPayoffCalculator,
     url: "/calculators/loan-payoff-calculator",
+    isNew: true,
     pageTitle: "Loan Payoff Calculator - Plan Debt-Free Journey | ToolNames",
     metaDescription: "Compare debt payoff strategies and create a payment plan to become debt-free with our free loan payoff calculator tool.",
   },
