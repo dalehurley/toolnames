@@ -28,6 +28,9 @@ yarn.lock
 *.tsbuildinfo
 next-env.d.ts
 
+# Generated TypeScript declaration files (emitDeclarationOnly build artifacts)
+src/**/*.d.ts
+
 # Editor directories and files
 .idea/
 .vscode/*
