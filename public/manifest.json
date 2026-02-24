@@ -1,0 +1,39 @@
+{
+  "name": "ToolNames - Free Browser Tools",
+  "short_name": "ToolNames",
+  "description": "A collection of free, privacy-focused tools that run entirely in your browser. Calculators, converters, generators, utilities, and SEO tools.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["utilities", "productivity", "tools"],
+  "shortcuts": [
+    {
+      "name": "Calculators",
+      "short_name": "Calculators",
+      "description": "Open calculator tools",
+      "url": "/calculators"
+    },
+    {
+      "name": "Generators",
+      "short_name": "Generators",
+      "description": "Open generator tools",
+      "url": "/generators"
+    },
+    {
+      "name": "Converters",
+      "short_name": "Converters",
+      "description": "Open converter tools",
+      "url": "/converters"
+    }
+  ]
+}
