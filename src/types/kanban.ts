@@ -8,6 +8,7 @@ export interface KanbanCard {
   tags: string[];
   createdAt: string;
   color?: string;
+  storyPoints?: number; // Optional story points / effort estimate
   checklist?: {
     id: string;
     text: string;
@@ -21,12 +22,15 @@ export interface KanbanColumn {
   cardIds: string[];
   limit?: number; // Optional WIP limit
   color?: string; // Optional column color
+  isCollapsed?: boolean; // Whether the column is collapsed
+  sortOrder?: 'none' | 'priority-asc' | 'priority-desc' | 'due-date-asc' | 'due-date-desc' | 'created-asc' | 'created-desc';
 }
 
 export interface KanbanBoard {
   columns: KanbanColumn[];
   cards: Record<string, KanbanCard>;
   columnOrder: string[];
+  name?: string; // Optional board name
 }
 
 export type CardDragStart = {

@@ -170,6 +170,25 @@ const NewCardForm = ({
         </div>
 
         <div>
+          <Label htmlFor="storyPoints">Story Points (optional)</Label>
+          <Input
+            id="storyPoints"
+            type="number"
+            min="0"
+            max="999"
+            value={formData.storyPoints ?? ""}
+            onChange={(e) => {
+              const val = e.target.value;
+              setFormData((prev) => ({
+                ...prev,
+                storyPoints: val === "" ? undefined : Number(val),
+              }));
+            }}
+            placeholder="e.g. 3, 5, 8"
+          />
+        </div>
+
+        <div>
           <Label htmlFor="tags">Tags</Label>
           <div className="flex space-x-2">
             <Input
