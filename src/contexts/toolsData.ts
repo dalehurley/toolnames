@@ -1,3 +1,4 @@
+import { lazy } from "react";
 import { MortgageCalculator } from "@/components/tools/calculators/MortgageCalculator";
 import { CompoundInterestCalculator } from "@/components/tools/calculators/CompoundInterestCalculator";
 import { BMICalculator } from "@/components/tools/calculators/BMICalculator";
@@ -71,6 +72,7 @@ import {
   Leaf,
   PiggyBank,
   Music,
+  PenTool,
 } from "lucide-react";
 import { NetworkLatencySimulator } from "@/components/tools/utilities/NetworkLatencySimulator";
 import {
@@ -1105,6 +1107,21 @@ export const availableTools: Tool[] = [
     url: "/converters/audio-format-converter",
     pageTitle: "Audio Format Converter: Convert MP3, WAV, OGG | ToolNames",
     metaDescription: "Free online audio converter. Convert audio files securely in your browser without uploading.",
+  },
+  {
+    id: "canvas-drawing",
+    title: "Canvas Drawing Tool",
+    description:
+      "Full-featured drawing canvas with shapes, freehand, text, layers, undo/redo, and export to PNG/SVG.",
+    icon: PenTool,
+    category: "design",
+    component: lazy(() =>
+      import("@/components/tools/design/CanvasDrawing").then((m) => ({ default: m.CanvasDrawing }))
+    ),
+    url: "/design/canvas-drawing",
+    pageTitle: "Canvas Drawing Tool: Free Online Whiteboard & Sketching App | ToolNames",
+    metaDescription:
+      "Free online canvas drawing tool. Draw freehand, add shapes, text, and images. Supports layers, undo/redo, zoom/pan, and export to PNG, JPG, or SVG. 100% client-side.",
   },
 ];
 
