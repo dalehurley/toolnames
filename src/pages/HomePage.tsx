@@ -1,9 +1,9 @@
 import React from "react";
-import { useEffect, useState, useCallback, memo } from "react";
+import { useEffect, useState, useCallback, memo, useRef } from "react";
 import { useTools } from "@/contexts/ToolsContext";
 import { useSEO } from "@/hooks/useSEO";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Tool } from "@/contexts/toolsData";
 
@@ -19,6 +19,9 @@ import {
   Dices,
   ArrowUp,
   KeyRound,
+  FileType,
+  Clock,
+  Palette,
 } from "lucide-react";
 
 // Memoized Tool Card component for better performance
@@ -56,12 +59,14 @@ const CategoryCard = memo(
     color,
     description,
     delay,
+    toolCount,
   }: {
     category: string;
     icon: React.FC<React.SVGProps<SVGSVGElement>>;
     color: string;
     description: string;
     delay: number;
+    toolCount: number;
   }) => (
     <div
       className="animate-in fade-in slide-in-from-bottom-4 hover:-translate-y-1 transition-all duration-300"
@@ -82,9 +87,14 @@ const CategoryCard = memo(
           <h3
             className={`font-medium mb-1 group-hover:text-${color} transition-colors`}
           >
-            {category}
+            {category.replace("-", " ")}
           </h3>
-          <p className="text-sm text-muted-foreground">{description}</p>
+          <p className="text-sm text-muted-foreground mb-2">{description}</p>
+          {toolCount > 0 && (
+            <span className={`text-xs font-medium text-${color} bg-${color}/10 px-2 py-0.5 rounded-full`}>
+              {toolCount} tools
+            </span>
+          )}
         </div>
       </Link>
     </div>
@@ -139,6 +149,8 @@ const HomePage = () => {
   const [searchResults, setSearchResults] = useState<Tool[]>([]);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [greeting, setGreeting] = useState("Welcome to ToolNames");
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
 
   // SEO configuration for homepage
   useSEO({
@@ -244,7 +256,7 @@ const HomePage = () => {
     } else if (hour >= 12 && hour < 18) {
       setGreeting("Good Afternoon from ToolNames");
     } else {
-      setGreeting("Welcome to ToolNames");
+      setGreeting("Good Evening from ToolNames");
     }
 
     // Add CSS for grid patterns
@@ -270,8 +282,24 @@ const HomePage = () => {
 
     window.addEventListener("scroll", handleScroll);
 
+    // Global "/" keyboard shortcut to focus search
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        e.key === "/" &&
+        !(e.target instanceof HTMLInputElement) &&
+        !(e.target instanceof HTMLTextAreaElement)
+      ) {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        searchInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
     return () => {
       window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("keydown", handleKeyDown);
       // Clean up the injected style element
       if (style && document.head.contains(style)) {
         document.head.removeChild(style);
@@ -295,7 +323,7 @@ const HomePage = () => {
             tool.description.toLowerCase().includes(query) ||
             tool.category.toLowerCase().includes(query)
         )
-        .slice(0, 5); // Limit to 5 results
+        .slice(0, 8); // Limit to 8 results
 
       setSearchResults(results);
     }, 150); // Small debounce for better performance
@@ -349,12 +377,44 @@ const HomePage = () => {
       delay: 0.4,
     },
     {
+      name: "File-Tools",
+      icon: FileType,
+      color: "teal-500",
+      description:
+        "Convert images, explore CSV data, and handle file format conversions entirely in your browser — no uploads needed.",
+      delay: 0.5,
+    },
+    {
+      name: "Design",
+      icon: Palette,
+      color: "amber-500",
+      description:
+        "Visual tools for CSS flexbox/grid generation, color palettes, spacing visualizers, and responsive layout builders.",
+      delay: 0.6,
+    },
+    {
+      name: "SEO",
+      icon: Search,
+      color: "rose-500",
+      description:
+        "Analyze keyword density, meta tags, heading structure, alt text, and internal links to improve your site's SEO.",
+      delay: 0.7,
+    },
+    {
+      name: "Productivity",
+      icon: Clock,
+      color: "purple-500",
+      description:
+        "Boost your workflow with a Pomodoro timer, Kanban board, habit tracker, notes, time-blocking calendar, and more.",
+      delay: 0.8,
+    },
+    {
       name: "Lottery",
       icon: Dices,
       color: "green-500",
       description:
         "Explore lottery number generators, odds calculators, historical data analyzers, and wheeling systems.",
-      delay: 0.5,
+      delay: 0.9,
     },
   ];
 
@@ -447,13 +507,13 @@ const HomePage = () => {
                 <Button
                   variant="outline"
                   size="lg"
-                  asChild
                   className="border-2 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl px-8 h-14 text-base font-semibold transform hover:scale-105 transition-all focus:ring-2 focus:ring-indigo-500/50"
+                  onClick={() => {
+                    document.getElementById("featured-tools")?.scrollIntoView({ behavior: "smooth" });
+                  }}
                 >
-                  <Link to="#featured-tools">
-                    <Search className="mr-2 h-5 w-5" aria-hidden="true" />
-                    Browse Popular Tools
-                  </Link>
+                  <Search className="mr-2 h-5 w-5" aria-hidden="true" />
+                  Browse Popular Tools
                 </Button>
               </div>
             </div>
@@ -540,9 +600,10 @@ const HomePage = () => {
             </h2>
             <div className="relative">
               <Input
+                ref={searchInputRef}
                 type="text"
                 placeholder="Search for calculators, converters, generators..."
-                className="w-full pl-12 py-6 text-lg border-indigo-200 dark:border-indigo-800/50 focus-visible:ring-indigo-400 shadow-md hover:shadow-lg transition-shadow rounded-full"
+                className="w-full pl-12 pr-24 py-6 text-lg border-indigo-200 dark:border-indigo-800/50 focus-visible:ring-indigo-400 shadow-md hover:shadow-lg transition-shadow rounded-full"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 aria-label="Search tools"
@@ -553,6 +614,11 @@ const HomePage = () => {
                   aria-hidden="true"
                 />
               </div>
+              {!searchQuery && (
+                <kbd className="absolute right-4 top-1/2 transform -translate-y-1/2 hidden sm:inline-flex items-center gap-1 px-2 py-1 text-xs font-mono text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded">
+                  /
+                </kbd>
+              )}
               {searchQuery && (
                 <button
                   onClick={clearSearch}
@@ -592,10 +658,20 @@ const HomePage = () => {
                   />
                 ))}
 
-                <div className="p-3 bg-muted/50 border-t border-indigo-100 dark:border-indigo-800/20 text-center text-sm">
+                <div className="p-3 bg-muted/50 border-t border-indigo-100 dark:border-indigo-800/20 flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">
                     Found {searchResults.length} results
                   </span>
+                  <button
+                    onClick={() => {
+                      const q = searchQuery.trim();
+                      clearSearch();
+                      navigate(`/sitemap?q=${encodeURIComponent(q)}`);
+                    }}
+                    className="text-indigo-500 hover:text-indigo-700 font-medium flex items-center gap-1"
+                  >
+                    View all <ChevronRight className="h-3 w-3" />
+                  </button>
                 </div>
               </div>
             )}
@@ -674,7 +750,7 @@ const HomePage = () => {
               Find the perfect tool for your specific needs
             </p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {categories.map((category) => (
               <CategoryCard
                 key={category.name}
@@ -683,6 +759,7 @@ const HomePage = () => {
                 color={category.color}
                 description={category.description}
                 delay={category.delay}
+                toolCount={tools.filter((t) => t.category === category.name.toLowerCase().replace(" ", "-")).length}
               />
             ))}
           </div>
@@ -930,15 +1007,13 @@ const HomePage = () => {
 
       {/* Back to Top Button */}
       {showBackToTop && (
-        <div className="fixed bottom-6 right-6 rounded-full p-3 shadow-lg bg-gradient-to-tr from-indigo-500 to-violet-500 hover:shadow-md hover:shadow-indigo-500/20 transform hover:scale-110 transition-all duration-300 border-none">
-          <Button
-            className="rounded-full p-3 shadow-lg bg-gradient-to-tr from-indigo-500 to-violet-500 hover:shadow-md hover:shadow-indigo-500/20 transform hover:scale-110 transition-all duration-300 border-none"
-            onClick={scrollToTop}
-            aria-label="Back to top"
-          >
-            <ArrowUp className="h-5 w-5 text-white" aria-hidden="true" />
-          </Button>
-        </div>
+        <Button
+          className="fixed bottom-6 right-6 rounded-full w-12 h-12 p-0 shadow-lg bg-gradient-to-tr from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 hover:shadow-md hover:shadow-indigo-500/20 transform hover:scale-110 transition-all duration-300 border-none"
+          onClick={scrollToTop}
+          aria-label="Back to top"
+        >
+          <ArrowUp className="h-5 w-5 text-white" aria-hidden="true" />
+        </Button>
       )}
     </>
   );

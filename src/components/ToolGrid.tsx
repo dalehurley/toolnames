@@ -20,6 +20,9 @@ const categoryNames: Record<string, string> = {
   utilities: "Utilities",
   "file-tools": "File Tools",
   seo: "SEO Tools",
+  productivity: "Productivity",
+  design: "Design",
+  lottery: "Lottery",
 };
 
 interface ToolCardProps {
