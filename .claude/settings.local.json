@@ -9,7 +9,9 @@
       "Bash(npx tsc:*)",
       "Bash(npm ci:*)",
       "Bash(# Check if react-beautiful-dnd is in node_modules and also check if @types/react-helmet is used \\(react-helmet may be replaced\\) ls /Users/dale.hurley/Code/GitHub/toolnames/node_modules | grep -E \"\"^react-helmet$|^@types\"\")",
-      "Bash(xargs git rm:*)"
+      "Bash(xargs git rm:*)",
+      "Bash(ls:*)",
+      "Bash(git add:*)"
     ]
   }
 }

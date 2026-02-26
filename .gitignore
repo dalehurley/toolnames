@@ -30,6 +30,12 @@ next-env.d.ts
 
 # Generated TypeScript declaration files (emitDeclarationOnly build artifacts)
 src/**/*.d.ts
+# Except handwritten ambient module declarations
+!src/types/cytoscape-cose-bilkent.d.ts
+!src/types/react-simple-maps.d.ts
+!src/utils/schemaUtils.d.ts
+!src/components/ui/progress.d.ts
+!src/vite-env.d.ts
 
 # Editor directories and files
 .idea/
