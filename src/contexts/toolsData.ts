@@ -82,6 +82,20 @@ import {
   BookOpenCheck,
   AlignLeft,
   ScanLine,
+  Mic,
+  MapPin,
+  Smartphone,
+  Database,
+  Sun,
+  Clipboard,
+  Clapperboard,
+  Activity,
+  Bell,
+  Paintbrush,
+  Vibrate,
+  Share2,
+  Wifi,
+  Globe,
 } from "lucide-react";
 import { NetworkLatencySimulator } from "@/components/tools/utilities/NetworkLatencySimulator";
 import {
@@ -148,6 +162,21 @@ import { AsciiArtGenerator } from "@/components/tools/generators/AsciiArtGenerat
 import { NumberToWords } from "@/components/tools/converters/NumberToWords";
 import { TypographyScaleGenerator } from "@/components/tools/design/TypographyScaleGenerator";
 import { ImageMetadataViewer } from "@/components/tools/file-tools/ImageMetadataViewer";
+import { AudioWaveformAnalyzer } from "@/components/tools/html5-apis/AudioWaveformAnalyzer";
+import { VoiceToText } from "@/components/tools/html5-apis/VoiceToText";
+import { GeolocationTool } from "@/components/tools/html5-apis/GeolocationTool";
+import { DeviceOrientationVisualizer } from "@/components/tools/html5-apis/DeviceOrientationVisualizer";
+import { BrowserStorageInspector } from "@/components/tools/html5-apis/BrowserStorageInspector";
+import { ScreenWakeLock } from "@/components/tools/html5-apis/ScreenWakeLock";
+import { ClipboardInspector } from "@/components/tools/html5-apis/ClipboardInspector";
+import { MediaRecorderTool } from "@/components/tools/html5-apis/MediaRecorderTool";
+import { PerformanceMonitor } from "@/components/tools/html5-apis/PerformanceMonitor";
+import { WebNotificationsBuilder } from "@/components/tools/html5-apis/WebNotificationsBuilder";
+import { CanvasDrawingTool } from "@/components/tools/html5-apis/CanvasDrawingTool";
+import { VibrationTester } from "@/components/tools/html5-apis/VibrationTester";
+import { WebShareTool } from "@/components/tools/html5-apis/WebShareTool";
+import { NetworkInfoMonitor } from "@/components/tools/html5-apis/NetworkInfoMonitor";
+import { PWAManifestGenerator } from "@/components/tools/html5-apis/PWAManifestGenerator";
 
 // Tool type definition
 export interface Tool {
@@ -1297,6 +1326,172 @@ export const availableTools: Tool[] = [
     pageTitle: "Image Metadata & EXIF Viewer: View Photo Information | ToolNames",
     metaDescription: "View image metadata including dimensions, file size, EXIF camera data (make, model, exposure settings). All processing is local — no uploads needed.",
   },
+  // ── HTML5 API Tools ──────────────────────────────────────────────────────────
+  {
+    id: "audio-waveform-analyzer",
+    title: "Audio Waveform Analyzer",
+    description: "Visualize audio waveforms and frequency spectrum in real time. Upload files or use your microphone.",
+    icon: Music,
+    category: "html5-apis",
+    component: AudioWaveformAnalyzer,
+    url: "/html5-apis/audio-waveform-analyzer",
+    pageTitle: "Audio Waveform Analyzer: Visualize Sound with Web Audio API | ToolNames",
+    metaDescription: "Analyze and visualize audio waveforms and frequency spectra using the Web Audio API. Upload audio files or use your microphone. 100% client-side.",
+  },
+  {
+    id: "voice-to-text",
+    title: "Voice to Text Transcription",
+    description: "Real-time speech recognition in 12+ languages using the Web Speech API.",
+    icon: Mic,
+    category: "html5-apis",
+    component: VoiceToText,
+    url: "/html5-apis/voice-to-text",
+    pageTitle: "Voice to Text Transcription: Real-Time Speech Recognition | ToolNames",
+    metaDescription: "Transcribe speech to text in real time using the Web Speech API. Supports 12+ languages. Download or copy your transcript. No server uploads.",
+  },
+  {
+    id: "geolocation-tool",
+    title: "Geolocation & Distance Calculator",
+    description: "Capture GPS coordinates and calculate distances between multiple points.",
+    icon: MapPin,
+    category: "html5-apis",
+    component: GeolocationTool,
+    url: "/html5-apis/geolocation-tool",
+    pageTitle: "Geolocation & Distance Calculator: GPS Coordinates Tool | ToolNames",
+    metaDescription: "Get your GPS coordinates and calculate distances between multiple locations using the browser Geolocation API. Haversine formula. No server required.",
+  },
+  {
+    id: "device-orientation-visualizer",
+    title: "Device Orientation Visualizer",
+    description: "Visualize device tilt, rotation, and acceleration in real time with a 3D cube.",
+    icon: Smartphone,
+    category: "html5-apis",
+    component: DeviceOrientationVisualizer,
+    url: "/html5-apis/device-orientation-visualizer",
+    pageTitle: "Device Orientation & Motion Visualizer: Gyroscope & Accelerometer | ToolNames",
+    metaDescription: "Visualize device orientation (alpha, beta, gamma) and linear acceleration using the Device Orientation API. Interactive 3D cube. Best on mobile.",
+  },
+  {
+    id: "browser-storage-inspector",
+    title: "Browser Storage Inspector",
+    description: "View, edit, and manage localStorage & sessionStorage without DevTools.",
+    icon: Database,
+    category: "html5-apis",
+    component: BrowserStorageInspector,
+    url: "/html5-apis/browser-storage-inspector",
+    pageTitle: "Browser Storage Inspector: View & Edit localStorage | ToolNames",
+    metaDescription: "Inspect, add, edit, and delete localStorage and sessionStorage entries directly in your browser. Export as JSON. Developer debugging tool.",
+  },
+  {
+    id: "screen-wake-lock",
+    title: "Screen Wake Lock & Battery Monitor",
+    description: "Prevent your screen from sleeping and monitor battery status in real time.",
+    icon: Sun,
+    category: "html5-apis",
+    component: ScreenWakeLock,
+    url: "/html5-apis/screen-wake-lock",
+    pageTitle: "Screen Wake Lock & Battery Monitor: Keep Screen On | ToolNames",
+    metaDescription: "Keep your screen awake using the Screen Wake Lock API. Monitor battery level, charging status, and estimated time using the Battery Status API.",
+  },
+  {
+    id: "clipboard-inspector",
+    title: "Clipboard Inspector",
+    description: "Read, inspect, analyze, and write clipboard data with type detection.",
+    icon: Clipboard,
+    category: "html5-apis",
+    component: ClipboardInspector,
+    url: "/html5-apis/clipboard-inspector",
+    pageTitle: "Clipboard Inspector: Read & Analyze Clipboard Data | ToolNames",
+    metaDescription: "Inspect clipboard contents, detect data types (JSON, HTML, URL, UUID), view history, and write text to clipboard. Uses the Clipboard API.",
+  },
+  {
+    id: "media-recorder",
+    title: "Media Recorder",
+    description: "Record audio, video from your webcam, or capture your screen with one click.",
+    icon: Clapperboard,
+    category: "html5-apis",
+    component: MediaRecorderTool,
+    url: "/html5-apis/media-recorder",
+    pageTitle: "Media Recorder: Record Audio, Video & Screen | ToolNames",
+    metaDescription: "Record audio, webcam video, or your entire screen using the MediaRecorder API and Screen Capture API. Download recordings locally. No server uploads.",
+  },
+  {
+    id: "performance-monitor",
+    title: "Performance Monitor",
+    description: "Analyze page load timing, resource waterfall, FPS counter, and JS memory usage.",
+    icon: Activity,
+    category: "html5-apis",
+    component: PerformanceMonitor,
+    url: "/html5-apis/performance-monitor",
+    pageTitle: "Browser Performance Monitor: FPS, Timing & Memory | ToolNames",
+    metaDescription: "Monitor browser performance metrics: navigation timing, resource waterfall, real-time FPS counter, and JavaScript heap memory. Uses the Performance API.",
+  },
+  {
+    id: "web-notifications-builder",
+    title: "Web Notifications Builder",
+    description: "Build, preview, and schedule native browser notifications with full control.",
+    icon: Bell,
+    category: "html5-apis",
+    component: WebNotificationsBuilder,
+    url: "/html5-apis/web-notifications-builder",
+    pageTitle: "Web Notifications Builder: Test Browser Notifications | ToolNames",
+    metaDescription: "Create and test native browser notifications using the Notifications API. Schedule delayed notifications, set silent/persistent options, and preview your notification.",
+  },
+  {
+    id: "canvas-drawing-tool",
+    title: "Canvas Drawing Tool",
+    description: "Draw and sketch with pen, shapes, fill, and text. Export as PNG using Canvas API.",
+    icon: Paintbrush,
+    category: "html5-apis",
+    component: CanvasDrawingTool,
+    url: "/html5-apis/canvas-drawing-tool",
+    pageTitle: "Canvas Drawing Tool: Online Sketch & Export PNG | ToolNames",
+    metaDescription: "Draw freehand or use shapes, fill, and text tools on an HTML5 Canvas. Supports undo, opacity, brush size. Export your drawing as a PNG image.",
+  },
+  {
+    id: "vibration-tester",
+    title: "Vibration Pattern Tester",
+    description: "Design and test vibration patterns using the Vibration API on mobile devices.",
+    icon: Smartphone,
+    category: "html5-apis",
+    component: VibrationTester,
+    url: "/html5-apis/vibration-tester",
+    pageTitle: "Vibration Pattern Tester: Test & Design Haptic Patterns | ToolNames",
+    metaDescription: "Design custom vibration patterns and test them on your device using the Vibration API. Visual timeline editor, presets, and raw pattern input.",
+  },
+  {
+    id: "web-share-tool",
+    title: "Web Share Tool",
+    description: "Share content via native OS share sheet or generate platform-specific links.",
+    icon: Share2,
+    category: "html5-apis",
+    component: WebShareTool,
+    url: "/html5-apis/web-share-tool",
+    pageTitle: "Web Share Tool: Native Share API & Social Links | ToolNames",
+    metaDescription: "Share content using the native Web Share API or generate platform-specific share links for Twitter, Facebook, LinkedIn, WhatsApp, and more.",
+  },
+  {
+    id: "network-info-monitor",
+    title: "Network Info Monitor",
+    description: "Monitor connection type, estimated speed, RTT, and run a client-side speed test.",
+    icon: Wifi,
+    category: "html5-apis",
+    component: NetworkInfoMonitor,
+    url: "/html5-apis/network-info-monitor",
+    pageTitle: "Network Info Monitor: Connection Speed & Type | ToolNames",
+    metaDescription: "View network connection type (2G/3G/4G), downlink speed, RTT, and data saver status using the Network Information API. Includes client-side speed test.",
+  },
+  {
+    id: "pwa-manifest-generator",
+    title: "PWA Manifest Generator",
+    description: "Generate manifest.json, service worker, and HTML meta tags for Progressive Web Apps.",
+    icon: Globe,
+    category: "html5-apis",
+    component: PWAManifestGenerator,
+    url: "/html5-apis/pwa-manifest-generator",
+    pageTitle: "PWA Manifest Generator: Create manifest.json & Service Worker | ToolNames",
+    metaDescription: "Generate a complete manifest.json, service worker (Cache API), and HTML meta tags for your Progressive Web App. Includes PWA completeness scoring.",
+  },
 ];
 
 // Utility function to get a category's readable name
@@ -1311,7 +1506,8 @@ export const getCategoryName = (categoryId: string): string => {
     seo: "SEO Tools",
     design: "Design Tools",
     productivity: "Productivity Tools",
-    lottery: "Lottery Tools"
+    lottery: "Lottery Tools",
+    "html5-apis": "HTML5 API Tools",
   };
 
   return categories[categoryId] || categoryId;
