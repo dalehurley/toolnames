@@ -1,0 +1,446 @@
+import React, { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  Legend,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
+import { useHabits } from "@/contexts/HabitContext";
+import {
+  getDatesBetween,
+  formatDateString,
+  getTodayString,
+} from "@/utils/habitUtils";
+import {
+  ChartBarIcon,
+  Flame,
+  TrendingUp,
+  PieChart as PieChartIcon,
+  Calendar,
+} from "lucide-react";
+
+const HabitStats: React.FC = () => {
+  const { habits, entries, statistics } = useHabits();
+  const [selectedHabit, setSelectedHabit] = useState<string>("");
+  const [timeRange, setTimeRange] = useState<"week" | "month" | "year">("week");
+
+  useEffect(() => {
+    if (habits.length > 0 && (!selectedHabit || !habits.find(h => h.id === selectedHabit))) {
+      const activeHabits = habits.filter(h => !h.archivedAt);
+      if (activeHabits.length > 0) {
+        setSelectedHabit(activeHabits[0].id);
+      } else if (habits.length > 0) {
+        setSelectedHabit(habits[0].id);
+      }
+    }
+  }, [habits, selectedHabit]);
+
+  const habit = habits.find((h) => h.id === selectedHabit);
+  const habitEntries = entries[selectedHabit || ""] || [];
+  const habitStats = statistics[selectedHabit || ""];
+
+  const calculateDateRange = () => {
+    const today = new Date();
+    let startDate: Date;
+
+    if (timeRange === "week") {
+      startDate = new Date(today);
+      startDate.setDate(today.getDate() - 7);
+    } else if (timeRange === "month") {
+      startDate = new Date(today);
+      startDate.setMonth(today.getMonth() - 1);
+    } else {
+      startDate = new Date(today);
+      startDate.setFullYear(today.getFullYear() - 1);
+    }
+
+    return { startDate, endDate: today };
+  };
+
+  const prepareCompletionData = () => {
+    if (!habit) return [];
+
+    const { startDate, endDate } = calculateDateRange();
+    const dateStrings = getDatesBetween(startDate, endDate);
+
+    const data = dateStrings.map((dateStr) => {
+      const entry = habitEntries.find((e) => e.date === dateStr);
+      const date = new Date(dateStr);
+
+      return {
+        date: dateStr,
+        displayDate:
+          timeRange === "week" || timeRange === "month"
+            ? date.toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+              })
+            : date.toLocaleDateString("en-US", {
+                month: "short",
+                year: "2-digit",
+              }),
+        completed: entry?.completed ? 1 : 0,
+        missed: entry?.completed ? 0 : 1,
+      };
+    });
+
+    if (timeRange === "year") {
+      const monthlyData: Record<
+        string,
+        {
+          displayDate: string;
+          completed: number;
+          missed: number;
+          total: number;
+        }
+      > = {};
+
+      data.forEach((item) => {
+        const date = new Date(item.date);
+        const monthYear = date.toLocaleDateString("en-US", {
+          month: "short",
+          year: "2-digit",
+        });
+
+        if (!monthlyData[monthYear]) {
+          monthlyData[monthYear] = {
+            displayDate: monthYear,
+            completed: 0,
+            missed: 0,
+            total: 0,
+          };
+        }
+
+        monthlyData[monthYear].completed += item.completed;
+        monthlyData[monthYear].missed += item.missed;
+        monthlyData[monthYear].total += 1;
+      });
+
+      return Object.values(monthlyData);
+    }
+
+    return data;
+  };
+
+  const prepareStreakData = () => {
+    if (!habit || habitEntries.length === 0) return [];
+
+    const streakCounts: Record<number, number> = {};
+    let currentStreak = 0;
+
+    const sortedEntries = [...habitEntries].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+
+    sortedEntries.forEach((entry) => {
+      if (entry.completed) {
+        currentStreak++;
+      } else {
+        if (currentStreak > 0) {
+          streakCounts[currentStreak] = (streakCounts[currentStreak] || 0) + 1;
+          currentStreak = 0;
+        }
+      }
+    });
+
+    if (currentStreak > 0) {
+      streakCounts[currentStreak] = (streakCounts[currentStreak] || 0) + 1;
+    }
+
+    return Object.entries(streakCounts)
+      .map(([streakLength, count]) => ({
+        name: `${streakLength}-day`,
+        value: count,
+      }))
+      .sort((a, b) => parseInt(a.name) - parseInt(b.name));
+  };
+
+  const prepareWeeklyPatternData = () => {
+    if (!habit) return [];
+
+    const daysOfWeek = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ];
+    const completionByDay: Record<
+      string,
+      { completed: number; total: number }
+    > = {};
+
+    daysOfWeek.forEach((day) => {
+      completionByDay[day] = { completed: 0, total: 0 };
+    });
+
+    habitEntries.forEach((entry) => {
+      const date = new Date(entry.date);
+      const dayName = daysOfWeek[date.getDay()];
+
+      completionByDay[dayName].total++;
+      if (entry.completed) {
+        completionByDay[dayName].completed++;
+      }
+    });
+
+    return daysOfWeek.map((day) => ({
+      name: day.slice(0, 3),
+      rate:
+        completionByDay[day].total > 0
+          ? (completionByDay[day].completed / completionByDay[day].total) * 100
+          : 0,
+    }));
+  };
+
+  const completionData = prepareCompletionData();
+  const streakData = prepareStreakData();
+  const weeklyPatternData = prepareWeeklyPatternData();
+
+  const COLORS = [
+    "#4CAF50",
+    "#FF9800",
+    "#2196F3",
+    "#F44336",
+    "#9C27B0",
+    "#3F51B5",
+  ];
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Habit Statistics</CardTitle>
+          <CardDescription>
+            Visualize your progress and identify patterns
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+            <Select
+              value={selectedHabit}
+              onValueChange={(value) => setSelectedHabit(value)}
+            >
+              <SelectTrigger className="w-[240px]">
+                <SelectValue placeholder="Select a habit to analyze" />
+              </SelectTrigger>
+              <SelectContent>
+                {habits.map((habit) => (
+                  <SelectItem key={habit.id} value={habit.id}>
+                    {habit.name} {habit.archivedAt && "(Archived)"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <div className="flex items-center">
+              <span className="text-sm text-muted-foreground mr-2">
+                Time range:
+              </span>
+              <Select
+                value={timeRange}
+                onValueChange={(value: "week" | "month" | "year") =>
+                  setTimeRange(value)
+                }
+              >
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue placeholder="Time range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="week">Week</SelectItem>
+                  <SelectItem value="month">Month</SelectItem>
+                  <SelectItem value="year">Year</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {!selectedHabit && (
+            <div className="text-center py-12 text-muted-foreground">
+              Select a habit to view its statistics
+            </div>
+          )}
+
+          {selectedHabit && habit && (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <Card>
+                  <CardHeader className="py-4 px-6">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Current Streak
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="py-0 px-6">
+                    <div className="flex items-center">
+                      <Flame className="h-5 w-5 mr-2 text-amber-500" />
+                      <span className="text-2xl font-bold">
+                        {habitStats?.currentStreak || 0}
+                      </span>
+                      <span className="text-muted-foreground ml-1">days</span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="py-4 px-6">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Longest Streak
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="py-0 px-6">
+                    <div className="flex items-center">
+                      <TrendingUp className="h-5 w-5 mr-2 text-emerald-500" />
+                      <span className="text-2xl font-bold">
+                        {habitStats?.longestStreak || 0}
+                      </span>
+                      <span className="text-muted-foreground ml-1">days</span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="py-4 px-6">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Completion Rate
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="py-0 px-6">
+                    <div className="flex items-center">
+                      <ChartBarIcon className="h-5 w-5 mr-2 text-blue-500" />
+                      <span className="text-2xl font-bold">
+                        {Math.round((habitStats?.completionRate || 0) * 100)}%
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Tabs defaultValue="completion" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="completion">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Completion History
+                  </TabsTrigger>
+                  <TabsTrigger value="weekly">
+                    <ChartBarIcon className="h-4 w-4 mr-2" />
+                    Weekly Pattern
+                  </TabsTrigger>
+                  <TabsTrigger value="streaks">
+                    <PieChartIcon className="h-4 w-4 mr-2" />
+                    Streak Distribution
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="completion" className="mt-4">
+                  <div className="w-full h-64">
+                    {completionData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={completionData}
+                          margin={{ top: 10, right: 30, left: 0, bottom: 30 }}
+                        >
+                          <CartesianGrid
+                            strokeDasharray="3 3"
+                            vertical={false}
+                          />
+                          <XAxis
+                            dataKey="displayDate"
+                            tick={{ fontSize: 12 }}
+                            angle={-45}
+                            textAnchor="end"
+                          />
+                          <YAxis tickFormatter={(value) => `${value}%`} />
+                          <Tooltip labelFormatter={(value) => value.value + "%"} />
+                          <Legend />
+                          <Bar dataKey="completed" fill="#8884d8" />
+                          <Bar dataKey="missed" fill="#82ca9d" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    )}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="weekly" className="mt-4">
+                  <div className="w-full h-64">
+                    {weeklyPatternData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart
+                          data={weeklyPatternData}
+                          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis
+                            dataKey="name"
+                            tick={{ fontSize: 12 }}
+                          />
+                          <YAxis tickFormatter={(value) => value + "%"} />
+                          <Tooltip labelFormatter={(value) => value + "%"} />
+                          <Legend />
+                          <Line type="monotone" dataKey="rate" stroke="#8884d8" activeDot={{ r: 8 }} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    )}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="streaks" className="mt-4">
+                  <div className="w-full h-64">
+                    {streakData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart width={400} height={400}>
+                          <Pie
+                            data={streakData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            {streakData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip labelFormatter={(value) => value + " streaks"} />
+                          <Legend />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default HabitStats;

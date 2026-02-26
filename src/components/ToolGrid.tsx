@@ -39,16 +39,6 @@ const ToolCard = ({ tool, isFav, onToggleFav }: ToolCardProps) => {
             <div className="flex justify-between items-start">
               <tool.icon className="h-8 w-8 text-primary mb-2" />
               <div className="flex items-center gap-1">
-                {tool.isNew && (
-                  <Badge className="text-xs bg-green-500 hover:bg-green-600 text-white">
-                    New
-                  </Badge>
-                )}
-                {tool.isPopular && !tool.isNew && (
-                  <Badge className="text-xs bg-amber-500 hover:bg-amber-600 text-white">
-                    Popular
-                  </Badge>
-                )}
                 <Badge variant="outline" className="text-xs">
                   {categoryLabel}
                 </Badge>

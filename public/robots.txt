@@ -1,0 +1,30 @@
+User-agent: *
+Allow: /
+
+# Allow all bots to access the sitemap
+Sitemap: https://toolnames.com/sitemap.xml
+
+# Allow indexing of all pages
+Allow: /calculators/
+Allow: /converters/
+Allow: /generators/
+Allow: /utilities/
+Allow: /file-tools/
+Allow: /seo/
+Allow: /productivity/
+Allow: /design/
+Allow: /lottery/
+
+# Specific tool paths
+Allow: /calculators/*
+Allow: /converters/*
+Allow: /generators/*
+Allow: /utilities/*
+Allow: /file-tools/*
+Allow: /seo/*
+Allow: /productivity/*
+Allow: /design/*
+Allow: /lottery/*
+
+# Crawl delay (optional - be conservative)
+Crawl-delay: 1 

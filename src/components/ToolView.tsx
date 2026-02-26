@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useTools } from "@/contexts/ToolsContext";
 import {
@@ -130,16 +129,6 @@ export const ToolView = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-bold">{activeTool.title}</h1>
-                {activeTool.isNew && (
-                  <Badge className="bg-green-500 hover:bg-green-600 text-white text-xs">
-                    New
-                  </Badge>
-                )}
-                {activeTool.isPopular && !activeTool.isNew && (
-                  <Badge className="bg-amber-500 hover:bg-amber-600 text-white text-xs">
-                    Popular
-                  </Badge>
-                )}
               </div>
               <p className="text-muted-foreground text-sm">
                 {activeTool.description}

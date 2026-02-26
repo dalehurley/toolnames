@@ -1,0 +1,1 @@
+export { TailwindComponentMaker } from "./TailwindComponentMaker";

@@ -1,14 +1,27 @@
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createBrowserRouter } from "react-router-dom";
+import { lazy, Suspense } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import HomePage from "@/pages/HomePage";
-import CategoryPage from "@/pages/CategoryPage";
 import ToolPage from "@/pages/ToolPage";
 import NotFoundPage from "@/pages/NotFoundPage";
-import SitemapPage from "@/pages/SitemapPage";
 import CSVExplorer from "@/pages/CSVExplorer";
 import { availableTools } from "@/contexts/toolsData";
 import { UnitConverterPage } from "@/pages/converters/UnitConverterPage";
 import { HashGeneratorPage } from "@/components/pages/HashGeneratorPage";
+import ColorTheoryPage from "@/pages/ColorTheoryPage";
+import ToolView from "@/components/ToolView";
+
+// Lazy load heavy category pages
+const CalculatorsPage = lazy(() => import("@/pages/CalculatorsPage"));
+const ConvertersPage = lazy(() => import("@/pages/ConvertersPage"));
+const GeneratorsPage = lazy(() => import("@/pages/GeneratorsPage"));
+const UtilitiesPage = lazy(() => import("@/pages/UtilitiesPage"));
+const DesignPage = lazy(() => import("@/pages/DesignPage"));
+const SEOPage = lazy(() => import("@/pages/SEOPage"));
+const ProductivityPage = lazy(() => import("@/pages/ProductivityPage"));
+const FileToolsPage = lazy(() => import("@/pages/FileToolsPage"));
+const LotteryPage = lazy(() => import("@/pages/LotteryPage"));
+const LazySitemapPage = lazy(() => import("@/pages/SitemapPage"));
 
 // Create an array of all unit conversion routes
 const unitConverterRoutes = [
@@ -92,6 +105,18 @@ const hashGeneratorRoutes = [
   { algorithm: "sha512" },
 ];
 
+// Loading component
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-[400px]">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+  </div>
+);
+
+// Wrapper for lazy loaded pages
+const LazyWrapper = ({ children }: { children: React.ReactNode }) => (
+  <Suspense fallback={<PageLoader />}>{children}</Suspense>
+);
+
 // Create the router
 export const router = createBrowserRouter([
   {
@@ -100,33 +125,89 @@ export const router = createBrowserRouter([
     errorElement: <NotFoundPage />,
     children: [
       {
-        path: "/",
+        index: true,
         element: <HomePage />,
       },
       // Category routes
       {
-        path: "/calculators",
-        element: <CategoryPage category="calculators" />,
+        path: "calculators",
+        element: (
+          <LazyWrapper>
+            <CalculatorsPage />
+          </LazyWrapper>
+        ),
       },
       {
-        path: "/converters",
-        element: <CategoryPage category="converters" />,
+        path: "converters",
+        element: (
+          <LazyWrapper>
+            <ConvertersPage />
+          </LazyWrapper>
+        ),
       },
       {
-        path: "/generators",
-        element: <CategoryPage category="generators" />,
+        path: "generators",
+        element: (
+          <LazyWrapper>
+            <GeneratorsPage />
+          </LazyWrapper>
+        ),
       },
       {
-        path: "/utilities",
-        element: <CategoryPage category="utilities" />,
+        path: "utilities",
+        element: (
+          <LazyWrapper>
+            <UtilitiesPage />
+          </LazyWrapper>
+        ),
       },
       {
-        path: "/file-tools",
-        element: <CategoryPage category="file-tools" />,
+        path: "design",
+        element: (
+          <LazyWrapper>
+            <DesignPage />
+          </LazyWrapper>
+        ),
       },
       {
-        path: "/seo",
-        element: <CategoryPage category="seo" />,
+        path: "seo",
+        element: (
+          <LazyWrapper>
+            <SEOPage />
+          </LazyWrapper>
+        ),
+      },
+      {
+        path: "productivity",
+        element: (
+          <LazyWrapper>
+            <ProductivityPage />
+          </LazyWrapper>
+        ),
+      },
+      {
+        path: "file-tools",
+        element: (
+          <LazyWrapper>
+            <FileToolsPage />
+          </LazyWrapper>
+        ),
+      },
+      {
+        path: "lottery",
+        element: (
+          <LazyWrapper>
+            <LotteryPage />
+          </LazyWrapper>
+        ),
+      },
+      {
+        path: "sitemap",
+        element: (
+          <LazyWrapper>
+            <LazySitemapPage />
+          </LazyWrapper>
+        ),
       },
 
       // CSV Explorer route
@@ -135,16 +216,26 @@ export const router = createBrowserRouter([
         element: <CSVExplorer />,
       },
 
-      // Sitemap route
+      // File Converter route
       {
-        path: "/sitemap",
-        element: <SitemapPage />,
+        path: "/file-tools/file-converter",
+        element: <ToolView />,
       },
 
-      // Tool routes - dynamically generate routes for each tool
+      // Color Theory route
+      {
+        path: "/color-theory",
+        element: <ColorTheoryPage />,
+      },
+
+      // Dynamic tool routes
       ...availableTools.map((tool) => ({
         path: tool.url,
-        element: <ToolPage toolId={tool.id} />,
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <ToolPage toolId={tool.id} />
+          </Suspense>
+        ),
       })),
 
       // Special routes for unit converter with specific conversions
@@ -168,12 +259,6 @@ export const router = createBrowserRouter([
         path: `/generators/hash-generator/${route.algorithm}`,
         element: <HashGeneratorPage algorithm={route.algorithm} />,
       })),
-
-      // Redirect legacy paths
-      {
-        path: "/app",
-        element: <Navigate to="/" replace />,
-      },
 
       // Catch-all for 404
       {
