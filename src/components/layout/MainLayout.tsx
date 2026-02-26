@@ -12,10 +12,14 @@ import {
   Search,
   Clock,
   Palette,
+  Dices,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useTools } from "@/contexts/ToolsContext";
+import { useTheme } from "@/hooks/useTheme";
 import ScrollToTop from "./ScrollToTop";
 
 interface NavItemProps {
@@ -53,6 +57,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const { setFilterCategory, filterCategory, setActiveTool, tools } =
     useTools();
   const location = useLocation();
+  const { theme, toggleTheme } = useTheme();
 
   // Update filter category and potentially the active tool based on current path
   useEffect(() => {
@@ -71,6 +76,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           "seo",
           "productivity",
           "design",
+          "lottery",
         ].includes(category)
       ) {
         setFilterCategory(category);
@@ -146,6 +152,12 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       label: "SEO Tools",
       id: "seo",
       to: "/seo",
+    },
+    {
+      icon: <Dices className="h-5 w-5" />,
+      label: "Lottery",
+      id: "lottery",
+      to: "/lottery",
     },
   ];
 
@@ -228,6 +240,21 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
             </Link>
           </div>
 
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleTheme}
+            className="md:hidden text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {theme === "dark" ? (
+              <Sun className="h-5 w-5" />
+            ) : (
+              <Moon className="h-5 w-5" />
+            )}
+          </Button>
+
           <nav className="hidden md:flex items-center space-x-1">
             {navItems.map((item) => (
               <Button
@@ -248,6 +275,20 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                 </Link>
               </Button>
             ))}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              className="ml-1 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {theme === "dark" ? (
+                <Sun className="h-5 w-5" />
+              ) : (
+                <Moon className="h-5 w-5" />
+              )}
+            </Button>
           </nav>
         </div>
       </header>
@@ -261,7 +302,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       <footer className="border-t py-8 bg-background">
         <div className="container mx-auto px-4">
           {/* Main footer content */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-8">
             {/* ToolNames Info */}
             <div>
               <h3 className="font-semibold text-foreground mb-3">ToolNames</h3>
@@ -272,12 +313,40 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                 All tools run entirely in your browser - your data never leaves
                 your device
               </p>
-              <Link
-                to="/sitemap"
-                className="text-primary hover:underline text-sm"
-              >
-                Sitemap
-              </Link>
+              <div className="space-y-1">
+                <Link
+                  to="/sitemap"
+                  className="text-primary hover:underline text-sm block"
+                >
+                  Browse All Tools
+                </Link>
+              </div>
+            </div>
+
+            {/* Tool Categories */}
+            <div>
+              <h3 className="font-semibold text-foreground mb-3">Tool Categories</h3>
+              <div className="space-y-1.5">
+                {[
+                  { label: "Calculators", to: "/calculators" },
+                  { label: "Converters", to: "/converters" },
+                  { label: "Generators", to: "/generators" },
+                  { label: "Utilities", to: "/utilities" },
+                  { label: "File Tools", to: "/file-tools" },
+                  { label: "SEO Tools", to: "/seo" },
+                  { label: "Design", to: "/design" },
+                  { label: "Productivity", to: "/productivity" },
+                  { label: "Lottery", to: "/lottery" },
+                ].map((item) => (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    className="text-sm text-muted-foreground hover:text-primary transition-colors block"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
             </div>
 
             {/* Dale Hurley Projects - Column 1 */}
