@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect } from "react";
 import { nanoid } from "nanoid";
-import { Note, NotesState, NotesContextType } from "@/types/notes";
+import { Note, NotesState, NotesContextType, SortBy } from "@/types/notes";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 // Initial state
@@ -9,6 +9,8 @@ const initialState: NotesState = {
   currentNoteId: null,
   searchQuery: "",
   selectedTags: [],
+  sortBy: "updated",
+  onlyPinned: false,
 };
 
 // Action types
@@ -20,6 +22,9 @@ type Action =
   | { type: "SET_SEARCH_QUERY"; payload: string }
   | { type: "TOGGLE_TAG"; payload: string }
   | { type: "TOGGLE_PINNED"; payload: string }
+  | { type: "DUPLICATE_NOTE"; payload: Note }
+  | { type: "SET_SORT_BY"; payload: SortBy }
+  | { type: "SET_ONLY_PINNED"; payload: boolean }
   | { type: "IMPORT_NOTES"; payload: Note[] }
   | { type: "SET_NOTES"; payload: Note[] };
 
@@ -73,6 +78,22 @@ const notesReducer = (state: NotesState, action: Action): NotesState => {
             ? { ...note, isPinned: !note.isPinned, updatedAt: Date.now() }
             : note
         ),
+      };
+    case "DUPLICATE_NOTE":
+      return {
+        ...state,
+        notes: [action.payload, ...state.notes],
+        currentNoteId: action.payload.id,
+      };
+    case "SET_SORT_BY":
+      return {
+        ...state,
+        sortBy: action.payload,
+      };
+    case "SET_ONLY_PINNED":
+      return {
+        ...state,
+        onlyPinned: action.payload,
       };
     case "IMPORT_NOTES":
       return {
@@ -154,6 +175,31 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({
     dispatch({ type: "TOGGLE_PINNED", payload: id });
   };
 
+  // Duplicate a note
+  const duplicateNote = (id: string) => {
+    const note = state.notes.find((n) => n.id === id);
+    if (!note) return;
+    const newNote: Note = {
+      ...note,
+      id: nanoid(),
+      title: `${note.title} (Copy)`,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      isPinned: false,
+    };
+    dispatch({ type: "DUPLICATE_NOTE", payload: newNote });
+  };
+
+  // Set sort order
+  const setSortBy = (sortBy: SortBy) => {
+    dispatch({ type: "SET_SORT_BY", payload: sortBy });
+  };
+
+  // Set pinned-only filter
+  const setOnlyPinned = (onlyPinned: boolean) => {
+    dispatch({ type: "SET_ONLY_PINNED", payload: onlyPinned });
+  };
+
   // Export notes to JSON
   const exportNotes = () => {
     const dataStr = JSON.stringify(state.notes, null, 2);
@@ -186,6 +232,9 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({
     searchNotes,
     toggleTag,
     togglePinned,
+    duplicateNote,
+    setSortBy,
+    setOnlyPinned,
     exportNotes,
     importNotes,
   };

@@ -24,12 +24,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SortBy } from "@/types/notes";
 
 export const AdvancedSearch: React.FC = () => {
   const {
-    state: { notes, searchQuery, selectedTags },
+    state: { notes, searchQuery, selectedTags, sortBy, onlyPinned },
     searchNotes,
     toggleTag,
+    setSortBy,
+    setOnlyPinned,
   } = useNotes();
 
   // Get all unique tags across all notes
@@ -37,10 +40,7 @@ export const AdvancedSearch: React.FC = () => {
     new Set(notes.flatMap((note) => note.tags))
   ).sort();
 
-  // Advanced search state
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
-  const [sortBy, setSortBy] = useState<string>("updated");
-  const [onlyPinned, setOnlyPinned] = useState<boolean>(false);
 
   // Clear all filters
   const clearFilters = () => {
@@ -129,13 +129,16 @@ export const AdvancedSearch: React.FC = () => {
             </div>
           </div>
 
-          {/* Sort and filter options */}
+          {/* Sort and filter options — now wired to context state */}
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1.5">
               <Label htmlFor="sort-by" className="text-xs font-medium">
                 Sort by
               </Label>
-              <Select value={sortBy} onValueChange={setSortBy}>
+              <Select
+                value={sortBy}
+                onValueChange={(v) => setSortBy(v as SortBy)}
+              >
                 <SelectTrigger id="sort-by" className="h-8 text-xs">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
