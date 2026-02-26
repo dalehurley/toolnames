@@ -92,6 +92,21 @@ export const BoardStats = ({ board, onClose }: BoardStatsProps) => {
       ? Math.round((cardsWithAssignee / totalCards) * 100)
       : 0;
 
+    // Overdue cards
+    const now = new Date();
+    const overdueCards = Object.values(board.cards).filter(
+      (card) => card.dueDate && new Date(card.dueDate) < now
+    ).length;
+
+    // Story points
+    const cardsWithPoints = Object.values(board.cards).filter(
+      (card) => card.storyPoints !== undefined && card.storyPoints !== null
+    );
+    const totalStoryPoints = cardsWithPoints.reduce(
+      (sum, card) => sum + (card.storyPoints ?? 0),
+      0
+    );
+
     return {
       totalCards,
       cardsPerColumn,
@@ -102,6 +117,8 @@ export const BoardStats = ({ board, onClose }: BoardStatsProps) => {
       dueDatePercentage,
       cardsWithAssignee,
       assigneePercentage,
+      overdueCards,
+      totalStoryPoints,
     };
   }, [board]);
 
@@ -207,6 +224,20 @@ export const BoardStats = ({ board, onClose }: BoardStatsProps) => {
                   {stats.assigneePercentage}%
                 </div>
                 <div className="text-xs text-gray-500">Assigned</div>
+              </div>
+
+              <div className={`p-2 rounded ${stats.overdueCards > 0 ? "bg-red-100 dark:bg-red-900/30" : "bg-gray-100 dark:bg-gray-800"}`}>
+                <div className={`text-2xl font-bold ${stats.overdueCards > 0 ? "text-red-600 dark:text-red-400" : ""}`}>
+                  {stats.overdueCards}
+                </div>
+                <div className="text-xs text-gray-500">Overdue Cards</div>
+              </div>
+
+              <div className="bg-gray-100 dark:bg-gray-800 p-2 rounded">
+                <div className="text-2xl font-bold">
+                  {stats.totalStoryPoints}
+                </div>
+                <div className="text-xs text-gray-500">Total Story Points</div>
               </div>
             </div>
           </div>

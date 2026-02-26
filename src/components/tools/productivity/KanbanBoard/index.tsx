@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { nanoid } from "nanoid";
 import {
   DndContext,
@@ -30,6 +30,7 @@ import { TemplateManager } from "./TemplateManager";
 
 // Initial data for an empty Kanban board
 const initialData: KanbanBoardType = {
+  name: "My Kanban Board",
   columns: [
     { id: "todo", title: "To Do", cardIds: [] },
     { id: "in-progress", title: "In Progress", cardIds: [], limit: 3 },
@@ -187,11 +188,13 @@ const KanbanBoard = () => {
     searchTerm: "",
     priorities: ["low", "medium", "high"],
     tags: [],
+    assignees: [],
   });
   const [showStats, setShowStats] = useState(false);
   const [templates, setTemplates] = useState<CardTemplate[]>([]);
   const [showTemplateManager, setShowTemplateManager] = useState(false);
   const [editingCardId, setEditingCardId] = useState<string | null>(null);
+  const importFileRef = useRef<HTMLInputElement>(null);
 
   // Initialize local storage or use sample data
   useEffect(() => {
@@ -531,6 +534,109 @@ const KanbanBoard = () => {
     localStorage.removeItem("kanban-board");
   };
 
+  // Rename the board
+  const handleRenameBoard = (name: string) => {
+    setBoard((prev) => ({ ...prev, name }));
+  };
+
+  // Export board as JSON
+  const handleExportBoard = () => {
+    const dataStr = JSON.stringify(board, null, 2);
+    const blob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${board.name || "kanban-board"}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Import board from JSON file
+  const handleImportBoard = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const imported = JSON.parse(e.target?.result as string) as KanbanBoardType;
+        if (imported.columns && imported.cards && imported.columnOrder) {
+          setBoard(imported);
+          localStorage.setItem("kanban-board", JSON.stringify(imported));
+        }
+      } catch {
+        // Silently ignore invalid JSON
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  // Move a card to a different column
+  const handleMoveCard = (cardId: string, targetColumnId: string) => {
+    setBoard((prev) => {
+      // Find the source column
+      const sourceColumn = prev.columns.find((col) => col.cardIds.includes(cardId));
+      if (!sourceColumn || sourceColumn.id === targetColumnId) return prev;
+
+      const updatedColumns = prev.columns.map((col) => {
+        if (col.id === sourceColumn.id) {
+          return { ...col, cardIds: col.cardIds.filter((id) => id !== cardId) };
+        }
+        if (col.id === targetColumnId) {
+          return { ...col, cardIds: [...col.cardIds, cardId] };
+        }
+        return col;
+      });
+
+      return { ...prev, columns: updatedColumns };
+    });
+  };
+
+  // Move a card to the top of its column
+  const handleMoveCardToTop = (cardId: string) => {
+    setBoard((prev) => {
+      const updatedColumns = prev.columns.map((col) => {
+        if (col.cardIds.includes(cardId)) {
+          const newIds = col.cardIds.filter((id) => id !== cardId);
+          return { ...col, cardIds: [cardId, ...newIds] };
+        }
+        return col;
+      });
+      return { ...prev, columns: updatedColumns };
+    });
+  };
+
+  // Move a card to the bottom of its column
+  const handleMoveCardToBottom = (cardId: string) => {
+    setBoard((prev) => {
+      const updatedColumns = prev.columns.map((col) => {
+        if (col.cardIds.includes(cardId)) {
+          const newIds = col.cardIds.filter((id) => id !== cardId);
+          return { ...col, cardIds: [...newIds, cardId] };
+        }
+        return col;
+      });
+      return { ...prev, columns: updatedColumns };
+    });
+  };
+
+  // Toggle column collapsed state
+  const handleToggleCollapseColumn = (columnId: string) => {
+    setBoard((prev) => {
+      const updatedColumns = prev.columns.map((col) =>
+        col.id === columnId ? { ...col, isCollapsed: !col.isCollapsed } : col
+      );
+      return { ...prev, columns: updatedColumns };
+    });
+  };
+
+  // Set sort order for a column
+  const handleSetColumnSortOrder = (columnId: string, sortOrder: KanbanColumn["sortOrder"]) => {
+    setBoard((prev) => {
+      const updatedColumns = prev.columns.map((col) =>
+        col.id === columnId ? { ...col, sortOrder } : col
+      );
+      return { ...prev, columns: updatedColumns };
+    });
+  };
+
   // Get all unique tags across all cards
   const allTags = useMemo(() => {
     const tagSet = new Set<string>();
@@ -540,12 +646,22 @@ const KanbanBoard = () => {
     return Array.from(tagSet);
   }, [board.cards]);
 
+  // Get all unique assignees across all cards
+  const allAssignees = useMemo(() => {
+    const assigneeSet = new Set<string>();
+    Object.values(board.cards).forEach((card) => {
+      if (card.assignee) assigneeSet.add(card.assignee);
+    });
+    return Array.from(assigneeSet);
+  }, [board.cards]);
+
   // Apply filters to cards
   const filteredCards = useMemo(() => {
     if (
       !filters.searchTerm &&
       filters.priorities.length === 3 &&
-      filters.tags.length === 0
+      filters.tags.length === 0 &&
+      filters.assignees.length === 0
     ) {
       return board.cards; // No filters applied
     }
@@ -567,7 +683,11 @@ const KanbanBoard = () => {
         filters.tags.length === 0 ||
         filters.tags.some((tag: string) => card.tags.includes(tag));
 
-      if (matchesSearch && matchesPriority && matchesTags) {
+      const matchesAssignee =
+        filters.assignees.length === 0 ||
+        (card.assignee && filters.assignees.includes(card.assignee));
+
+      if (matchesSearch && matchesPriority && matchesTags && matchesAssignee) {
         result[id] = card;
       }
     });
@@ -740,13 +860,31 @@ const KanbanBoard = () => {
 
   return (
     <div className="p-4 flex flex-col h-full">
+      <input
+        ref={importFileRef}
+        type="file"
+        accept=".json"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) {
+            handleImportBoard(file);
+            e.target.value = "";
+          }
+        }}
+      />
       <BoardHeader
         onAddColumn={handleAddColumn}
         onLoadSample={handleLoadSampleData}
         onClearBoard={handleClearBoard}
         onFilter={handleFilter}
         availableTags={allTags}
+        availableAssignees={allAssignees}
         hideLoadSample={hasData}
+        boardName={board.name || "My Kanban Board"}
+        onRenameBoard={handleRenameBoard}
+        onExportBoard={handleExportBoard}
+        onImportBoard={() => importFileRef.current?.click()}
       />
 
       {showStats && (
@@ -786,15 +924,46 @@ const KanbanBoard = () => {
             const column = board.columns.find((col) => col.id === columnId)!;
 
             // Filter cards for this column based on applied filters
-            const columnCards = column.cardIds
+            let columnCards = column.cardIds
               .filter((cardId) => filteredCards[cardId]) // Only show cards that pass the filter
               .map((cardId) => board.cards[cardId]);
+
+            // Apply column sort order
+            if (column.sortOrder && column.sortOrder !== "none") {
+              columnCards = [...columnCards].sort((a, b) => {
+                switch (column.sortOrder) {
+                  case "priority-desc": {
+                    const order = { high: 0, medium: 1, low: 2 };
+                    return order[a.priority] - order[b.priority];
+                  }
+                  case "priority-asc": {
+                    const order = { high: 0, medium: 1, low: 2 };
+                    return order[b.priority] - order[a.priority];
+                  }
+                  case "due-date-asc":
+                    if (!a.dueDate) return 1;
+                    if (!b.dueDate) return -1;
+                    return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+                  case "due-date-desc":
+                    if (!a.dueDate) return 1;
+                    if (!b.dueDate) return -1;
+                    return new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime();
+                  case "created-asc":
+                    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+                  case "created-desc":
+                    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                  default:
+                    return 0;
+                }
+              });
+            }
 
             return (
               <Column
                 key={column.id}
                 column={column}
                 cards={columnCards}
+                allColumns={board.columns}
                 onAddCard={() => {
                   setShowAddCard(true);
                   setTargetColumn(column.id);
@@ -807,15 +976,21 @@ const KanbanBoard = () => {
                 onEditColumn={handleEditColumn}
                 onAddFromTemplate={handleAddFromTemplate}
                 templates={templates}
+                onToggleCollapse={handleToggleCollapseColumn}
+                onSetSortOrder={handleSetColumnSortOrder}
               >
                 {columnCards.map((card) => (
                   <Card
                     key={card.id}
                     card={card}
+                    allColumns={board.columns}
                     onDelete={handleDeleteCard}
                     onEdit={handleEditCard}
                     onDuplicate={handleDuplicateCard}
                     onSaveTemplate={handleSaveTemplate}
+                    onMoveCard={handleMoveCard}
+                    onMoveToTop={handleMoveCardToTop}
+                    onMoveToBottom={handleMoveCardToBottom}
                     isEditing={card.id === editingCardId}
                     onCloseEdit={() => setEditingCardId(null)}
                   />

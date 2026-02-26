@@ -8,6 +8,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { KanbanCard, KanbanColumn, CardTemplate } from "@/types/kanban";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import {
   PlusCircle,
   MoreVertical,
@@ -20,6 +21,8 @@ import {
   Library,
   Plus,
   ChevronDown,
+  ChevronRight,
+  ArrowUpDown,
 } from "lucide-react";
 import {
   Card as UICard,
@@ -52,6 +55,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 interface ColumnProps {
   column: KanbanColumn;
   cards: KanbanCard[];
+  allColumns?: KanbanColumn[];
   onAddCard: () => void;
   onDeleteCard: (id: string) => void;
   onEditCard: (id: string, data: Partial<KanbanCard>) => void;
@@ -66,6 +70,8 @@ interface ColumnProps {
   ) => void;
   onAddFromTemplate?: (columnId: string, templateId?: string) => void;
   templates?: CardTemplate[];
+  onToggleCollapse?: (columnId: string) => void;
+  onSetSortOrder?: (columnId: string, sortOrder: KanbanColumn["sortOrder"]) => void;
   children?: React.ReactNode;
 }
 
@@ -98,6 +104,16 @@ const priorityColors = {
   low: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
 };
 
+const SORT_LABELS: Record<NonNullable<KanbanColumn["sortOrder"]>, string> = {
+  none: "None",
+  "priority-desc": "Priority (High → Low)",
+  "priority-asc": "Priority (Low → High)",
+  "due-date-asc": "Due Date (Soonest)",
+  "due-date-desc": "Due Date (Latest)",
+  "created-asc": "Oldest First",
+  "created-desc": "Newest First",
+};
+
 const Column = ({
   column,
   cards,
@@ -107,6 +123,8 @@ const Column = ({
   onEditColumn,
   onAddFromTemplate,
   templates = [],
+  onToggleCollapse,
+  onSetSortOrder,
   children,
 }: ColumnProps) => {
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -181,169 +199,272 @@ const Column = ({
     return acc;
   }, {} as Record<string, CardTemplate[]>);
 
+  const isCollapsed = column.isCollapsed ?? false;
+  const wipPercentage = column.limit ? Math.min((cards.length / column.limit) * 100, 100) : 0;
+
   return (
     <UICard
       ref={setNodeRef}
       style={style}
-      className={`flex flex-col min-w-[300px] max-w-[300px] h-full ${getColumnBackground()} shadow-sm ${
+      className={`flex flex-col ${isCollapsed ? "min-w-[56px] max-w-[56px]" : "min-w-[300px] max-w-[300px]"} h-full ${getColumnBackground()} shadow-sm ${
         isDragging ? "opacity-50" : ""
-      }`}
+      } transition-all duration-200`}
       {...attributes}
     >
       <CardHeader className="pb-2 pt-4 px-3 flex-shrink-0">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
+        {isCollapsed ? (
+          /* Collapsed view: vertical title + expand button */
+          <div className="flex flex-col items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0"
+              onClick={() => onToggleCollapse?.(column.id)}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
             <div
-              className="cursor-move mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              className="cursor-move text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               {...listeners}
             >
               <GripVertical className="h-4 w-4" />
             </div>
-            <h3 className="text-sm font-medium">{column.title}</h3>
-            <Badge variant="secondary" className="ml-2 text-xs">
+            <span
+              className="text-xs font-medium writing-mode-vertical truncate max-h-32"
+              style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}
+            >
+              {column.title}
+            </span>
+            <Badge variant="secondary" className="text-xs px-1">
               {cards.length}
-              {column.limit ? `/${column.limit}` : ""}
             </Badge>
           </div>
+        ) : (
+          /* Normal view */
+          <>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div
+                  className="cursor-move mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  {...listeners}
+                >
+                  <GripVertical className="h-4 w-4" />
+                </div>
+                <h3 className="text-sm font-medium">{column.title}</h3>
+                <Badge variant="secondary" className="ml-2 text-xs">
+                  {cards.length}
+                  {column.limit ? `/${column.limit}` : ""}
+                </Badge>
+              </div>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Column
-              </DropdownMenuItem>
+              <div className="flex items-center gap-1">
+                {/* Collapse button */}
+                {onToggleCollapse && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0"
+                    title="Collapse column"
+                    onClick={() => onToggleCollapse(column.id)}
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                )}
 
-              <DropdownMenuItem onClick={() => setShowColorPicker(true)}>
-                <Palette className="h-4 w-4 mr-2" />
-                Change Color
-              </DropdownMenuItem>
+                {/* Sort dropdown */}
+                {onSetSortOrder && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`h-7 w-7 p-0 ${column.sortOrder && column.sortOrder !== "none" ? "text-primary" : ""}`}
+                        title="Sort cards"
+                      >
+                        <ArrowUpDown className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Sort Cards By</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {(Object.keys(SORT_LABELS) as KanbanColumn["sortOrder"][]).map((key) => (
+                        <DropdownMenuItem
+                          key={key}
+                          onClick={() => onSetSortOrder(column.id, key)}
+                          className="flex items-center justify-between"
+                        >
+                          {SORT_LABELS[key!]}
+                          {column.sortOrder === key && <Check className="h-4 w-4 ml-2" />}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
 
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="text-red-500 focus:text-red-500"
-                onClick={() => setShowDeleteDialog(true)}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete Column
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Column
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem onClick={() => setShowColorPicker(true)}>
+                      <Palette className="h-4 w-4 mr-2" />
+                      Change Color
+                    </DropdownMenuItem>
+
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-red-500 focus:text-red-500"
+                      onClick={() => setShowDeleteDialog(true)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Column
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
+
+            {/* WIP limit progress bar */}
+            {column.limit && (
+              <div className="mt-2">
+                <Progress
+                  value={wipPercentage}
+                  className={`h-1 ${
+                    isAtLimit
+                      ? "[&>div]:bg-red-500"
+                      : wipPercentage >= 75
+                      ? "[&>div]:bg-amber-500"
+                      : "[&>div]:bg-green-500"
+                  }`}
+                />
+                <p className="text-xs text-gray-400 mt-0.5">
+                  WIP: {cards.length}/{column.limit}
+                </p>
+              </div>
+            )}
+          </>
+        )}
       </CardHeader>
 
-      <CardContent className="p-2 flex-1 overflow-y-auto">
-        <SortableContext
-          items={cards.map((card) => card.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          {children}
-          {cards.length === 0 && (
-            <div className="text-center text-gray-400 dark:text-gray-600 py-4 text-sm italic min-h-[100px] flex items-center justify-center">
-              No cards in this column
-            </div>
-          )}
-        </SortableContext>
-      </CardContent>
+      {!isCollapsed && (
+        <CardContent className="p-2 flex-1 overflow-y-auto">
+          <SortableContext
+            items={cards.map((card) => card.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            {children}
+            {cards.length === 0 && (
+              <div className="text-center text-gray-400 dark:text-gray-600 py-4 text-sm italic min-h-[100px] flex items-center justify-center">
+                No cards in this column
+              </div>
+            )}
+          </SortableContext>
+        </CardContent>
+      )}
 
-      <CardFooter className="p-2 flex-shrink-0 flex space-x-2">
-        {onAddFromTemplate && templates.length > 0 ? (
-          <>
+      {!isCollapsed && (
+        <CardFooter className="p-2 flex-shrink-0 flex space-x-2">
+          {onAddFromTemplate && templates.length > 0 ? (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 text-xs"
+                onClick={() => onAddCard()}
+                disabled={isAtLimit}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                New Card
+              </Button>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs"
+                    disabled={isAtLimit}
+                  >
+                    <Library className="h-4 w-4 mr-1" />
+                    Templates <ChevronDown className="h-3 w-3 ml-1" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64">
+                  <ScrollArea className="h-[400px]">
+                    {Object.entries(templatesByCategory).map(
+                      ([category, categoryTemplates]) => (
+                        <div key={category}>
+                          <DropdownMenuLabel>{category}</DropdownMenuLabel>
+                          <DropdownMenuGroup>
+                            {categoryTemplates.map((template) => (
+                              <DropdownMenuItem
+                                key={template.id}
+                                onClick={() =>
+                                  onAddFromTemplate(column.id, template.id)
+                                }
+                              >
+                                <div className="flex flex-col w-full">
+                                  <div className="font-medium">
+                                    {template.name}
+                                  </div>
+                                  <div className="text-xs text-gray-500 truncate">
+                                    {template.cardData.title}
+                                  </div>
+                                  <div className="flex mt-1 items-center">
+                                    <Badge
+                                      variant="outline"
+                                      className={`${
+                                        priorityColors[template.cardData.priority]
+                                      } mr-2 text-xs`}
+                                    >
+                                      {template.cardData.priority}
+                                    </Badge>
+                                    {template.cardData.tags.length > 0 && (
+                                      <span className="text-xs text-gray-500">
+                                        {template.cardData.tags.length} tags
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuGroup>
+                          <DropdownMenuSeparator />
+                        </div>
+                      )
+                    )}
+
+                    <DropdownMenuItem
+                      onClick={() => onAddFromTemplate(column.id)}
+                    >
+                      <PlusCircle className="h-4 w-4 mr-2" />
+                      Manage Templates
+                    </DropdownMenuItem>
+                  </ScrollArea>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          ) : (
             <Button
-              variant="outline"
+              variant={isAtLimit ? "secondary" : "outline"}
               size="sm"
-              className="flex-1 text-xs"
-              onClick={() => onAddCard()}
+              className="w-full text-xs"
+              onClick={onAddCard}
               disabled={isAtLimit}
             >
-              <Plus className="h-4 w-4 mr-1" />
-              New Card
+              <PlusCircle className="h-4 w-4 mr-1" />
+              {isAtLimit ? "WIP Limit Reached" : "Add Card"}
             </Button>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-xs"
-                  disabled={isAtLimit}
-                >
-                  <Library className="h-4 w-4 mr-1" />
-                  Templates <ChevronDown className="h-3 w-3 ml-1" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64">
-                <ScrollArea className="h-[400px]">
-                  {Object.entries(templatesByCategory).map(
-                    ([category, categoryTemplates]) => (
-                      <div key={category}>
-                        <DropdownMenuLabel>{category}</DropdownMenuLabel>
-                        <DropdownMenuGroup>
-                          {categoryTemplates.map((template) => (
-                            <DropdownMenuItem
-                              key={template.id}
-                              onClick={() =>
-                                onAddFromTemplate(column.id, template.id)
-                              }
-                            >
-                              <div className="flex flex-col w-full">
-                                <div className="font-medium">
-                                  {template.name}
-                                </div>
-                                <div className="text-xs text-gray-500 truncate">
-                                  {template.cardData.title}
-                                </div>
-                                <div className="flex mt-1 items-center">
-                                  <Badge
-                                    variant="outline"
-                                    className={`${
-                                      priorityColors[template.cardData.priority]
-                                    } mr-2 text-xs`}
-                                  >
-                                    {template.cardData.priority}
-                                  </Badge>
-                                  {template.cardData.tags.length > 0 && (
-                                    <span className="text-xs text-gray-500">
-                                      {template.cardData.tags.length} tags
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            </DropdownMenuItem>
-                          ))}
-                        </DropdownMenuGroup>
-                        <DropdownMenuSeparator />
-                      </div>
-                    )
-                  )}
-
-                  <DropdownMenuItem
-                    onClick={() => onAddFromTemplate(column.id)}
-                  >
-                    <PlusCircle className="h-4 w-4 mr-2" />
-                    Manage Templates
-                  </DropdownMenuItem>
-                </ScrollArea>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </>
-        ) : (
-          <Button
-            variant={isAtLimit ? "secondary" : "outline"}
-            size="sm"
-            className="w-full text-xs"
-            onClick={onAddCard}
-            disabled={isAtLimit}
-          >
-            <PlusCircle className="h-4 w-4 mr-1" />
-            {isAtLimit ? "WIP Limit Reached" : "Add Card"}
-          </Button>
-        )}
-      </CardFooter>
+          )}
+        </CardFooter>
+      )}
 
       {/* Edit Column Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>

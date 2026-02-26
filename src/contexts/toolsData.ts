@@ -73,6 +73,17 @@ import {
   PiggyBank,
   Music,
   PenTool,
+  Wand2,
+  Timer,
+  Binary,
+  Accessibility,
+  TextCursorInput,
+  Database,
+  Ratio,
+  Clapperboard,
+  BookOpenCheck,
+  AlignLeft,
+  ScanLine,
 } from "lucide-react";
 import { NetworkLatencySimulator } from "@/components/tools/utilities/NetworkLatencySimulator";
 import {
@@ -124,6 +135,21 @@ import { RetirementCalculator } from "@/components/tools/calculators/RetirementC
 import { ROICalculator } from "@/components/tools/calculators/ROICalculator/ROICalculator";
 import { SalaryCalculator } from "@/components/tools/calculators/SalaryCalculator/SalaryCalculator";
 import { AudioFormatConverter } from "@/components/tools/converters/AudioFormatConverter/AudioFormatConverter";
+import { CSSGradientGenerator } from "@/components/tools/design/CSSGradientGenerator";
+import { CronExpressionBuilder } from "@/components/tools/utilities/CronExpressionBuilder";
+import { JsonToTypeScript } from "@/components/tools/utilities/JsonToTypeScript";
+import { MorseCodeTranslator } from "@/components/tools/converters/MorseCodeTranslator";
+import { WordFrequencyAnalyzer } from "@/components/tools/utilities/WordFrequencyAnalyzer";
+import { SqlFormatter } from "@/components/tools/utilities/SqlFormatter";
+import { AspectRatioCalculator } from "@/components/tools/calculators/AspectRatioCalculator";
+import { CSSAnimationGenerator } from "@/components/tools/design/CSSAnimationGenerator";
+import { ReadingTimeEstimator } from "@/components/tools/utilities/ReadingTimeEstimator";
+import { StopwatchTimer } from "@/components/tools/productivity/StopwatchTimer";
+import { ColorBlindnessSimulator } from "@/components/tools/design/ColorBlindnessSimulator";
+import { AsciiArtGenerator } from "@/components/tools/generators/AsciiArtGenerator";
+import { NumberToWords } from "@/components/tools/converters/NumberToWords";
+import { TypographyScaleGenerator } from "@/components/tools/design/TypographyScaleGenerator";
+import { ImageMetadataViewer } from "@/components/tools/file-tools/ImageMetadataViewer";
 
 // Tool type definition
 export interface Tool {
@@ -1109,6 +1135,17 @@ export const availableTools: Tool[] = [
     metaDescription: "Free online audio converter. Convert audio files securely in your browser without uploading.",
   },
   {
+    id: "css-gradient-generator",
+    title: "CSS Gradient Generator",
+    description: "Visually build linear, radial, and conic CSS gradients with live preview and code export.",
+    icon: Palette,
+    category: "design",
+    component: CSSGradientGenerator,
+    url: "/design/css-gradient-generator",
+    pageTitle: "CSS Gradient Generator: Create Beautiful Gradients Online | ToolNames",
+    metaDescription: "Create stunning linear, radial, and conic CSS gradients with our free visual generator. Adjust colors, direction, and positions, then copy the CSS code instantly.",
+  },
+  {
     id: "canvas-drawing",
     title: "Canvas Drawing Tool",
     description:
@@ -1122,6 +1159,160 @@ export const availableTools: Tool[] = [
     pageTitle: "Canvas Drawing Tool: Free Online Whiteboard & Sketching App | ToolNames",
     metaDescription:
       "Free online canvas drawing tool. Draw freehand, add shapes, text, and images. Supports layers, undo/redo, zoom/pan, and export to PNG, JPG, or SVG. 100% client-side.",
+  },
+  {
+    id: "cron-expression-builder",
+    title: "Cron Expression Builder",
+    description: "Build, validate, and visualize cron job schedules with next run time previews.",
+    icon: Timer,
+    category: "utilities",
+    component: CronExpressionBuilder,
+    url: "/utilities/cron-expression-builder",
+    pageTitle: "Cron Expression Builder: Create & Validate Cron Schedules | ToolNames",
+    metaDescription: "Build and validate cron expressions visually. See human-readable descriptions, preview the next 5 run times, and access common schedule presets. Free online cron tool.",
+  },
+  {
+    id: "json-to-typescript",
+    title: "JSON to TypeScript Converter",
+    description: "Automatically generate TypeScript interfaces or type aliases from any JSON data.",
+    icon: Binary,
+    category: "utilities",
+    component: JsonToTypeScript,
+    url: "/utilities/json-to-typescript",
+    pageTitle: "JSON to TypeScript Converter: Generate Interfaces Online | ToolNames",
+    metaDescription: "Convert JSON data to TypeScript interfaces or type aliases instantly. Supports nested objects, arrays, and optional properties. Free online TypeScript code generator.",
+  },
+  {
+    id: "morse-code-translator",
+    title: "Morse Code Translator",
+    description: "Encode text to Morse code or decode Morse code back to text, with audio playback.",
+    icon: TextCursorInput,
+    category: "converters",
+    component: MorseCodeTranslator,
+    url: "/converters/morse-code-translator",
+    pageTitle: "Morse Code Translator: Encode & Decode Online | ToolNames",
+    metaDescription: "Translate text to Morse code or decode Morse code back to text. Features audio playback at adjustable speeds and a full character reference chart. Free online tool.",
+  },
+  {
+    id: "word-frequency-analyzer",
+    title: "Word Frequency Analyzer",
+    description: "Count word frequencies in text with bar charts, readability stats, and CSV export.",
+    icon: BarChart3,
+    category: "utilities",
+    component: WordFrequencyAnalyzer,
+    url: "/utilities/word-frequency-analyzer",
+    pageTitle: "Word Frequency Analyzer: Text Statistics & Word Count | ToolNames",
+    metaDescription: "Analyze word frequency and distribution in any text. Features frequency charts, stop word filtering, and CSV export. Great for content analysis and SEO research.",
+  },
+  {
+    id: "sql-formatter",
+    title: "SQL Formatter & Beautifier",
+    description: "Format, beautify, and syntax-highlight SQL queries for better readability.",
+    icon: Database,
+    category: "utilities",
+    component: SqlFormatter,
+    url: "/utilities/sql-formatter",
+    pageTitle: "SQL Formatter & Beautifier: Format SQL Queries Online | ToolNames",
+    metaDescription: "Format, beautify, and syntax-highlight SQL queries online. Supports keyword casing, indentation, and minification. Free client-side SQL formatter for developers.",
+  },
+  {
+    id: "aspect-ratio-calculator",
+    title: "Aspect Ratio Calculator",
+    description: "Calculate, scale, and convert image or video dimensions while maintaining aspect ratios.",
+    icon: Ratio,
+    category: "calculators",
+    component: AspectRatioCalculator,
+    url: "/calculators/aspect-ratio-calculator",
+    pageTitle: "Aspect Ratio Calculator: Scale Image & Video Dimensions | ToolNames",
+    metaDescription: "Calculate aspect ratios, scale dimensions proportionally, and find the right size for any screen or format. Includes presets for 16:9, 4:3, 1:1, and more.",
+  },
+  {
+    id: "css-animation-generator",
+    title: "CSS Animation Generator",
+    description: "Create and preview CSS keyframe animations with a visual editor and code export.",
+    icon: Clapperboard,
+    category: "design",
+    component: CSSAnimationGenerator,
+    url: "/design/css-animation-generator",
+    pageTitle: "CSS Animation Generator: Build Keyframe Animations Online | ToolNames",
+    metaDescription: "Build CSS keyframe animations visually with live preview. Choose from presets like fade, bounce, spin, and shake. Export ready-to-use CSS animation code.",
+  },
+  {
+    id: "reading-time-estimator",
+    title: "Reading Time Estimator",
+    description: "Estimate reading time and analyze text readability with Flesch-Kincaid scores.",
+    icon: BookOpenCheck,
+    category: "utilities",
+    component: ReadingTimeEstimator,
+    url: "/utilities/reading-time-estimator",
+    pageTitle: "Reading Time Estimator: Calculate Text Reading Time & Readability | ToolNames",
+    metaDescription: "Estimate how long it takes to read any text based on your reading speed. Includes Flesch-Kincaid readability scores, word count, sentence stats, and grade level.",
+  },
+  {
+    id: "stopwatch-timer",
+    title: "Stopwatch & Lap Timer",
+    description: "Precision stopwatch with multi-lap tracking, best/worst lap stats, and CSV export.",
+    icon: Timer,
+    category: "productivity",
+    component: StopwatchTimer,
+    url: "/productivity/stopwatch-timer",
+    pageTitle: "Online Stopwatch & Lap Timer: Precision Timing Tool | ToolNames",
+    metaDescription: "Free online stopwatch with lap timer. Track multiple laps, view best and worst times, calculate averages, and export lap data as CSV. Works entirely in your browser.",
+  },
+  {
+    id: "color-blindness-simulator",
+    title: "Color Blindness Simulator",
+    description: "Simulate how colors appear to people with different types of color vision deficiencies.",
+    icon: Accessibility,
+    category: "design",
+    component: ColorBlindnessSimulator,
+    url: "/design/color-blindness-simulator",
+    pageTitle: "Color Blindness Simulator: Test Accessibility Online | ToolNames",
+    metaDescription: "Simulate 7 types of color vision deficiency including protanopia, deuteranopia, and tritanopia. Test your designs and images for color accessibility. Free online tool.",
+  },
+  {
+    id: "ascii-art-generator",
+    title: "ASCII Art Generator",
+    description: "Convert text into ASCII art with multiple fonts, styles, and character sets.",
+    icon: AlignLeft,
+    category: "generators",
+    component: AsciiArtGenerator,
+    url: "/generators/ascii-art-generator",
+    pageTitle: "ASCII Art Generator: Convert Text to ASCII Art Online | ToolNames",
+    metaDescription: "Convert text into ASCII art with big text, banner, and box styles. Choose from multiple character sets and download your creation. Free online ASCII art maker.",
+  },
+  {
+    id: "number-to-words",
+    title: "Number to Words Converter",
+    description: "Convert numbers to English words, ordinals, Roman numerals, and currency text.",
+    icon: Type,
+    category: "converters",
+    component: NumberToWords,
+    url: "/converters/number-to-words",
+    pageTitle: "Number to Words Converter: Write Numbers in English | ToolNames",
+    metaDescription: "Convert any number to English words, ordinals, Roman numerals, and check-writing currency format. Supports numbers up to quadrillions. Free online converter.",
+  },
+  {
+    id: "typography-scale-generator",
+    title: "Typography Scale Generator",
+    description: "Generate harmonious typographic scales using musical ratios for design systems.",
+    icon: Wand2,
+    category: "design",
+    component: TypographyScaleGenerator,
+    url: "/design/typography-scale-generator",
+    pageTitle: "Typography Scale Generator: Create Type Systems Online | ToolNames",
+    metaDescription: "Generate harmonious typographic scales using musical ratios (Minor Third, Perfect Fourth, Golden Ratio, etc.). Export to CSS variables, SCSS, Tailwind, or JSON.",
+  },
+  {
+    id: "image-metadata-viewer",
+    title: "Image Metadata & EXIF Viewer",
+    description: "View image dimensions, file info, and EXIF metadata directly in your browser.",
+    icon: ScanLine,
+    category: "file-tools",
+    component: ImageMetadataViewer,
+    url: "/file-tools/image-metadata-viewer",
+    pageTitle: "Image Metadata & EXIF Viewer: View Photo Information | ToolNames",
+    metaDescription: "View image metadata including dimensions, file size, EXIF camera data (make, model, exposure settings). All processing is local — no uploads needed.",
   },
 ];
 
