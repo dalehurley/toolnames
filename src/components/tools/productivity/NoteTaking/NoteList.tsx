@@ -7,11 +7,17 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { formatDistanceToNow } from "date-fns";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { formatDistanceToNow, format } from "date-fns";
 
 export const NoteList: React.FC = () => {
   const {
-    state: { notes, currentNoteId, searchQuery, selectedTags },
+    state: { notes, currentNoteId, searchQuery, selectedTags, sortBy, onlyPinned },
     addNote,
     selectNote,
     searchNotes,
@@ -19,41 +25,64 @@ export const NoteList: React.FC = () => {
     togglePinned,
   } = useNotes();
 
-  // Get all unique tags across all notes
-  const allTags = Array.from(
-    new Set(notes.flatMap((note) => note.tags))
-  ).sort();
+  // Build tag → count map
+  const tagCounts = notes.reduce<Record<string, number>>((acc, note) => {
+    note.tags.forEach((tag) => {
+      acc[tag] = (acc[tag] ?? 0) + 1;
+    });
+    return acc;
+  }, {});
 
-  // Filter notes based on search query and selected tags
+  // All unique tags sorted alphabetically
+  const allTags = Object.keys(tagCounts).sort();
+
+  // Filter notes based on search query, selected tags, and pinned-only
   const filteredNotes = notes.filter((note) => {
-    // Filter by search query
     const matchesSearch =
       searchQuery === "" ||
       note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       note.content.toLowerCase().includes(searchQuery.toLowerCase());
 
-    // Filter by selected tags
     const matchesTags =
       selectedTags.length === 0 ||
       selectedTags.every((tag) => note.tags.includes(tag));
 
-    return matchesSearch && matchesTags;
+    const matchesPinned = !onlyPinned || note.isPinned;
+
+    return matchesSearch && matchesTags && matchesPinned;
   });
 
-  // Sort notes: pinned first, then by updated date
+  // Sort notes: pinned first, then by the chosen sort key
   const sortedNotes = [...filteredNotes].sort((a, b) => {
-    // First by pinned status
     if (a.isPinned && !b.isPinned) return -1;
     if (!a.isPinned && b.isPinned) return 1;
 
-    // Then by updated date (newest first)
+    if (sortBy === "title") {
+      return a.title.localeCompare(b.title);
+    }
+    if (sortBy === "created") {
+      return b.createdAt - a.createdAt;
+    }
+    // default: "updated"
     return b.updatedAt - a.updatedAt;
   });
+
+  const totalCount = notes.length;
+  const filteredCount = sortedNotes.length;
+  const isFiltered = searchQuery || selectedTags.length > 0 || onlyPinned;
 
   return (
     <div className="flex flex-col h-full border-r">
       <div className="p-4 border-b">
-        <h2 className="text-xl font-bold mb-4">Notes</h2>
+        {/* Header with note count */}
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold">Notes</h2>
+          <span className="text-xs text-muted-foreground">
+            {isFiltered
+              ? `${filteredCount} of ${totalCount}`
+              : `${totalCount} ${totalCount === 1 ? "note" : "notes"}`}
+          </span>
+        </div>
 
         {/* Search */}
         <div className="relative mb-4">
@@ -67,7 +96,7 @@ export const NoteList: React.FC = () => {
           />
         </div>
 
-        {/* Tags filter */}
+        {/* Tags filter with per-tag counts */}
         {allTags.length > 0 && (
           <ScrollArea className="w-full whitespace-nowrap mb-4 pb-2 max-h-20">
             <div className="flex gap-1 flex-wrap">
@@ -80,6 +109,7 @@ export const NoteList: React.FC = () => {
                 >
                   <TagIcon className="h-3 w-3 mr-1" />
                   {tag}
+                  <span className="ml-1 opacity-60">{tagCounts[tag]}</span>
                 </Badge>
               ))}
             </div>
@@ -97,7 +127,7 @@ export const NoteList: React.FC = () => {
       <ScrollArea className="flex-1">
         {sortedNotes.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground">
-            {searchQuery || selectedTags.length > 0
+            {isFiltered
               ? "No notes match your filters"
               : "Create your first note!"}
           </div>
@@ -119,7 +149,7 @@ export const NoteList: React.FC = () => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6"
+                        className="h-6 w-6 shrink-0"
                         onClick={(e) => {
                           e.stopPropagation();
                           togglePinned(note.id);
@@ -151,9 +181,23 @@ export const NoteList: React.FC = () => {
                         </Badge>
                       )}
                     </div>
-                    <span className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(note.updatedAt, { addSuffix: true })}
-                    </span>
+
+                    {/* Updated date with created date in tooltip */}
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="text-xs text-muted-foreground cursor-default">
+                            {formatDistanceToNow(note.updatedAt, { addSuffix: true })}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="left">
+                          <div className="text-xs space-y-0.5">
+                            <div>Updated: {format(note.updatedAt, "PPpp")}</div>
+                            <div>Created: {format(note.createdAt, "PPpp")}</div>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 </Card>
               );

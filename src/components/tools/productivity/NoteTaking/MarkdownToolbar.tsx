@@ -20,14 +20,16 @@ import {
   Heading1Icon,
   Heading2Icon,
   Heading3Icon,
+  TableIcon,
+  CheckSquareIcon,
+  MinusIcon,
 } from "lucide-react";
 
 interface MarkdownToolbarProps {
-  onAction: (action: string, template: string) => void;
+  onAction: (template: string) => void;
 }
 
 type ToolbarItem = {
-  action: string;
   icon: React.ReactNode;
   label: string;
   template: string;
@@ -41,21 +43,18 @@ export const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({
     // Headings
     [
       {
-        action: "heading1",
         icon: <Heading1Icon className="h-4 w-4" />,
         label: "Heading 1",
         template: "# $selection",
         shortcut: "Ctrl+1",
       },
       {
-        action: "heading2",
         icon: <Heading2Icon className="h-4 w-4" />,
         label: "Heading 2",
         template: "## $selection",
         shortcut: "Ctrl+2",
       },
       {
-        action: "heading3",
         icon: <Heading3Icon className="h-4 w-4" />,
         label: "Heading 3",
         template: "### $selection",
@@ -65,21 +64,18 @@ export const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({
     // Formatting
     [
       {
-        action: "bold",
         icon: <BoldIcon className="h-4 w-4" />,
         label: "Bold",
         template: "**$selection**",
         shortcut: "Ctrl+B",
       },
       {
-        action: "italic",
         icon: <ItalicIcon className="h-4 w-4" />,
         label: "Italic",
         template: "*$selection*",
         shortcut: "Ctrl+I",
       },
       {
-        action: "strikethrough",
         icon: <StrikethroughIcon className="h-4 w-4" />,
         label: "Strikethrough",
         template: "~~$selection~~",
@@ -88,29 +84,30 @@ export const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({
     // Lists
     [
       {
-        action: "bullet-list",
         icon: <ListIcon className="h-4 w-4" />,
         label: "Bullet List",
         template: "- $selection",
       },
       {
-        action: "numbered-list",
         icon: <ListOrderedIcon className="h-4 w-4" />,
         label: "Numbered List",
         template: "1. $selection",
+      },
+      {
+        icon: <CheckSquareIcon className="h-4 w-4" />,
+        label: "Task List",
+        template: "- [ ] $selection",
       },
     ],
     // Links and media
     [
       {
-        action: "link",
         icon: <LinkIcon className="h-4 w-4" />,
         label: "Link",
         template: "[$selection](url)",
         shortcut: "Ctrl+K",
       },
       {
-        action: "image",
         icon: <ImageIcon className="h-4 w-4" />,
         label: "Image",
         template: "![$selection](url)",
@@ -119,22 +116,33 @@ export const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({
     // Code and quotes
     [
       {
-        action: "code",
         icon: <CodeIcon className="h-4 w-4" />,
         label: "Inline Code",
         template: "`$selection`",
       },
       {
-        action: "code-block",
         icon: <CodeIcon className="h-4 w-4" />,
         label: "Code Block",
         template: "```\n$selection\n```",
       },
       {
-        action: "blockquote",
         icon: <QuoteIcon className="h-4 w-4" />,
         label: "Blockquote",
         template: "> $selection",
+      },
+    ],
+    // Table and divider
+    [
+      {
+        icon: <TableIcon className="h-4 w-4" />,
+        label: "Table",
+        template:
+          "| Header 1 | Header 2 | Header 3 |\n| --- | --- | --- |\n| Cell 1 | Cell 2 | Cell 3 |\n| Cell 4 | Cell 5 | Cell 6 |",
+      },
+      {
+        icon: <MinusIcon className="h-4 w-4" />,
+        label: "Horizontal Rule",
+        template: "\n---\n",
       },
     ],
   ];
@@ -147,15 +155,15 @@ export const MarkdownToolbar: React.FC<MarkdownToolbarProps> = ({
             <Separator orientation="vertical" className="mx-1 h-8" />
           )}
           <div className="flex items-center">
-            {group.map((item) => (
-              <TooltipProvider key={item.action}>
+            {group.map((item, itemIndex) => (
+              <TooltipProvider key={itemIndex}>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8"
-                      onClick={() => onAction(item.action, item.template)}
+                      onClick={() => onAction(item.template)}
                     >
                       {item.icon}
                       <span className="sr-only">{item.label}</span>
