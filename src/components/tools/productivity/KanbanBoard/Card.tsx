@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { KanbanCard, CardTemplate } from "@/types/kanban";
+import { KanbanCard, KanbanColumn, CardTemplate } from "@/types/kanban";
 import { Badge } from "@/components/ui/badge";
 import {
   CalendarClock,
@@ -15,12 +15,19 @@ import {
   MoreVertical,
   X,
   Check,
+  ArrowRightCircle,
+  ArrowUp,
+  ArrowDown,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card as UICard, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
-import { format } from "date-fns";
+import { format, formatDistanceToNow, isPast, isWithinInterval, addDays } from "date-fns";
 import CardEditModal from "./CardEditModal";
 import {
   DropdownMenu,
@@ -28,6 +35,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
 
 // Priority colors
@@ -57,6 +67,10 @@ interface CardProps {
   onEdit: (id: string, data: Partial<KanbanCard>) => void;
   onDuplicate?: (id: string) => void;
   onSaveTemplate?: (template: CardTemplate) => void;
+  onMoveCard?: (cardId: string, targetColumnId: string) => void;
+  onMoveToTop?: (cardId: string) => void;
+  onMoveToBottom?: (cardId: string) => void;
+  allColumns?: KanbanColumn[];
   isEditing?: boolean;
   onCloseEdit?: () => void;
 }
@@ -68,12 +82,17 @@ const Card = ({
   onEdit,
   onDuplicate,
   onSaveTemplate,
+  onMoveCard,
+  onMoveToTop,
+  onMoveToBottom,
+  allColumns = [],
   isEditing = false,
   onCloseEdit,
 }: CardProps) => {
   const [showEdit, setShowEdit] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id: card.id });
@@ -93,10 +112,19 @@ const Card = ({
       )
     : 0;
 
+  // Due date status
+  const now = new Date();
+  const dueDate = card.dueDate ? new Date(card.dueDate) : null;
+  const isOverdue = dueDate ? isPast(dueDate) : false;
+  const isDueSoon = dueDate
+    ? isWithinInterval(dueDate, { start: now, end: addDays(now, 3) }) && !isOverdue
+    : false;
+
   // Format due date
-  const formattedDueDate = card.dueDate
-    ? format(new Date(card.dueDate), "MMM d, yyyy")
-    : null;
+  const formattedDueDate = dueDate ? format(dueDate, "MMM d, yyyy") : null;
+
+  // Card age
+  const cardAge = formatDistanceToNow(new Date(card.createdAt), { addSuffix: false });
 
   // Toggle a checklist item
   const toggleChecklistItem = (itemId: string) => {
@@ -120,6 +148,13 @@ const Card = ({
     return card.color || "bg-white dark:bg-gray-800";
   };
 
+  // Border highlight based on due status
+  const getDueBorderClass = () => {
+    if (isOverdue) return "border-l-4 border-l-red-500";
+    if (isDueSoon) return "border-l-4 border-l-amber-400";
+    return "";
+  };
+
   // Effect to handle external control of edit modal
   useEffect(() => {
     if (isEditing) {
@@ -135,6 +170,22 @@ const Card = ({
     }
   };
 
+  // Description truncation: show only 2 lines unless expanded
+  const descriptionLines = card.description.split("\n");
+  const isLongDescription =
+    card.description.length > 100 || descriptionLines.length > 2;
+  const truncatedDescription = isLongDescription && !isDescriptionExpanded
+    ? card.description.slice(0, 100).trimEnd() + "…"
+    : card.description;
+
+  // Columns the card can be moved to (excluding the current one)
+  const currentColumnId = allColumns.find((col) =>
+    col.cardIds.includes(card.id)
+  )?.id;
+  const moveTargetColumns = allColumns.filter(
+    (col) => col.id !== currentColumnId
+  );
+
   return (
     <>
       <div
@@ -145,7 +196,7 @@ const Card = ({
         {...listeners}
       >
         <UICard
-          className={`shadow-sm hover:shadow transition-shadow duration-200 ${getCardBackground()}`}
+          className={`shadow-sm hover:shadow transition-shadow duration-200 ${getCardBackground()} ${getDueBorderClass()}`}
         >
           <CardContent className="p-3">
             <div className="flex justify-between items-start mb-2">
@@ -186,6 +237,39 @@ const Card = ({
                       </DropdownMenuItem>
                     )}
 
+                    {onMoveToTop && (
+                      <DropdownMenuItem onClick={() => onMoveToTop(card.id)}>
+                        <ArrowUp className="h-4 w-4 mr-2" />
+                        Move to Top
+                      </DropdownMenuItem>
+                    )}
+
+                    {onMoveToBottom && (
+                      <DropdownMenuItem onClick={() => onMoveToBottom(card.id)}>
+                        <ArrowDown className="h-4 w-4 mr-2" />
+                        Move to Bottom
+                      </DropdownMenuItem>
+                    )}
+
+                    {onMoveCard && moveTargetColumns.length > 0 && (
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger>
+                          <ArrowRightCircle className="h-4 w-4 mr-2" />
+                          Move to Column
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent>
+                          {moveTargetColumns.map((col) => (
+                            <DropdownMenuItem
+                              key={col.id}
+                              onClick={() => onMoveCard(card.id, col.id)}
+                            >
+                              {col.title}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuSubContent>
+                      </DropdownMenuSub>
+                    )}
+
                     <DropdownMenuSeparator />
 
                     <DropdownMenuItem
@@ -200,9 +284,57 @@ const Card = ({
               </div>
             </div>
 
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-              {card.description}
-            </p>
+            {/* Overdue / due-soon badge */}
+            {isOverdue && (
+              <div className="flex items-center gap-1 text-red-600 dark:text-red-400 text-xs mb-2">
+                <AlertCircle className="h-3 w-3" />
+                <span>Overdue</span>
+              </div>
+            )}
+            {isDueSoon && !isOverdue && (
+              <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400 text-xs mb-2">
+                <Clock className="h-3 w-3" />
+                <span>Due soon</span>
+              </div>
+            )}
+
+            {/* Description with truncation */}
+            {card.description && (
+              <div className="mb-3">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {truncatedDescription}
+                </p>
+                {isLongDescription && (
+                  <button
+                    className="text-xs text-primary mt-0.5 flex items-center gap-0.5"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsDescriptionExpanded((v) => !v);
+                    }}
+                  >
+                    {isDescriptionExpanded ? (
+                      <>
+                        <ChevronUp className="h-3 w-3" /> Show less
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="h-3 w-3" /> Read more
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Story points badge */}
+            {card.storyPoints !== undefined && card.storyPoints !== null && (
+              <div className="flex items-center gap-1 mb-2">
+                <Badge variant="secondary" className="text-xs gap-1">
+                  <Zap className="h-3 w-3" />
+                  {card.storyPoints} {card.storyPoints === 1 ? "pt" : "pts"}
+                </Badge>
+              </div>
+            )}
 
             {card.tags.length > 0 && (
               <div className="flex flex-wrap gap-1 mb-3">
@@ -250,7 +382,15 @@ const Card = ({
 
             <div className="flex flex-wrap gap-y-2 justify-between text-xs text-gray-500 dark:text-gray-400">
               {formattedDueDate && (
-                <div className="flex items-center">
+                <div
+                  className={`flex items-center ${
+                    isOverdue
+                      ? "text-red-600 dark:text-red-400 font-medium"
+                      : isDueSoon
+                      ? "text-amber-600 dark:text-amber-400 font-medium"
+                      : ""
+                  }`}
+                >
                   <CalendarClock className="mr-1 h-3 w-3" />
                   {formattedDueDate}
                 </div>
@@ -262,6 +402,12 @@ const Card = ({
                   {card.assignee}
                 </div>
               )}
+
+              {/* Card age */}
+              <div className="flex items-center w-full text-gray-400 dark:text-gray-600 mt-1">
+                <Clock className="mr-1 h-3 w-3" />
+                <span>{cardAge} ago</span>
+              </div>
             </div>
           </CardContent>
         </UICard>
