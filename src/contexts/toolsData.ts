@@ -1,3 +1,4 @@
+import { lazy } from "react";
 import { MortgageCalculator } from "@/components/tools/calculators/MortgageCalculator";
 import { CompoundInterestCalculator } from "@/components/tools/calculators/CompoundInterestCalculator";
 import { BMICalculator } from "@/components/tools/calculators/BMICalculator";
@@ -71,6 +72,7 @@ import {
   Leaf,
   PiggyBank,
   Music,
+  PenTool,
   Wand2,
   Timer,
   Binary,
@@ -1171,6 +1173,21 @@ export const availableTools: Tool[] = [
     url: "/design/css-gradient-generator",
     pageTitle: "CSS Gradient Generator: Create Beautiful Gradients Online | ToolNames",
     metaDescription: "Create stunning linear, radial, and conic CSS gradients with our free visual generator. Adjust colors, direction, and positions, then copy the CSS code instantly.",
+  },
+  {
+    id: "canvas-drawing",
+    title: "Canvas Drawing Tool",
+    description:
+      "Full-featured drawing canvas with shapes, freehand, text, layers, undo/redo, and export to PNG/SVG.",
+    icon: PenTool,
+    category: "design",
+    component: lazy(() =>
+      import("@/components/tools/design/CanvasDrawing").then((m) => ({ default: m.CanvasDrawing }))
+    ),
+    url: "/design/canvas-drawing",
+    pageTitle: "Canvas Drawing Tool: Free Online Whiteboard & Sketching App | ToolNames",
+    metaDescription:
+      "Free online canvas drawing tool. Draw freehand, add shapes, text, and images. Supports layers, undo/redo, zoom/pan, and export to PNG, JPG, or SVG. 100% client-side.",
   },
   {
     id: "cron-expression-builder",

@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import MDEditor from "@uiw/react-md-editor";
 import { useNotes } from "@/contexts/NotesContext";
-import { extractTags } from "@/utils/markdownUtils";
+import { extractTags, extractTitle, countWords, estimateReadingTime } from "@/utils/markdownUtils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,17 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { MarkdownPreview } from "./MarkdownPreview";
 import { MarkdownToolbar } from "./MarkdownToolbar";
 import {
@@ -20,6 +31,11 @@ import {
   TagIcon,
   EyeIcon,
   EditIcon,
+  CopyIcon,
+  DownloadIcon,
+  MaximizeIcon,
+  MinimizeIcon,
+  Columns2Icon,
 } from "lucide-react";
 
 export const NoteEditor: React.FC = () => {
@@ -28,6 +44,7 @@ export const NoteEditor: React.FC = () => {
     updateNote,
     deleteNote,
     togglePinned,
+    duplicateNote,
   } = useNotes();
 
   // Get the current note
@@ -36,6 +53,7 @@ export const NoteEditor: React.FC = () => {
   // Local state for note content
   const [title, setTitle] = useState<string>("");
   const [content, setContent] = useState<string>("");
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Reference to the editor
   const editorRef = useRef<HTMLTextAreaElement | null>(null);
@@ -49,54 +67,64 @@ export const NoteEditor: React.FC = () => {
       setTitle("");
       setContent("");
     }
-  }, [currentNote]);
+  }, [currentNote?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-save changes after a delay
+  // Auto-save changes after a delay; auto-title from first H1 when title is "Untitled Note"
   useEffect(() => {
     if (!currentNote) return;
 
     const timerId = setTimeout(() => {
       const updatedTags = extractTags(content);
-      updateNote(currentNote.id, {
-        title,
+      const updates: Parameters<typeof updateNote>[1] = {
         content,
         tags: updatedTags,
-      });
+      };
+
+      // Auto-title: if title is still the default, pull from first heading
+      if (title === "Untitled Note" || title === "") {
+        const headingTitle = extractTitle(content);
+        if (headingTitle) {
+          updates.title = headingTitle;
+          setTitle(headingTitle);
+        } else {
+          updates.title = title;
+        }
+      } else {
+        updates.title = title;
+      }
+
+      updateNote(currentNote.id, updates);
     }, 1000);
 
     return () => clearTimeout(timerId);
-  }, [title, content, currentNote, updateNote]);
+  }, [title, content, currentNote?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Word / char stats (memoised so they don't recalc on every render)
+  const wordCount = useMemo(() => countWords(content), [content]);
+  const charCount = content.length;
+  const readingTime = useMemo(() => estimateReadingTime(wordCount), [wordCount]);
 
   // Handle toolbar actions
   const handleMarkdownAction = (template: string) => {
-    // Find the textarea element inside MDEditor
     const textareaElement = document.querySelector(
       ".w-md-editor-text-input"
     ) as HTMLTextAreaElement;
 
     if (!textareaElement) return;
 
-    // Save current selection
     const start = textareaElement.selectionStart;
     const end = textareaElement.selectionEnd;
     const selectedText = textareaElement.value.substring(start, end);
 
-    // Replace $selection placeholder with actual selection
-    const formattedTemplate = template.replace(
-      "$selection",
-      selectedText || ""
-    );
+    const formattedTemplate = template.replace("$selection", selectedText || "");
 
-    // Insert the template at cursor position
     const newContent =
       textareaElement.value.substring(0, start) +
       formattedTemplate +
       textareaElement.value.substring(end);
 
-    // Update content state
     setContent(newContent);
 
-    // Set focus back to the editor after state update
     setTimeout(() => {
       textareaElement.focus();
       const newCursorPos =
@@ -105,14 +133,19 @@ export const NoteEditor: React.FC = () => {
     }, 0);
   };
 
-  // Handle note deletion
-  const handleDelete = () => {
-    if (
-      currentNote &&
-      window.confirm("Are you sure you want to delete this note?")
-    ) {
-      deleteNote(currentNote.id);
-    }
+  // Export the current note as a .md file
+  const handleExportMarkdown = () => {
+    if (!currentNote) return;
+    const blob = new Blob([`# ${title}\n\n${content}`], {
+      type: "text/markdown;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const safeTitle = title.replace(/[^a-z0-9]/gi, "-").toLowerCase() || "note";
+    link.href = url;
+    link.download = `${safeTitle}.md`;
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   if (!currentNote) {
@@ -127,8 +160,8 @@ export const NoteEditor: React.FC = () => {
     );
   }
 
-  return (
-    <div className="flex flex-col h-full">
+  const editorContent = (
+    <div className={`flex flex-col h-full ${isFullscreen ? "fixed inset-0 z-50 bg-background" : ""}`}>
       {/* Note Header */}
       <div className="flex items-center justify-between p-4 border-b">
         <div className="flex-1 mr-4">
@@ -140,7 +173,7 @@ export const NoteEditor: React.FC = () => {
           />
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -150,9 +183,7 @@ export const NoteEditor: React.FC = () => {
                   onClick={() => togglePinned(currentNote.id)}
                 >
                   <PinIcon
-                    className={`h-4 w-4 ${
-                      currentNote.isPinned ? "text-amber-500" : ""
-                    }`}
+                    className={`h-4 w-4 ${currentNote.isPinned ? "text-amber-500" : ""}`}
                   />
                 </Button>
               </TooltipTrigger>
@@ -165,13 +196,81 @@ export const NoteEditor: React.FC = () => {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" onClick={handleDelete}>
-                  <TrashIcon className="h-4 w-4 text-destructive" />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => duplicateNote(currentNote.id)}
+                >
+                  <CopyIcon className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Delete note</TooltipContent>
+              <TooltipContent>Duplicate note</TooltipContent>
             </Tooltip>
           </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={handleExportMarkdown}>
+                  <DownloadIcon className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Export as .md</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsFullscreen((f) => !f)}
+                >
+                  {isFullscreen ? (
+                    <MinimizeIcon className="h-4 w-4" />
+                  ) : (
+                    <MaximizeIcon className="h-4 w-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {isFullscreen ? "Exit fullscreen" : "Fullscreen mode"}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <AlertDialog>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <TrashIcon className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </AlertDialogTrigger>
+                </TooltipTrigger>
+                <TooltipContent>Delete note</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete note?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  "{title}" will be permanently deleted. This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={() => deleteNote(currentNote.id)}
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
 
@@ -189,8 +288,8 @@ export const NoteEditor: React.FC = () => {
         </div>
       )}
 
-      {/* Editor / Preview Tabs */}
-      <Tabs defaultValue="editor" className="flex-1 flex flex-col">
+      {/* Editor / Preview / Split Tabs */}
+      <Tabs defaultValue="editor" className="flex-1 flex flex-col min-h-0">
         <div className="border-b px-4">
           <TabsList className="h-10">
             <TabsTrigger value="editor" className="flex items-center">
@@ -201,19 +300,22 @@ export const NoteEditor: React.FC = () => {
               <EyeIcon className="h-4 w-4 mr-2" />
               Preview
             </TabsTrigger>
+            <TabsTrigger value="split" className="flex items-center">
+              <Columns2Icon className="h-4 w-4 mr-2" />
+              Split
+            </TabsTrigger>
           </TabsList>
         </div>
 
+        {/* Edit tab */}
         <TabsContent
           value="editor"
-          className="flex-1 p-0 data-[state=active]:flex flex-col"
+          className="flex-1 p-0 data-[state=active]:flex flex-col min-h-0"
         >
-          {/* Markdown Toolbar */}
           <div className="p-2 border-b">
             <MarkdownToolbar onAction={handleMarkdownAction} />
           </div>
-
-          <div className="flex-1">
+          <div className="flex-1 min-h-0">
             <MDEditor
               ref={editorRef}
               value={content}
@@ -226,13 +328,50 @@ export const NoteEditor: React.FC = () => {
           </div>
         </TabsContent>
 
+        {/* Preview tab */}
         <TabsContent
           value="preview"
-          className="flex-1 p-0 data-[state=active]:flex"
+          className="flex-1 p-0 data-[state=active]:flex min-h-0"
         >
           <MarkdownPreview content={content} />
         </TabsContent>
+
+        {/* Split tab — editor on left, preview on right */}
+        <TabsContent
+          value="split"
+          className="flex-1 p-0 data-[state=active]:flex min-h-0"
+        >
+          <div className="flex flex-1 min-h-0 divide-x">
+            <div className="flex flex-col flex-1 min-h-0 min-w-0">
+              <div className="p-2 border-b">
+                <MarkdownToolbar onAction={handleMarkdownAction} />
+              </div>
+              <div className="flex-1 min-h-0">
+                <MDEditor
+                  value={content}
+                  onChange={(val) => setContent(val || "")}
+                  preview="edit"
+                  height="100%"
+                  visibleDragbar={false}
+                  hideToolbar={true}
+                />
+              </div>
+            </div>
+            <div className="flex-1 min-h-0 min-w-0 overflow-auto">
+              <MarkdownPreview content={content} />
+            </div>
+          </div>
+        </TabsContent>
       </Tabs>
+
+      {/* Status bar — word count, char count, reading time */}
+      <div className="flex items-center justify-end gap-4 px-4 py-1 border-t text-xs text-muted-foreground select-none">
+        <span>{wordCount.toLocaleString()} words</span>
+        <span>{charCount.toLocaleString()} chars</span>
+        <span>~{readingTime} min read</span>
+      </div>
     </div>
   );
+
+  return editorContent;
 };

@@ -1,3 +1,5 @@
+export type SortBy = "updated" | "created" | "title";
+
 export interface Note {
   id: string;           // Unique identifier
   title: string;        // Note title
@@ -13,6 +15,8 @@ export interface NotesState {
   currentNoteId: string | null;
   searchQuery: string;
   selectedTags: string[];
+  sortBy: SortBy;
+  onlyPinned: boolean;
 }
 
 export interface NotesContextType {
@@ -24,6 +28,9 @@ export interface NotesContextType {
   searchNotes: (query: string) => void;
   toggleTag: (tag: string) => void;
   togglePinned: (id: string) => void;
+  duplicateNote: (id: string) => void;
+  setSortBy: (sortBy: SortBy) => void;
+  setOnlyPinned: (onlyPinned: boolean) => void;
   exportNotes: () => void;
   importNotes: (notes: Note[]) => void;
-} 
+}
