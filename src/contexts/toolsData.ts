@@ -99,6 +99,7 @@ import {
   Braces,
   Lock,
   BotMessageSquare,
+  Bot,
 } from "lucide-react";
 import { AIPlayground } from "@/components/tools/ai-playground/AIPlayground";
 import { NetworkLatencySimulator } from "@/components/tools/utilities/NetworkLatencySimulator";
@@ -184,6 +185,7 @@ import { VibrationTester } from "@/components/tools/html5-apis/VibrationTester";
 import { WebShareTool } from "@/components/tools/html5-apis/WebShareTool";
 import { NetworkInfoMonitor } from "@/components/tools/html5-apis/NetworkInfoMonitor";
 import { PWAManifestGenerator } from "@/components/tools/html5-apis/PWAManifestGenerator";
+import { UniversalAIPlayground } from "@/components/tools/productivity/UniversalAIPlayground";
 
 // Tool type definition
 export interface Tool {
@@ -1513,6 +1515,17 @@ export const availableTools: Tool[] = [
     url: "/html5-apis/pwa-manifest-generator",
     pageTitle: "PWA Manifest Generator: Create manifest.json & Service Worker | ToolNames",
     metaDescription: "Generate a complete manifest.json, service worker (Cache API), and HTML meta tags for your Progressive Web App. Includes PWA completeness scoring.",
+  },
+  {
+    id: "universal-ai-playground",
+    title: "Universal AI Playground",
+    description: "A BYOK multi-provider AI chat workspace with streaming, markdown, attachments, and artifact canvas preview.",
+    icon: Bot,
+    category: "productivity",
+    component: UniversalAIPlayground,
+    url: "/productivity/universal-ai-playground",
+    pageTitle: "Universal AI Playground: Multi-Provider BYOK AI Chat | ToolNames",
+    metaDescription: "Chat with OpenAI, Anthropic, Gemini, Groq, Mistral, Ollama, and more in one local-first browser UI. BYOK, streaming, artifact canvas, and model switching.",
   },
   // ── Newly Added Tools ─────────────────────────────────────────────────────────
   {

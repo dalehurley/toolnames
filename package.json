@@ -91,6 +91,7 @@
     "react-window": "^1.8.11",
     "reactflow": "^11.11.4",
     "recharts": "^2.15.1",
+    "rehype-highlight": "^7.0.2",
     "remark-gfm": "^4.0.1",
     "roughjs": "^4.6.6",
     "sonner": "^2.0.1",
