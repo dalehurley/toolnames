@@ -24,6 +24,11 @@ const categoryNames: Record<string, string> = {
   utilities: "Utilities",
   "file-tools": "File Tools",
   seo: "SEO Tools",
+  design: "Design",
+  productivity: "Productivity",
+  lottery: "Lottery",
+  "html5-apis": "HTML5 APIs",
+  "color-theory": "Color Theory",
 };
 
 const categoryPaths: Record<string, string> = {
@@ -33,6 +38,11 @@ const categoryPaths: Record<string, string> = {
   utilities: "/utilities",
   "file-tools": "/file-tools",
   seo: "/seo",
+  design: "/design",
+  productivity: "/productivity",
+  lottery: "/lottery",
+  "html5-apis": "/html5-apis",
+  "color-theory": "/color-theory",
 };
 
 export const ToolView = () => {
