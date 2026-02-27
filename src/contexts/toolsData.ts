@@ -87,17 +87,17 @@ import {
   Mic,
   MapPin,
   Smartphone,
-  Database,
   Sun,
   Clipboard,
-  Clapperboard,
   Activity,
   Bell,
   Paintbrush,
-  Vibrate,
   Share2,
   Wifi,
   Globe,
+  Shuffle,
+  Braces,
+  Lock,
 } from "lucide-react";
 import { NetworkLatencySimulator } from "@/components/tools/utilities/NetworkLatencySimulator";
 import {
@@ -162,6 +162,9 @@ import { StopwatchTimer } from "@/components/tools/productivity/StopwatchTimer";
 import { ColorBlindnessSimulator } from "@/components/tools/design/ColorBlindnessSimulator";
 import { AsciiArtGenerator } from "@/components/tools/generators/AsciiArtGenerator";
 import { NumberToWords } from "@/components/tools/converters/NumberToWords";
+import { RandomNumberGenerator } from "@/components/tools/generators/RandomNumberGenerator";
+import { HTMLEntityEncoder } from "@/components/tools/utilities/HTMLEntityEncoder";
+import { JWTDecoder } from "@/components/tools/utilities/JWTDecoder";
 import { TypographyScaleGenerator } from "@/components/tools/design/TypographyScaleGenerator";
 import { ImageMetadataViewer } from "@/components/tools/file-tools/ImageMetadataViewer";
 import { AudioWaveformAnalyzer } from "@/components/tools/html5-apis/AudioWaveformAnalyzer";
@@ -1508,6 +1511,40 @@ export const availableTools: Tool[] = [
     url: "/html5-apis/pwa-manifest-generator",
     pageTitle: "PWA Manifest Generator: Create manifest.json & Service Worker | ToolNames",
     metaDescription: "Generate a complete manifest.json, service worker (Cache API), and HTML meta tags for your Progressive Web App. Includes PWA completeness scoring.",
+  },
+  // ── Newly Added Tools ─────────────────────────────────────────────────────────
+  {
+    id: "random-number-generator",
+    title: "Random Number Generator",
+    description: "Generate one or multiple random numbers within any range. Supports unique (no-duplicate) mode and shows sum, min, and max.",
+    icon: Shuffle,
+    category: "generators",
+    component: RandomNumberGenerator,
+    url: "/generators/random-number-generator",
+    pageTitle: "Random Number Generator: Free Online Random Number Tool | ToolNames",
+    metaDescription: "Generate random numbers instantly. Set any min/max range, choose how many numbers, and optionally ensure uniqueness. Free, fast, and browser-based.",
+  },
+  {
+    id: "html-entity-encoder",
+    title: "HTML Entity Encoder / Decoder",
+    description: "Encode special characters to HTML entities (&amp;, &lt;, &gt;, &copy;, etc.) or decode HTML entities back to plain text.",
+    icon: Braces,
+    category: "utilities",
+    component: HTMLEntityEncoder,
+    url: "/utilities/html-entity-encoder",
+    pageTitle: "HTML Entity Encoder & Decoder: Escape Special Characters | ToolNames",
+    metaDescription: "Encode special characters to HTML entities or decode HTML entities back to plain text. Supports all standard HTML entities. Free, instant, and private.",
+  },
+  {
+    id: "jwt-decoder",
+    title: "JWT Decoder",
+    description: "Decode and inspect JSON Web Tokens (JWT). View header, payload, expiry status, and claims. No secret key needed for decoding.",
+    icon: Lock,
+    category: "utilities",
+    component: JWTDecoder,
+    url: "/utilities/jwt-decoder",
+    pageTitle: "JWT Decoder: Decode & Inspect JSON Web Tokens | ToolNames",
+    metaDescription: "Decode JWT tokens and inspect header, payload, and claims instantly in your browser. Check expiry, issued-at time, and all claims. 100% client-side and private.",
   },
 ];
 

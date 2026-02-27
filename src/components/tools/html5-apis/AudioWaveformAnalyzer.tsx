@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
-import { Upload, Mic, MicOff, Play, Pause, Square, Music, Activity } from "lucide-react";
+import { Upload, Mic, MicOff, Play, Square, Music, Activity } from "lucide-react";
 
 export const AudioWaveformAnalyzer = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);

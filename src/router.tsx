@@ -21,6 +21,7 @@ const SEOPage = lazy(() => import("@/pages/SEOPage"));
 const ProductivityPage = lazy(() => import("@/pages/ProductivityPage"));
 const FileToolsPage = lazy(() => import("@/pages/FileToolsPage"));
 const LotteryPage = lazy(() => import("@/pages/LotteryPage"));
+const HTML5APIsPage = lazy(() => import("@/pages/HTML5APIsPage"));
 const LazySitemapPage = lazy(() => import("@/pages/SitemapPage"));
 
 // Create an array of all unit conversion routes
@@ -198,6 +199,14 @@ export const router = createBrowserRouter([
         element: (
           <LazyWrapper>
             <LotteryPage />
+          </LazyWrapper>
+        ),
+      },
+      {
+        path: "html5-apis",
+        element: (
+          <LazyWrapper>
+            <HTML5APIsPage />
           </LazyWrapper>
         ),
       },

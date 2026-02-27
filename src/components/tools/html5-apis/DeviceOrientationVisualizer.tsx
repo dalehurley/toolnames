@@ -20,7 +20,6 @@ export const DeviceOrientationVisualizer = () => {
   const [active, setActive] = useState(false);
   const [orientation, setOrientation] = useState<OrientationData>({ alpha: 0, beta: 0, gamma: 0 });
   const [motion, setMotion] = useState<MotionData>({ x: 0, y: 0, z: 0 });
-  const [history, setHistory] = useState<number[][]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const cubeCanvasRef = useRef<HTMLCanvasElement>(null);
   const historyRef = useRef<number[][]>([]);

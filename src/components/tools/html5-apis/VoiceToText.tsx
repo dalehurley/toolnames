@@ -7,6 +7,25 @@ import { Textarea } from "@/components/ui/textarea";
 import { Mic, MicOff, Copy, Trash2, Download, MessageSquare, Check } from "lucide-react";
 
 // Extend window for SpeechRecognition
+interface SpeechRecognitionEvent extends Event {
+  resultIndex: number;
+  results: SpeechRecognitionResultList;
+}
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+  message: string;
+}
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+  onend: (() => void) | null;
+  start(): void;
+  stop(): void;
+  abort(): void;
+}
 declare global {
   interface Window {
     SpeechRecognition: new () => SpeechRecognition;
@@ -52,7 +71,7 @@ export const VoiceToText = () => {
     rec.interimResults = true;
     rec.lang = language;
 
-    rec.onresult = (event) => {
+    rec.onresult = (event: SpeechRecognitionEvent) => {
       let interim = "";
       let final = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -69,7 +88,7 @@ export const VoiceToText = () => {
       setInterimText("");
     };
 
-    rec.onerror = (e) => {
+    rec.onerror = (e: SpeechRecognitionErrorEvent) => {
       console.error("SpeechRecognition error", e);
       setIsListening(false);
     };

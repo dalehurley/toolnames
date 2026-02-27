@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Wifi, WifiOff, RefreshCw, Activity, Clock, Download, Upload } from "lucide-react";
+import { Wifi, WifiOff, RefreshCw, Activity, Clock, Download } from "lucide-react";
 
 // Extend Navigator for NetworkInformation API
 interface NetworkInformation extends EventTarget {

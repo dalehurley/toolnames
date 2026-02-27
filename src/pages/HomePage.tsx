@@ -22,6 +22,8 @@ import {
   FileType,
   Clock,
   Palette,
+  Globe,
+  Sparkles,
 } from "lucide-react";
 
 // Memoized Tool Card component for better performance
@@ -60,6 +62,7 @@ const CategoryCard = memo(
     description,
     delay,
     toolCount,
+    isNew,
   }: {
     category: string;
     icon: React.FC<React.SVGProps<SVGSVGElement>>;
@@ -67,6 +70,7 @@ const CategoryCard = memo(
     description: string;
     delay: number;
     toolCount: number;
+    isNew?: boolean;
   }) => (
     <div
       className="animate-in fade-in slide-in-from-bottom-4 hover:-translate-y-1 transition-all duration-300"
@@ -75,10 +79,15 @@ const CategoryCard = memo(
         animationFillMode: "both",
       }}
     >
-      <Link to={`/${category.toLowerCase()}`} className="group block">
+      <Link to={`/${category.toLowerCase().replace(" ", "-")}`} className="group block">
         <div
-          className={`border border-${color}/10 rounded-lg p-6 h-full hover:shadow-lg transition-all duration-300 hover:border-${color} text-center group-hover:bg-gradient-to-br group-hover:from-${color}/5 group-hover:to-${color}/10`}
+          className={`border border-${color}/10 rounded-lg p-6 h-full hover:shadow-lg transition-all duration-300 hover:border-${color} text-center group-hover:bg-gradient-to-br group-hover:from-${color}/5 group-hover:to-${color}/10 relative`}
         >
+          {isNew && (
+            <span className="absolute top-2 right-2 bg-gradient-to-r from-cyan-500 to-indigo-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">
+              New
+            </span>
+          )}
           <div
             className={`bg-gradient-to-br from-${color}/20 to-${color}/5 p-3 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 transform group-hover:scale-110 transition-transform duration-300`}
           >
@@ -136,6 +145,10 @@ const SearchResult = memo(
             {tool.description}
           </div>
         </div>
+        {/* Change 11: Category badge in search results */}
+        <span className="ml-2 shrink-0 text-xs text-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 px-2 py-0.5 rounded-full capitalize border border-indigo-200/50 dark:border-indigo-800/30">
+          {tool.category.replace("-", " ")}
+        </span>
       </Link>
     </div>
   )
@@ -156,12 +169,12 @@ const HomePage = () => {
   useSEO({
     title: "ToolNames: Your Hub for Free, Privacy-Focused Online Tools",
     description:
-      "Discover a comprehensive suite of 50+ free, browser-based online tools designed for productivity, development, and everyday tasks. Explore calculators, converters, generators, text utilities, SEO tools, design aids, and more. All tools run locally in your browser, ensuring complete data privacy and security. No sign-ups required.",
+      "Discover a comprehensive suite of 100+ free, browser-based online tools designed for productivity, development, and everyday tasks. Explore calculators, converters, generators, text utilities, SEO tools, design aids, HTML5 API demos, and more. All tools run locally in your browser, ensuring complete data privacy and security. No sign-ups required.",
     keywords:
-      "free online tools, browser tools, privacy tools, calculators, converters, generators, text utilities, SEO tools, design tools, developer utilities, productivity software, local processing, no sign-up tools, ToolNames",
+      "free online tools, browser tools, privacy tools, calculators, converters, generators, text utilities, SEO tools, design tools, developer utilities, productivity software, html5 api tools, jwt decoder, html entity encoder, random number generator, local processing, no sign-up tools, ToolNames",
     ogTitle: "ToolNames: Free & Private Online Tools for Every Need",
     ogDescription:
-      "Boost your productivity with over 50 free, secure, and browser-based tools. Calculators, converters, generators, and more - all private and ready to use instantly.",
+      "Boost your productivity with over 100 free, secure, and browser-based tools. Calculators, converters, generators, HTML5 API demos, and more - all private and ready to use instantly.",
     ogType: "website",
     structuredData: {
       "@context": "https://schema.org",
@@ -182,60 +195,11 @@ const HomePage = () => {
         "@type": "Organization",
         name: "ToolNames",
         url: window.location.origin,
-        logo: `${window.location.origin}/logo.png`, // Assuming you have a logo.png in public
       },
-      about: [
-        {
-          "@type": "Thing",
-          name: "Online Calculators",
-          description:
-            "Financial, mathematical, health, and utility calculators.",
-        },
-        {
-          "@type": "Thing",
-          name: "Data Converters",
-          description:
-            "Tools for converting units, file formats, and data encodings.",
-        },
-        {
-          "@type": "Thing",
-          name: "Content Generators",
-          description:
-            "Generate passwords, QR codes, Lorem Ipsum, UUIDs, and more.",
-        },
-        {
-          "@type": "Thing",
-          name: "Text Utilities",
-          description: "Tools for text manipulation, formatting, and analysis.",
-        },
-        {
-          "@type": "Thing",
-          name: "SEO Tools",
-          description: "Utilities for analyzing and optimizing website SEO.",
-        },
-        {
-          "@type": "Thing",
-          name: "Design Tools",
-          description:
-            "Tools for color palettes, CSS generation, and layout design.",
-        },
-      ],
-      mentions: [
-        // Mentions can refer to the categories or types of tools offered
-        { "@type": "Thing", name: "Calculators" },
-        { "@type": "Thing", name: "Converters" },
-        { "@type": "Thing", name: "Generators" },
-        { "@type": "Thing", name: "Utilities" },
-        { "@type": "Thing", name: "File Tools" },
-        { "@type": "Thing", name: "SEO Tools" },
-        { "@type": "Thing", name: "Design Tools" },
-        { "@type": "Thing", name: "Productivity Tools" },
-        { "@type": "Thing", name: "Lottery Tools" },
-      ],
     },
   });
 
-  // Get popular/featured tools (mix of different categories)
+  // Change 5: Expanded featured tools list with more variety including new tools
   const featuredTools = [
     tools.find((t) => t.id === "password-generator"),
     tools.find((t) => t.id === "qr-code-generator"),
@@ -243,6 +207,19 @@ const HomePage = () => {
     tools.find((t) => t.id === "unit-converter"),
     tools.find((t) => t.id === "color-converter"),
     tools.find((t) => t.id === "json-formatter"),
+    tools.find((t) => t.id === "random-number-generator"),
+    tools.find((t) => t.id === "jwt-decoder"),
+    tools.find((t) => t.id === "voice-to-text"),
+  ].filter(Boolean) as Tool[];
+
+  // Change 14: New/Spotlight tools — recently added tools
+  const newTools = [
+    tools.find((t) => t.id === "random-number-generator"),
+    tools.find((t) => t.id === "html-entity-encoder"),
+    tools.find((t) => t.id === "jwt-decoder"),
+    tools.find((t) => t.id === "voice-to-text"),
+    tools.find((t) => t.id === "canvas-drawing-tool"),
+    tools.find((t) => t.id === "pwa-manifest-generator"),
   ].filter(Boolean) as Tool[];
 
   useEffect(() => {
@@ -342,7 +319,7 @@ const HomePage = () => {
     setSearchQuery("");
   }, []);
 
-  // Category configuration
+  // Change 1 + 2 + 3: Full category configuration including all missing categories
   const categories = [
     {
       name: "Calculators",
@@ -365,7 +342,7 @@ const HomePage = () => {
       icon: Shapes,
       color: "blue-500",
       description:
-        "Generate secure passwords, QR codes for URLs/text, Lorem Ipsum placeholder text, UUIDs, and cryptographic hashes.",
+        "Generate secure passwords, QR codes, Lorem Ipsum, UUIDs, random numbers, ASCII art, and cryptographic hashes.",
       delay: 0.3,
     },
     {
@@ -373,7 +350,7 @@ const HomePage = () => {
       icon: Settings,
       color: "emerald-500",
       description:
-        "Handy text manipulation tools, URL encoders/decoders, JSON formatters, character counters, and other web utilities.",
+        "Handy text tools, URL encoders, JSON formatters, JWT decoders, HTML entity encoders, character counters, and more.",
       delay: 0.4,
     },
     {
@@ -381,7 +358,7 @@ const HomePage = () => {
       icon: FileType,
       color: "teal-500",
       description:
-        "Convert images, explore CSV data, and handle file format conversions entirely in your browser — no uploads needed.",
+        "Convert images, explore CSV data, view image metadata, and handle file format conversions entirely in your browser.",
       delay: 0.5,
     },
     {
@@ -389,7 +366,7 @@ const HomePage = () => {
       icon: Palette,
       color: "amber-500",
       description:
-        "Visual tools for CSS flexbox/grid generation, color palettes, spacing visualizers, and responsive layout builders.",
+        "Visual tools for CSS flexbox/grid generation, color palettes, spacing visualizers, gradients, and responsive layout builders.",
       delay: 0.6,
     },
     {
@@ -416,6 +393,15 @@ const HomePage = () => {
         "Explore lottery number generators, odds calculators, historical data analyzers, and wheeling systems.",
       delay: 0.9,
     },
+    {
+      name: "HTML5-APIs",
+      icon: Globe,
+      color: "cyan-500",
+      description:
+        "Interactive demos powered by modern browser APIs: Web Audio, Geolocation, MediaRecorder, Canvas, Notifications, and more.",
+      delay: 1.0,
+      isNew: true,
+    },
   ];
 
   // Get category colors for tool sections
@@ -429,7 +415,22 @@ const HomePage = () => {
     productivity: "purple-500",
     design: "amber-500",
     lottery: "green-500",
+    "html5-apis": "cyan-500",
   };
+
+  // Change 4: Popular search suggestions
+  const popularSearches = [
+    "password",
+    "calculator",
+    "QR code",
+    "converter",
+    "JWT",
+    "color",
+    "JSON",
+    "timer",
+  ];
+
+  const categoryCount = Object.keys(categoryColors).length;
 
   return (
     <>
@@ -470,12 +471,13 @@ const HomePage = () => {
               </div>
 
               <p className="text-xl text-slate-600 dark:text-slate-300 max-w-xl leading-relaxed">
-                Access <strong>{tools.length}+ powerful tools</strong> that run
-                entirely in your browser. No sign-ups, no data sharing –
-                everything processes locally for maximum privacy and security.
+                Access <strong>{tools.length}+ powerful tools</strong> across{" "}
+                <strong>{categoryCount} categories</strong> that run entirely in
+                your browser. No sign-ups, no data sharing – everything
+                processes locally for maximum privacy and security.
               </p>
 
-              {/* Stats inline */}
+              {/* Change 8: Updated stats with category count */}
               <div className="flex flex-wrap gap-6 text-sm">
                 <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
                   <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
@@ -490,6 +492,10 @@ const HomePage = () => {
                 <div className="flex items-center gap-2 text-violet-600 dark:text-violet-400">
                   <div className="w-2 h-2 bg-violet-500 rounded-full animate-pulse"></div>
                   <span className="font-medium">No Registration Required</span>
+                </div>
+                <div className="flex items-center gap-2 text-cyan-600 dark:text-cyan-400">
+                  <div className="w-2 h-2 bg-cyan-500 rounded-full animate-pulse"></div>
+                  <span className="font-medium">{categoryCount} Categories</span>
                 </div>
               </div>
 
@@ -518,6 +524,7 @@ const HomePage = () => {
               </div>
             </div>
 
+            {/* Change 7: Show 6 tools in Quick Start (2×3 grid) */}
             <div className="space-y-4">
               <div className="text-center mb-6">
                 <h3 className="text-lg font-semibold bg-gradient-to-r from-indigo-500 to-violet-500 bg-clip-text text-transparent mb-2">
@@ -528,7 +535,7 @@ const HomePage = () => {
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                {featuredTools.slice(0, 4).map((tool, index) => (
+                {featuredTools.slice(0, 6).map((tool, index) => (
                   <div
                     key={tool.id}
                     className="animate-in fade-in slide-in-from-right-4 hover:scale-105 transition-all duration-300 ease-out"
@@ -676,16 +683,103 @@ const HomePage = () => {
               </div>
             )}
 
-            <div className="text-center mt-3 text-sm text-muted-foreground">
-              <p>
-                Try searching for "calculator", "convert", "password", or browse
-                categories below
-              </p>
-            </div>
+            {/* Change 4: Popular search suggestion chips */}
+            {!searchQuery && (
+              <div className="mt-4 flex flex-wrap gap-2 justify-center">
+                <span className="text-xs text-muted-foreground self-center">
+                  Popular:
+                </span>
+                {popularSearches.map((term) => (
+                  <button
+                    key={term}
+                    onClick={() => setSearchQuery(term)}
+                    className="text-xs px-3 py-1 bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-800/40 text-indigo-600 dark:text-indigo-400 rounded-full hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:border-indigo-300 transition-all"
+                  >
+                    {term}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {!searchQuery && (
+              <div className="text-center mt-3 text-sm text-muted-foreground">
+                <p>
+                  Try searching for "calculator", "convert", "password", or browse
+                  categories below
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Category Navigation */}
+        {/* Change 8: What's New / Recently Added Section */}
+        <section className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-cyan-500" />
+                <h2 className="text-2xl font-bold tracking-tight">
+                  Recently Added Tools
+                </h2>
+                <span className="bg-gradient-to-r from-cyan-500 to-indigo-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide">
+                  New
+                </span>
+              </div>
+              <p className="text-muted-foreground">
+                Fresh tools just added — explore what's new
+              </p>
+            </div>
+            <Link
+              to="/html5-apis"
+              className="text-sm font-medium text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 flex items-center gap-1 bg-cyan-50 dark:bg-cyan-900/20 px-4 py-2 rounded-full hover:bg-cyan-100 dark:hover:bg-cyan-900/30 transition-colors"
+            >
+              View HTML5 API Tools
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {newTools.map((tool, index) => (
+              <div
+                key={tool.id}
+                className="animate-in fade-in slide-in-from-bottom-2 transition-all duration-300"
+                style={{
+                  animationDelay: `${0.05 + index * 0.05}s`,
+                  animationFillMode: "both",
+                }}
+              >
+                <Link
+                  to={tool.url}
+                  className="group block h-full"
+                  aria-label={`Open ${tool.title} tool`}
+                >
+                  <div className="border border-cyan-500/10 hover:border-cyan-500/30 rounded-xl p-5 hover:shadow-lg transition-all h-full flex flex-col bg-gradient-to-br from-white to-cyan-50/30 dark:from-slate-800/50 dark:to-cyan-900/10 group-hover:bg-gradient-to-br group-hover:from-cyan-500/5 group-hover:to-cyan-500/10">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="bg-cyan-500/10 p-2.5 rounded-xl group-hover:scale-110 group-hover:bg-cyan-500/20 transition-all duration-300">
+                        <tool.icon className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-sm group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
+                          {tool.title}
+                        </h4>
+                        <span className="text-xs text-muted-foreground capitalize">
+                          {tool.category.replace("-", " ")}
+                        </span>
+                      </div>
+                      <span className="ml-auto text-[10px] font-bold text-cyan-600 dark:text-cyan-400 bg-cyan-100 dark:bg-cyan-900/30 px-1.5 py-0.5 rounded uppercase">
+                        New
+                      </span>
+                    </div>
+                    <p className="text-muted-foreground text-sm leading-relaxed line-clamp-2">
+                      {tool.description}
+                    </p>
+                  </div>
+                </Link>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* Featured Tools Section */}
         <section id="featured-tools" className="space-y-6">
           <div className="text-center space-y-2">
@@ -697,7 +791,7 @@ const HomePage = () => {
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredTools.map((tool, index) => (
+            {featuredTools.slice(0, 6).map((tool, index) => (
               <div
                 key={tool.id}
                 className="animate-in fade-in slide-in-from-bottom-4 hover:scale-105 transition-all duration-300 ease-out"
@@ -730,9 +824,15 @@ const HomePage = () => {
                       {tool.description}
                     </p>
                   </div>
-                  <div className="mt-auto pt-4 text-xs text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center">
-                    Try it now{" "}
-                    <ChevronRight className="h-3 w-3 ml-1" aria-hidden="true" />
+                  {/* Change 15: Category tag on featured tool cards */}
+                  <div className="flex items-center gap-2 w-full justify-between">
+                    <span className="text-xs text-slate-500 dark:text-slate-400 capitalize bg-slate-100 dark:bg-slate-700/50 px-2 py-0.5 rounded-full">
+                      {tool.category.replace("-", " ")}
+                    </span>
+                    <div className="text-xs text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center">
+                      Try it now{" "}
+                      <ChevronRight className="h-3 w-3 ml-1" aria-hidden="true" />
+                    </div>
                   </div>
                 </Link>
               </div>
@@ -740,14 +840,14 @@ const HomePage = () => {
           </div>
         </section>
 
-        {/* Categories Section */}
+        {/* Change 1+2: Categories Section — now includes ALL 10 categories */}
         <section className="space-y-6">
           <div className="text-center space-y-2">
             <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-indigo-500 to-violet-500 bg-clip-text text-transparent">
               Browse by Category
             </h2>
             <p className="text-muted-foreground text-lg">
-              Find the perfect tool for your specific needs
+              Find the perfect tool for your specific needs across {categoryCount} categories
             </p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -760,8 +860,22 @@ const HomePage = () => {
                 description={category.description}
                 delay={category.delay}
                 toolCount={tools.filter((t) => t.category === category.name.toLowerCase().replace(" ", "-")).length}
+                isNew={"isNew" in category ? (category as { isNew?: boolean }).isNew : false}
               />
             ))}
+          </div>
+          {/* Change 13: Browse All button in categories section */}
+          <div className="text-center pt-2">
+            <Button
+              asChild
+              variant="outline"
+              className="rounded-full border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800"
+            >
+              <Link to="/sitemap">
+                <Filter className="mr-2 h-4 w-4" />
+                Browse All {tools.length}+ Tools
+              </Link>
+            </Button>
           </div>
         </section>
 
@@ -791,7 +905,8 @@ const HomePage = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10 mb-8">
+          {/* Change 10: Added 4th stat card for Categories */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10 mb-8">
             <div className="bg-white/60 backdrop-blur-sm dark:bg-slate-800/60 p-8 rounded-2xl border border-indigo-200/50 dark:border-indigo-700/30 shadow-lg hover:shadow-2xl transition-all duration-300 text-center space-y-4 group hover:border-indigo-300/70 dark:hover:border-indigo-600/50 hover:-translate-y-2">
               <div className="relative">
                 <div className="text-indigo-500 text-6xl font-bold bg-gradient-to-br from-indigo-500 to-violet-500 bg-clip-text text-transparent group-hover:scale-110 transform transition-transform duration-300">
@@ -806,8 +921,7 @@ const HomePage = () => {
               </h3>
               <div className="w-20 h-1.5 bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full mx-auto group-hover:w-24 transition-all duration-300"></div>
               <p className="text-muted-foreground leading-relaxed">
-                A comprehensive library of tools that covers everything from
-                calculators to generators
+                A comprehensive library covering everything from calculators to HTML5 API demos
               </p>
             </div>
 
@@ -848,6 +962,25 @@ const HomePage = () => {
                 your browser
               </p>
             </div>
+
+            {/* New 4th stat: Categories */}
+            <div className="bg-white/60 backdrop-blur-sm dark:bg-slate-800/60 p-8 rounded-2xl border border-cyan-200/50 dark:border-cyan-700/30 shadow-lg hover:shadow-2xl transition-all duration-300 text-center space-y-4 group hover:border-cyan-300/70 dark:hover:border-cyan-600/50 hover:-translate-y-2">
+              <div className="relative">
+                <div className="text-cyan-500 text-6xl font-bold bg-gradient-to-br from-cyan-500 to-teal-500 bg-clip-text text-transparent group-hover:scale-110 transform transition-transform duration-300">
+                  {categoryCount}
+                </div>
+                <div className="absolute -top-2 -right-2 bg-gradient-to-r from-cyan-400 to-teal-500 text-white text-xs px-2 py-1 rounded-full font-medium animate-bounce">
+                  New!
+                </div>
+              </div>
+              <h3 className="font-semibold text-xl text-slate-900 dark:text-white">
+                Tool Categories
+              </h3>
+              <div className="w-20 h-1.5 bg-gradient-to-r from-cyan-500 to-teal-500 rounded-full mx-auto group-hover:w-24 transition-all duration-300"></div>
+              <p className="text-muted-foreground leading-relaxed">
+                From calculators to HTML5 API demos — every tool you need in one place
+              </p>
+            </div>
           </div>
 
           {/* Additional benefits */}
@@ -879,7 +1012,7 @@ const HomePage = () => {
           </div>
         </div>
 
-        {/* Quick Access to Popular Tools */}
+        {/* Change 3 + 9: Popular by Category — now includes ALL 10 categories */}
         <section className="space-y-8" id="popular-by-category">
           <div className="text-center space-y-2">
             <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-indigo-500 to-violet-500 bg-clip-text text-transparent">
@@ -899,6 +1032,10 @@ const HomePage = () => {
               "utilities",
               "productivity",
               "design",
+              "seo",
+              "file-tools",
+              "lottery",
+              "html5-apis",
             ].map((category) => {
               const categoryTools = tools
                 .filter((tool) => tool.category === category)
@@ -909,6 +1046,10 @@ const HomePage = () => {
 
               if (categoryTools.length === 0) return null;
 
+              const categoryDisplayName = category
+                .replace("-", " ")
+                .replace(/\b\w/g, (l) => l.toUpperCase());
+
               return (
                 <div key={category} className="space-y-6">
                   <div className="flex items-center justify-between">
@@ -916,7 +1057,7 @@ const HomePage = () => {
                       <h3
                         className={`text-2xl font-bold capitalize text-${colorClass}`}
                       >
-                        {category.replace("-", " ")}
+                        {categoryDisplayName}
                       </h3>
                       <div
                         className={`px-3 py-1 bg-${colorClass}/10 text-${colorClass} text-sm font-medium rounded-full`}
@@ -924,13 +1065,18 @@ const HomePage = () => {
                         {tools.filter((t) => t.category === category).length}{" "}
                         tools
                       </div>
+                      {category === "html5-apis" && (
+                        <span className="bg-gradient-to-r from-cyan-500 to-indigo-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">
+                          New
+                        </span>
+                      )}
                     </div>
 
                     <Link
                       to={`/${category}`}
                       className={`text-sm font-medium text-${colorClass} hover:text-${colorClass}/80 flex items-center group transition-colors bg-${colorClass}/5 hover:bg-${colorClass}/10 px-4 py-2 rounded-full`}
                     >
-                      View all {category}
+                      View all {categoryDisplayName}
                       <ChevronRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
                     </Link>
                   </div>
@@ -1003,6 +1149,46 @@ const HomePage = () => {
             </Button>
           </div>
         </section>
+
+        {/* Change 12: New CTA section at the bottom */}
+        <div className="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-2xl p-10 text-white text-center space-y-6 relative overflow-hidden">
+          <div
+            className="absolute inset-0 bg-grid-slate-200\\50 opacity-10"
+            aria-hidden="true"
+          ></div>
+          <div className="relative z-10">
+            <h2 className="text-3xl font-bold mb-3">
+              Can't Find What You Need?
+            </h2>
+            <p className="text-indigo-100 text-lg max-w-xl mx-auto mb-6">
+              Browse our full sitemap to discover all {tools.length}+ tools, or
+              use the search bar above to find exactly what you're looking for.
+            </p>
+            <div className="flex flex-wrap gap-4 justify-center">
+              <Button
+                asChild
+                size="lg"
+                className="bg-white text-indigo-700 hover:bg-indigo-50 rounded-xl px-8 font-semibold shadow-lg"
+              >
+                <Link to="/sitemap">
+                  <Filter className="mr-2 h-5 w-5" />
+                  View All Tools
+                </Link>
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="border-white/40 text-white hover:bg-white/10 rounded-xl px-8 font-semibold"
+              >
+                <Link to="/html5-apis">
+                  <Globe className="mr-2 h-5 w-5" />
+                  Explore HTML5 API Tools
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Back to Top Button */}
