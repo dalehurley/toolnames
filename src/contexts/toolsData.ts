@@ -98,7 +98,9 @@ import {
   Shuffle,
   Braces,
   Lock,
+  BotMessageSquare,
 } from "lucide-react";
+import { AIPlayground } from "@/components/tools/ai-playground/AIPlayground";
 import { NetworkLatencySimulator } from "@/components/tools/utilities/NetworkLatencySimulator";
 import {
   LotteryPickerGenerator,
@@ -1545,6 +1547,18 @@ export const availableTools: Tool[] = [
     url: "/utilities/jwt-decoder",
     pageTitle: "JWT Decoder: Decode & Inspect JSON Web Tokens | ToolNames",
     metaDescription: "Decode JWT tokens and inspect header, payload, and claims instantly in your browser. Check expiry, issued-at time, and all claims. 100% client-side and private.",
+  },
+  // ── AI Playground ─────────────────────────────────────────────────────────────
+  {
+    id: "ai-playground",
+    title: "Universal AI Playground",
+    description: "Chat with 10+ AI providers (OpenAI, Anthropic, Gemini, Mistral, Groq & more) using your own API keys. Streaming, artifacts, voice, file uploads, and a live code canvas — all in your browser.",
+    icon: BotMessageSquare,
+    category: "utilities",
+    component: AIPlayground,
+    url: "/utilities/ai-playground",
+    pageTitle: "Universal AI Playground: Chat with Any AI Model | ToolNames",
+    metaDescription: "Browser-based AI chat with OpenAI, Anthropic, Gemini, Mistral, xAI, Groq, and more. Bring your own API key. Streaming, voice, file uploads, React artifact runner, Monaco canvas editor. 100% private.",
   },
 ];
 
