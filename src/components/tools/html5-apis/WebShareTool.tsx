@@ -15,7 +15,6 @@ const SHARE_TEMPLATES = [
   { name: "GitHub Repo", title: "Interesting GitHub repo", text: "Found an awesome open-source project:", url: "https://github.com/example/repo" },
 ];
 
-
 export const WebShareTool = () => {
   const [title, setTitle] = useState("Check this out!");
   const [text, setText] = useState("I found something amazing and wanted to share it with you.");

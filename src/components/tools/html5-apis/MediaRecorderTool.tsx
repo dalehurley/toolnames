@@ -40,6 +40,7 @@ export const MediaRecorderTool = () => {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef(0);
   const liveVideoRef = useRef<HTMLVideoElement>(null);
+
   const stopStream = () => {
     streamRef.current?.getTracks().forEach(t => t.stop());
     streamRef.current = null;
