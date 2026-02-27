@@ -2,7 +2,6 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Paintbrush, Eraser, Trash2, Download, Undo2, Square, Circle, Minus, Type as TypeIcon } from "lucide-react";
 
 type Tool = "pen" | "eraser" | "line" | "rect" | "circle" | "fill" | "text";
