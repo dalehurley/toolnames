@@ -37,6 +37,7 @@ interface SpeechRecognition extends EventTarget {
   onend: (() => void) | null;
 }
 
+
 declare global {
   interface Window {
     SpeechRecognition: new () => SpeechRecognition;

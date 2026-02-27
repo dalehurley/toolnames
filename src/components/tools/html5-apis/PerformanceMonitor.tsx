@@ -24,7 +24,6 @@ interface ResourceEntry {
   startTime: number;
 }
 
-interface FPSData { fps: number; ts: number; }
 
 function getNavTiming(): NavTiming | null {
   const nav = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming;
@@ -86,7 +85,6 @@ const RESOURCE_COLORS: Record<string, string> = {
 export const PerformanceMonitor = () => {
   const [navTiming, setNavTiming] = useState<NavTiming | null>(null);
   const [resources, setResources] = useState<ResourceEntry[]>([]);
-  const [, setFpsData] = useState<FPSData[]>([]);
   const [currentFPS, setCurrentFPS] = useState(0);
   const [memory, setMemory] = useState<{ used: number; total: number; limit: number } | null>(null);
   const [measuring, setMeasuring] = useState(false);
@@ -119,8 +117,6 @@ export const PerformanceMonitor = () => {
       fpsRef.current.push(fps);
       if (fpsRef.current.length > 60) fpsRef.current.shift();
       setCurrentFPS(fps);
-      const avg = Math.round(fpsRef.current.reduce((a, b) => a + b, 0) / fpsRef.current.length);
-      setFpsData(prev => [...prev.slice(-100), { fps: avg, ts: now }]);
 
       // Draw FPS graph
       const canvas = canvasRef.current;

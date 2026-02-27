@@ -15,6 +15,7 @@ import {
   Dices,
   Sun,
   Moon,
+  Globe,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -77,6 +78,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           "productivity",
           "design",
           "lottery",
+          "html5-apis",
         ].includes(category)
       ) {
         setFilterCategory(category);
@@ -158,6 +160,12 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       label: "Lottery",
       id: "lottery",
       to: "/lottery",
+    },
+    {
+      icon: <Globe className="h-5 w-5" />,
+      label: "HTML5 APIs",
+      id: "html5-apis",
+      to: "/html5-apis",
     },
   ];
 
@@ -337,6 +345,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                   { label: "Design", to: "/design" },
                   { label: "Productivity", to: "/productivity" },
                   { label: "Lottery", to: "/lottery" },
+                  { label: "HTML5 API Tools", to: "/html5-apis" },
                 ].map((item) => (
                   <Link
                     key={item.to}
