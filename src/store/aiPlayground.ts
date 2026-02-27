@@ -80,6 +80,8 @@ interface AIPlaygroundStore {
   setThumbsRating: (conversationId: string, messageId: string, rating: "up" | "down" | null) => void;
   updateConversationTitle: (id: string, title: string) => void;
   forkConversation: (conversationId: string, fromMessageId: string) => string;
+  clearConversationMessages: (conversationId: string) => void;
+  deleteMessagesAfter: (conversationId: string, messageId: string) => void;
 
   // Actions - settings
   updateSettings: (patch: Partial<AIPlaygroundSettings>) => void;
@@ -246,6 +248,25 @@ export const useAIPlaygroundStore = create<AIPlaygroundStore>()(
           conversations: s.conversations.map((c) =>
             c.id === id ? { ...c, title } : c
           ),
+        }));
+      },
+
+      clearConversationMessages: (conversationId) => {
+        set((s) => ({
+          conversations: s.conversations.map((c) =>
+            c.id === conversationId ? { ...c, messages: [], updatedAt: Date.now() } : c
+          ),
+        }));
+      },
+
+      deleteMessagesAfter: (conversationId, messageId) => {
+        set((s) => ({
+          conversations: s.conversations.map((c) => {
+            if (c.id !== conversationId) return c;
+            const idx = c.messages.findIndex((m) => m.id === messageId);
+            if (idx === -1) return c;
+            return { ...c, messages: c.messages.slice(0, idx + 1), updatedAt: Date.now() };
+          }),
         }));
       },
 

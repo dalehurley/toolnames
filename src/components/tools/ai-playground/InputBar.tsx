@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, KeyboardEvent } from "react";
+import { useState, useRef, useCallback, useEffect, KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -87,6 +87,14 @@ export function InputBar({ onSend, onStop, isStreaming, disabled, visionSupporte
   const removeAttachment = (id: string) => {
     setAttachments((prev) => prev.filter((a) => a.id !== id));
   };
+
+  // Auto-grow textarea
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
+  }, [text]);
 
   const toggleVoice = () => {
     if (isListening) {
@@ -195,8 +203,9 @@ export function InputBar({ onSend, onStop, isStreaming, disabled, visionSupporte
               : "Message... (Ctrl+Enter to send)"
           }
           disabled={isStreaming || disabled}
-          className="flex-1 min-h-[40px] max-h-[200px] resize-none text-sm py-2.5"
+          className="flex-1 min-h-[40px] max-h-[200px] resize-none text-sm py-2.5 overflow-hidden"
           rows={1}
+          style={{ height: "40px" }}
         />
 
         {/* Send / Stop */}

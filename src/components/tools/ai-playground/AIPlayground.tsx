@@ -15,6 +15,7 @@ import { Sidebar } from "./Sidebar";
 import { MessageItem } from "./MessageItem";
 import { InputBar } from "./InputBar";
 import { ArtifactPanel } from "./ArtifactPanel";
+import { PromptLibrary } from "./PromptLibrary";
 
 import { useAIPlaygroundStore } from "@/store/aiPlayground";
 import { useStream } from "@/hooks/useStream";
@@ -31,7 +32,14 @@ import {
   SlidersHorizontal,
   MessageSquarePlus,
   ArrowDown,
+  Moon,
+  Sun,
+  Keyboard,
+  BookOpen,
+  Loader2,
+  X,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface OpenArtifact {
   code: string;
@@ -50,6 +58,17 @@ const STARTERS = [
   { icon: "🌐", title: "Build a webpage", prompt: "Build a complete HTML page that: " },
 ];
 
+// Keyboard shortcut definitions
+const SHORTCUTS = [
+  { key: "Ctrl+Enter", description: "Send message" },
+  { key: "Esc", description: "Stop generation" },
+  { key: "Ctrl+Shift+N", description: "New conversation" },
+  { key: "Ctrl+/", description: "Toggle system prompt" },
+  { key: "Ctrl+Shift+D", description: "Toggle dark mode" },
+  { key: "Ctrl+Shift+P", description: "Toggle prompt library" },
+  { key: "?", description: "Show keyboard shortcuts" },
+];
+
 export function AIPlayground() {
   const {
     conversations,
@@ -58,8 +77,10 @@ export function AIPlayground() {
     updateSettings,
     createConversation,
     addMessage,
+    updateMessage,
     getActiveConversation,
     sessionUsage,
+    deleteMessagesAfter,
   } = useAIPlaygroundStore();
 
   const { sendStream, stop } = useStream();
@@ -73,6 +94,10 @@ export function AIPlayground() {
   const [isStreamingActive, setIsStreamingActive] = useState(false);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const [compareMode, setCompareMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(settings.darkMode);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [showPromptLibrary, setShowPromptLibrary] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -89,13 +114,32 @@ export function AIPlayground() {
       .find((m) => m.id === settings.selectedModelId)
       ?.tags.includes("vision") ?? false;
 
-  // Auto-scroll to bottom
+  // Dark mode: apply to document root
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    updateSettings({ darkMode });
+  }, [darkMode]);
+
+  // Auto-scroll to bottom; track unread when scrolled away
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    setUnreadCount(0);
   }, []);
 
   useEffect(() => {
-    if (isStreamingActive) scrollToBottom();
+    if (!isStreamingActive) return;
+    const el = scrollAreaRef.current;
+    if (!el) return;
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+    if (atBottom) {
+      scrollToBottom();
+    } else {
+      setUnreadCount((n) => n + 1);
+    }
   }, [messages, isStreamingActive, scrollToBottom]);
 
   // Scroll detection
@@ -103,13 +147,19 @@ export function AIPlayground() {
     const el = e.currentTarget;
     const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
     setShowScrollBtn(!atBottom);
+    if (atBottom) setUnreadCount(0);
   }, []);
 
   // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isStreamingActive) {
-        stop();
+      // Don't fire shortcuts when typing in an input/textarea
+      const tag = (e.target as HTMLElement).tagName;
+      const inInput = tag === "INPUT" || tag === "TEXTAREA";
+
+      if (e.key === "Escape") {
+        if (isStreamingActive) stop();
+        if (showShortcuts) setShowShortcuts(false);
       }
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "N") {
         e.preventDefault();
@@ -119,10 +169,21 @@ export function AIPlayground() {
         e.preventDefault();
         setShowSystemPrompt((v) => !v);
       }
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "D") {
+        e.preventDefault();
+        setDarkMode((v) => !v);
+      }
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "P") {
+        e.preventDefault();
+        setShowPromptLibrary((v) => !v);
+      }
+      if (e.key === "?" && !inInput) {
+        setShowShortcuts((v) => !v);
+      }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [isStreamingActive, stop, createConversation]);
+  }, [isStreamingActive, stop, createConversation, showShortcuts]);
 
   // Initialize conversation if none exists
   useEffect(() => {
@@ -216,6 +277,40 @@ export function AIPlayground() {
     });
   }, [activeConversationId, getActiveConversation, sendStream, settings, noSystemPrompt]);
 
+  // Edit & re-run: update message text, remove subsequent messages, re-send
+  const handleEditAndRerun = useCallback(
+    async (messageId: string, newContent: string) => {
+      if (!activeConversationId) return;
+      updateMessage(activeConversationId, messageId, newContent);
+      deleteMessagesAfter(activeConversationId, messageId);
+
+      // Wait for state update, then get fresh messages
+      await Promise.resolve();
+      const conv = useAIPlaygroundStore.getState().conversations.find(
+        (c) => c.id === activeConversationId
+      );
+      if (!conv) return;
+
+      setIsStreamingActive(true);
+      sendStream({
+        conversationId: activeConversationId,
+        providerId: settings.selectedProviderId,
+        modelId: settings.selectedModelId,
+        messages: conv.messages,
+        systemPrompt: noSystemPrompt ? undefined : settings.systemPrompt,
+        onDone: (fullText) => {
+          setIsStreamingActive(false);
+          const detected = detectArtifact(fullText);
+          if (detected) {
+            setArtifact({ code: detected.code, language: detected.language, type: detected.type });
+          }
+        },
+        onError: () => setIsStreamingActive(false),
+      });
+    },
+    [activeConversationId, updateMessage, deleteMessagesAfter, sendStream, settings, noSystemPrompt]
+  );
+
   const handleOpenArtifact = useCallback(
     (code: string, type: string, language: string) => {
       setArtifact({ code, type: type as ArtifactType, language });
@@ -223,12 +318,41 @@ export function AIPlayground() {
     []
   );
 
+  // "Ask AI to edit" callback for ArtifactPanel
+  const handleAskAI = useCallback(
+    async (instruction: string, currentCode: string): Promise<string | null> => {
+      const convId = activeConversationId || createConversation();
+      const prompt = `Edit the following code as instructed.\n\nInstruction: ${instruction}\n\nCurrent code:\n\`\`\`\n${currentCode}\n\`\`\`\n\nRespond with ONLY the updated code inside a single code block, no explanation.`;
+      addMessage(convId, { role: "user", content: prompt });
+
+      const conv = useAIPlaygroundStore.getState().conversations.find((c) => c.id === convId);
+      const apiMessages = conv?.messages || [];
+
+      return new Promise((resolve) => {
+        sendStream({
+          conversationId: convId,
+          providerId: settings.selectedProviderId,
+          modelId: settings.selectedModelId,
+          messages: apiMessages,
+          systemPrompt: undefined,
+          onDone: (fullText) => {
+            // Extract code from fenced block
+            const match = /```[\w]*\n?([\s\S]*?)```/.exec(fullText);
+            resolve(match ? match[1].trim() : fullText.trim());
+          },
+          onError: () => resolve(null),
+        });
+      });
+    },
+    [activeConversationId, createConversation, addMessage, sendStream, settings]
+  );
+
   const totalTokens = Object.values(sessionUsage).reduce((a, b) => a + b, 0);
 
   return (
     <TooltipProvider>
       <div className="flex flex-col h-[calc(100vh-120px)] min-h-[500px] border rounded-xl overflow-hidden bg-background">
-        {/* Privacy Banner - first load */}
+        {/* Privacy Banner */}
         <div className="bg-blue-50 dark:bg-blue-950/50 border-b border-blue-100 dark:border-blue-900 px-4 py-1.5 text-xs text-blue-700 dark:text-blue-300 flex items-center justify-between">
           <span>
             🔒 <strong>Your data stays local.</strong> Keys and conversations stored in
@@ -241,6 +365,26 @@ export function AIPlayground() {
             Learn more
           </button>
         </div>
+
+        {/* Streaming status bar */}
+        {isStreamingActive && (
+          <div className="flex items-center gap-2 px-4 py-1 bg-primary/5 border-b text-xs text-muted-foreground">
+            <Loader2 className="w-3 h-3 animate-spin text-primary" />
+            <span>
+              Generating with{" "}
+              <span className="font-medium text-foreground">
+                {currentProvider?.name} / {settings.selectedModelId}
+              </span>
+              …
+            </span>
+            <button
+              className="ml-auto text-destructive hover:text-destructive/80 font-medium"
+              onClick={stop}
+            >
+              Stop (Esc)
+            </button>
+          </div>
+        )}
 
         {/* Top bar */}
         <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/20 flex-shrink-0 gap-2">
@@ -265,6 +409,21 @@ export function AIPlayground() {
                 ~{totalTokens.toLocaleString()} tokens
               </Badge>
             )}
+
+            {/* Prompt library */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={showPromptLibrary ? "default" : "ghost"}
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setShowPromptLibrary(!showPromptLibrary)}
+                >
+                  <BookOpen className="w-3.5 h-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Prompt library (Ctrl+Shift+P)</TooltipContent>
+            </Tooltip>
 
             {/* Compare mode */}
             <Tooltip>
@@ -294,6 +453,38 @@ export function AIPlayground() {
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Model parameters</TooltipContent>
+            </Tooltip>
+
+            {/* Dark mode toggle */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setDarkMode((v) => !v)}
+                  title="Toggle dark mode (Ctrl+Shift+D)"
+                >
+                  {darkMode ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Toggle dark mode (Ctrl+Shift+D)</TooltipContent>
+            </Tooltip>
+
+            {/* Keyboard shortcuts */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setShowShortcuts((v) => !v)}
+                  title="Keyboard shortcuts (?)"
+                >
+                  <Keyboard className="w-3.5 h-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Keyboard shortcuts (?)</TooltipContent>
             </Tooltip>
 
             {/* Settings */}
@@ -367,18 +558,51 @@ export function AIPlayground() {
           </div>
         )}
 
+        {/* Keyboard shortcuts overlay */}
+        {showShortcuts && (
+          <div
+            className="absolute inset-0 z-50 flex items-center justify-center bg-black/50"
+            onClick={() => setShowShortcuts(false)}
+          >
+            <div
+              className="bg-background border rounded-xl shadow-xl p-5 w-80"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-sm">Keyboard Shortcuts</h3>
+                <button
+                  onClick={() => setShowShortcuts(false)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="space-y-2">
+                {SHORTCUTS.map((s) => (
+                  <div key={s.key} className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">{s.description}</span>
+                    <kbd className="text-[10px] bg-muted px-1.5 py-0.5 rounded border font-mono">
+                      {s.key}
+                    </kbd>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Main content */}
-        <div className="flex flex-1 min-h-0">
+        <div className="flex flex-1 min-h-0 relative">
           {/* Sidebar */}
           <Sidebar
             collapsed={sidebarCollapsed}
             onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
           />
 
-          {/* Chat + Artifact */}
+          {/* Chat + Artifact + PromptLibrary */}
           <PanelGroup direction="horizontal" className="flex-1">
             {/* Chat Panel */}
-            <Panel defaultSize={artifact ? 55 : 100} minSize={30}>
+            <Panel defaultSize={artifact || showPromptLibrary ? 55 : 100} minSize={30}>
               <div className="flex flex-col h-full">
                 {/* System prompt */}
                 <Collapsible open={showSystemPrompt} onOpenChange={setShowSystemPrompt}>
@@ -453,11 +677,7 @@ export function AIPlayground() {
                           <button
                             key={s.title}
                             className="flex flex-col items-start gap-1 p-3 rounded-xl border hover:border-primary/50 hover:bg-muted/50 text-left transition-colors"
-                            onClick={() => {
-                              // Pre-fill input - we'll need to trigger via a state
-                              // For simplicity, create a handler
-                              handleSend(s.prompt, []);
-                            }}
+                            onClick={() => handleSend(s.prompt, [])}
                           >
                             <span className="text-lg">{s.icon}</span>
                             <span className="text-xs font-medium">{s.title}</span>
@@ -483,25 +703,37 @@ export function AIPlayground() {
                           message={msg}
                           conversationId={activeConversationId!}
                           isLast={idx === messages.length - 1}
-                          isStreaming={isStreamingActive && idx === messages.length - 1 && msg.role === "assistant"}
+                          isStreaming={
+                            isStreamingActive &&
+                            idx === messages.length - 1 &&
+                            msg.role === "assistant"
+                          }
                           onRegenerate={handleRegenerate}
                           onArtifactOpen={handleOpenArtifact}
                           onSpeak={(text) => speak(text)}
                           isSpeaking={isSpeaking}
                           onStopSpeak={stopSpeaking}
+                          onEditAndRerun={handleEditAndRerun}
+                          onRetry={handleRegenerate}
                         />
                       ))}
                       <div ref={messagesEndRef} />
                     </div>
                   )}
 
-                  {/* Scroll to bottom FAB */}
+                  {/* Scroll to bottom FAB with unread badge */}
                   {showScrollBtn && (
                     <button
-                      className="absolute bottom-4 right-4 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg hover:bg-primary/90"
+                      className={cn(
+                        "absolute bottom-4 right-4 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg hover:bg-primary/90",
+                        unreadCount > 0 ? "w-auto px-3 h-8 gap-1.5" : "w-8 h-8"
+                      )}
                       onClick={scrollToBottom}
                     >
-                      <ArrowDown className="w-4 h-4" />
+                      <ArrowDown className="w-4 h-4 flex-shrink-0" />
+                      {unreadCount > 0 && (
+                        <span className="text-xs font-medium">{unreadCount}</span>
+                      )}
                     </button>
                   )}
                 </div>
@@ -530,6 +762,25 @@ export function AIPlayground() {
                     onCodeChange={(code) =>
                       setArtifact((prev) => (prev ? { ...prev, code } : null))
                     }
+                    onAskAI={handleAskAI}
+                  />
+                </Panel>
+              </>
+            )}
+
+            {/* Prompt Library panel */}
+            {showPromptLibrary && (
+              <>
+                <PanelResizeHandle className="w-1.5 bg-border hover:bg-primary/30 transition-colors" />
+                <Panel defaultSize={35} minSize={25}>
+                  <PromptLibrary
+                    onUse={(prompt) => {
+                      updateSettings({ systemPrompt: prompt, showSystemPrompt: true });
+                      setShowSystemPrompt(true);
+                      setShowPromptLibrary(false);
+                      toast.success("Prompt applied as system prompt");
+                    }}
+                    onClose={() => setShowPromptLibrary(false)}
                   />
                 </Panel>
               </>

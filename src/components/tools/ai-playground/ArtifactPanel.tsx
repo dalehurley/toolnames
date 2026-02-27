@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Editor from "@monaco-editor/react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArtifactType } from "@/hooks/useArtifact";
 import {
@@ -12,6 +13,8 @@ import {
   Code2,
   Eye,
   Terminal,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +25,7 @@ interface ArtifactPanelProps {
   title?: string;
   onClose: () => void;
   onCodeChange?: (code: string) => void;
+  onAskAI?: (instruction: string, currentCode: string) => Promise<string | null>;
 }
 
 function buildIframeSrc(code: string, type: ArtifactType): string {
@@ -201,12 +205,16 @@ export function ArtifactPanel({
   title,
   onClose,
   onCodeChange,
+  onAskAI,
 }: ArtifactPanelProps) {
   const [code, setCode] = useState(initialCode);
   const [activeTab, setActiveTab] = useState<"preview" | "code" | "console">("preview");
   const [iframeSrc, setIframeSrc] = useState(() => buildIframeSrc(initialCode, type));
   const [consoleLogs, setConsoleLogs] = useState<string[]>([]);
   const [fullscreen, setFullscreen] = useState(false);
+  const [showAskAI, setShowAskAI] = useState(false);
+  const [aiInstruction, setAiInstruction] = useState("");
+  const [isAiEditing, setIsAiEditing] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const reloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -275,6 +283,23 @@ export function ArtifactPanel({
     window.open(url, "_blank");
   };
 
+  const handleAskAI = useCallback(async () => {
+    if (!aiInstruction.trim() || !onAskAI) return;
+    setIsAiEditing(true);
+    try {
+      const newCode = await onAskAI(aiInstruction, code);
+      if (newCode) {
+        setCode(newCode);
+        onCodeChange?.(newCode);
+        setIframeSrc(buildIframeSrc(newCode, type));
+        setAiInstruction("");
+        setShowAskAI(false);
+      }
+    } finally {
+      setIsAiEditing(false);
+    }
+  }, [aiInstruction, code, onAskAI, onCodeChange, type]);
+
   const monacoLanguage =
     language === "jsx" || language === "tsx"
       ? "typescript"
@@ -306,6 +331,17 @@ export function ArtifactPanel({
               <ExternalLink className="w-3.5 h-3.5" />
             </Button>
           )}
+          {onAskAI && (
+            <Button
+              variant={showAskAI ? "default" : "ghost"}
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => setShowAskAI(!showAskAI)}
+              title="Ask AI to edit"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+            </Button>
+          )}
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={download} title="Download">
             <Download className="w-3.5 h-3.5" />
           </Button>
@@ -323,6 +359,38 @@ export function ArtifactPanel({
           </Button>
         </div>
       </div>
+
+      {/* Ask AI to edit bar */}
+      {showAskAI && (
+        <div className="flex items-center gap-2 px-3 py-2 border-b bg-muted/10">
+          <Sparkles className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+          <Input
+            placeholder="Describe your edit… e.g. 'Add a dark mode toggle'"
+            value={aiInstruction}
+            onChange={(e) => setAiInstruction(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleAskAI()}
+            className="h-7 text-xs flex-1"
+            autoFocus
+            disabled={isAiEditing}
+          />
+          <Button
+            size="sm"
+            className="h-7 px-3 text-xs"
+            onClick={handleAskAI}
+            disabled={!aiInstruction.trim() || isAiEditing}
+          >
+            {isAiEditing ? <Loader2 className="w-3 h-3 animate-spin" /> : "Apply"}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => { setShowAskAI(false); setAiInstruction(""); }}
+          >
+            <X className="w-3 h-3" />
+          </Button>
+        </div>
+      )}
 
       {/* Tabs */}
       <Tabs
