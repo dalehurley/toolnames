@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { MapPin, Plus, Trash2, Navigation, Copy, Check } from "lucide-react";
+import { MapPin, Trash2, Navigation, Copy, Check } from "lucide-react";
 
 interface Location {
   id: string;

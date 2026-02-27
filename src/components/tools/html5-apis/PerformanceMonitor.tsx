@@ -86,7 +86,7 @@ const RESOURCE_COLORS: Record<string, string> = {
 export const PerformanceMonitor = () => {
   const [navTiming, setNavTiming] = useState<NavTiming | null>(null);
   const [resources, setResources] = useState<ResourceEntry[]>([]);
-  const [fpsData, setFpsData] = useState<FPSData[]>([]);
+  const [, setFpsData] = useState<FPSData[]>([]);
   const [currentFPS, setCurrentFPS] = useState(0);
   const [memory, setMemory] = useState<{ used: number; total: number; limit: number } | null>(null);
   const [measuring, setMeasuring] = useState(false);

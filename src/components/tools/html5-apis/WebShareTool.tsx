@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Share2, Copy, Check, Link, FileText, Image as ImageIcon, ExternalLink } from "lucide-react";
+import { Share2, Copy, Check, Image as ImageIcon, ExternalLink } from "lucide-react";
 
 const SHARE_TEMPLATES = [
   { name: "Blog Post", title: "Check out this article", text: "I found this really helpful article you should read!", url: "https://example.com/article" },
@@ -14,14 +14,6 @@ const SHARE_TEMPLATES = [
   { name: "Video", title: "Watch this video", text: "You need to see this video — it's incredible.", url: "https://youtube.com/watch?v=example" },
   { name: "GitHub Repo", title: "Interesting GitHub repo", text: "Found an awesome open-source project:", url: "https://github.com/example/repo" },
 ];
-
-function buildShareUrl(title: string, text: string, url: string): string {
-  const params = new URLSearchParams();
-  if (title) params.set("title", title);
-  if (text) params.set("text", text);
-  if (url) params.set("url", url);
-  return `${window.location.origin}?share&${params.toString()}`;
-}
 
 export const WebShareTool = () => {
   const [title, setTitle] = useState("Check this out!");
@@ -49,11 +41,6 @@ export const WebShareTool = () => {
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setCopied(id); setTimeout(() => setCopied(""), 2000);
-  };
-
-  const canShare = () => {
-    if (!navigator.canShare) return false;
-    return navigator.canShare({ title, text, url });
   };
 
   // Generate various share link formats

@@ -2,8 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Mic, Video, Square, Download, Trash2, Play, Pause, Monitor, Clapperboard } from "lucide-react";
+import { Mic, Video, Square, Download, Trash2, Play, Monitor, Clapperboard } from "lucide-react";
 
 interface Recording { id: string; blob: Blob; url: string; duration: number; type: string; size: number; name: string; }
 
@@ -41,7 +40,6 @@ export const MediaRecorderTool = () => {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef(0);
   const liveVideoRef = useRef<HTMLVideoElement>(null);
-  const previewRef = useRef<HTMLAudioElement | HTMLVideoElement | null>(null);
 
   const stopStream = () => {
     streamRef.current?.getTracks().forEach(t => t.stop());

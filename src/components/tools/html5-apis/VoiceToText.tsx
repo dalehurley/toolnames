@@ -6,7 +6,37 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Mic, MicOff, Copy, Trash2, Download, MessageSquare, Check } from "lucide-react";
 
-// Extend window for SpeechRecognition
+// SpeechRecognition type declarations
+interface SpeechRecognitionAlternative {
+  readonly transcript: string;
+  readonly confidence: number;
+}
+interface SpeechRecognitionResult {
+  readonly isFinal: boolean;
+  readonly length: number;
+  item(index: number): SpeechRecognitionAlternative;
+  [index: number]: SpeechRecognitionAlternative;
+}
+interface SpeechRecognitionResultList {
+  readonly length: number;
+  item(index: number): SpeechRecognitionResult;
+  [index: number]: SpeechRecognitionResult;
+}
+interface SpeechRecognitionEvent extends Event {
+  readonly resultIndex: number;
+  readonly results: SpeechRecognitionResultList;
+}
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onerror: ((event: Event) => void) | null;
+  onend: (() => void) | null;
+}
+
 declare global {
   interface Window {
     SpeechRecognition: new () => SpeechRecognition;
@@ -52,7 +82,7 @@ export const VoiceToText = () => {
     rec.interimResults = true;
     rec.lang = language;
 
-    rec.onresult = (event) => {
+    rec.onresult = (event: SpeechRecognitionEvent) => {
       let interim = "";
       let final = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -69,7 +99,7 @@ export const VoiceToText = () => {
       setInterimText("");
     };
 
-    rec.onerror = (e) => {
+    rec.onerror = (e: Event) => {
       console.error("SpeechRecognition error", e);
       setIsListening(false);
     };
