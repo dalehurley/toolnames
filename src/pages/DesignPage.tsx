@@ -581,6 +581,28 @@ const DesignPage: React.FC = () => {
                         </div>
                       </div>
                     </Link>
+
+                    <Link
+                      to="/design/canvas-drawing"
+                      className="block group"
+                    >
+                      <div className="flex items-center p-4 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-lg border border-emerald-200/50 dark:border-emerald-800/50 group-hover:shadow-md transition-all">
+                        <div className="bg-emerald-100 dark:bg-emerald-900/30 rounded-lg p-3 mr-4">
+                          <PenTool className="h-6 w-6 text-emerald-600" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                            Canvas Drawing Tool
+                          </h4>
+                          <p className="text-sm text-muted-foreground">
+                            Freehand drawing, shapes, layers & export
+                          </p>
+                        </div>
+                        <div className="text-emerald-500 group-hover:translate-x-1 transition-transform">
+                          →
+                        </div>
+                      </div>
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -746,13 +768,23 @@ const DesignPage: React.FC = () => {
                   Color Tools
                 </TabsTrigger>
                 <TabsTrigger
+                  value="drawing"
+                  className={cn(
+                    "rounded-lg data-[state=active]:shadow-sm transition-all",
+                    activeTab === "drawing" && "bg-white dark:bg-gray-800"
+                  )}
+                >
+                  <PenTool className="h-4 w-4 mr-2" />
+                  Drawing
+                </TabsTrigger>
+                <TabsTrigger
                   value="other"
                   className={cn(
                     "rounded-lg data-[state=active]:shadow-sm transition-all",
                     activeTab === "other" && "bg-white dark:bg-gray-800"
                   )}
                 >
-                  <PenTool className="h-4 w-4 mr-2" />
+                  <Wand2 className="h-4 w-4 mr-2" />
                   Other Tools
                 </TabsTrigger>
               </TabsList>
@@ -991,10 +1023,48 @@ const DesignPage: React.FC = () => {
                 </div>
               </TabsContent>
 
+              <TabsContent value="drawing" className="p-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Link to="/design/canvas-drawing" className="block group col-span-1 md:col-span-2">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-emerald-100 dark:border-emerald-900/30 overflow-hidden hover:shadow-lg transition-all">
+                      <div className="h-48 bg-gradient-to-r from-emerald-50 via-teal-50 to-cyan-50 dark:from-emerald-950/30 dark:via-teal-950/30 dark:to-cyan-950/30 p-6 flex items-center justify-center">
+                        <div className="flex items-center gap-8">
+                          <PenTool className="h-20 w-20 text-emerald-500 opacity-80" />
+                          <div className="text-left">
+                            <div className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-sm font-medium mb-3">
+                              <Sparkles className="h-3 w-3 mr-1" />
+                              Featured Tool
+                            </div>
+                            <h3 className="text-2xl font-bold text-gray-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                              Canvas Drawing Tool
+                            </h3>
+                            <p className="text-muted-foreground mt-1 max-w-sm">
+                              Full-featured drawing canvas with shapes, freehand, text, layers, undo/redo, and export to PNG/SVG.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-6 flex items-center justify-between">
+                        <div className="flex flex-wrap gap-2">
+                          <span className="text-xs bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-200 px-2 py-1 rounded-full">Freehand drawing</span>
+                          <span className="text-xs bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-200 px-2 py-1 rounded-full">Shapes & text</span>
+                          <span className="text-xs bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-200 px-2 py-1 rounded-full">Layers</span>
+                          <span className="text-xs bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-200 px-2 py-1 rounded-full">Export PNG/SVG</span>
+                          <span className="text-xs bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-200 px-2 py-1 rounded-full">Undo/Redo</span>
+                        </div>
+                        <div className="text-emerald-600 dark:text-emerald-400 font-medium group-hover:translate-x-1 transition-transform whitespace-nowrap ml-4">
+                          Open Tool →
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                </div>
+              </TabsContent>
+
               <TabsContent value="other" className="p-1">
-                {otherTools.length > 0 ? (
+                {otherTools.filter((t) => t.id !== "canvas-drawing").length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {otherTools.map((tool) => (
+                    {otherTools.filter((t) => t.id !== "canvas-drawing").map((tool) => (
                       <Link key={tool.id} to={tool.url} className="block group">
                         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden h-full hover:shadow-md transition-all">
                           <div className="h-40 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-6 flex items-center justify-center">

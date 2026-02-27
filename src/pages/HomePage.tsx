@@ -207,6 +207,7 @@ const HomePage = () => {
     tools.find((t) => t.id === "unit-converter"),
     tools.find((t) => t.id === "color-converter"),
     tools.find((t) => t.id === "json-formatter"),
+    tools.find((t) => t.id === "canvas-drawing"),
     tools.find((t) => t.id === "random-number-generator"),
     tools.find((t) => t.id === "jwt-decoder"),
     tools.find((t) => t.id === "voice-to-text"),
@@ -214,11 +215,11 @@ const HomePage = () => {
 
   // Change 14: New/Spotlight tools — recently added tools
   const newTools = [
+    tools.find((t) => t.id === "canvas-drawing"),
     tools.find((t) => t.id === "random-number-generator"),
     tools.find((t) => t.id === "html-entity-encoder"),
     tools.find((t) => t.id === "jwt-decoder"),
     tools.find((t) => t.id === "voice-to-text"),
-    tools.find((t) => t.id === "canvas-drawing-tool"),
     tools.find((t) => t.id === "pwa-manifest-generator"),
   ].filter(Boolean) as Tool[];
 
