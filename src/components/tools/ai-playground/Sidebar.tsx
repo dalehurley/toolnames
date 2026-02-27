@@ -12,6 +12,7 @@ import {
   ChevronRight,
   MessageSquare,
   Download,
+  FileCode2,
   Eraser,
   Search,
   Pencil,
@@ -23,6 +24,45 @@ import { format } from "date-fns";
 interface SidebarProps {
   collapsed: boolean;
   onToggle: () => void;
+}
+
+function exportAsHTML(conv: Conversation): void {
+  const rows = conv.messages
+    .map((msg) => {
+      const text =
+        typeof msg.content === "string"
+          ? msg.content
+          : msg.content
+              .filter((p) => p.type === "text")
+              .map((p) => p.text || "")
+              .join("");
+      const escaped = text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\n/g, "<br/>");
+      const bg = msg.role === "user" ? "#e0f2fe" : "#f0fdf4";
+      const label = msg.role === "user" ? "You" : "AI";
+      return `<div style="margin:12px 0;padding:12px 16px;border-radius:12px;background:${bg};"><strong>${label}:</strong><br/>${escaped}</div>`;
+    })
+    .join("\n");
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>${conv.title || "Conversation"}</title>
+<style>body{font-family:system-ui,sans-serif;max-width:800px;margin:40px auto;padding:0 20px;color:#1a1a1a;}</style>
+</head><body>
+<h1>${conv.title || "Conversation"}</h1>
+${rows}
+</body></html>`;
+
+  const blob = new Blob([html], { type: "text/html" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${(conv.title || "conversation").replace(/[^a-z0-9]/gi, "-")}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 function exportAsMarkdown(conv: Conversation): void {
@@ -226,6 +266,13 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                               title="Export as Markdown"
                             >
                               <Download className="w-2.5 h-2.5" />
+                            </button>
+                            <button
+                              className="w-5 h-5 flex items-center justify-center rounded text-muted-foreground hover:text-violet-500"
+                              onClick={() => exportAsHTML(conv)}
+                              title="Export as HTML"
+                            >
+                              <FileCode2 className="w-2.5 h-2.5" />
                             </button>
                             <button
                               className="w-5 h-5 flex items-center justify-center rounded text-muted-foreground hover:text-yellow-600"

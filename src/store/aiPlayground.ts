@@ -5,6 +5,8 @@ import { ModelConfig } from "@/providers/ai";
 
 export type MessageRole = "user" | "assistant" | "system" | "tool";
 
+export type EmojiReaction = "🔥" | "💡" | "⭐" | "❤️" | "👀";
+
 export interface ChatMessage {
   id: string;
   role: MessageRole;
@@ -12,6 +14,7 @@ export interface ChatMessage {
   timestamp: number;
   thumbs?: "up" | "down" | null;
   tokens?: number;
+  reactions?: EmojiReaction[];
 }
 
 export interface Conversation {
@@ -34,6 +37,18 @@ export interface ModelParams {
   reasoningEffort?: "low" | "medium" | "high";
 }
 
+export interface ModelProfile {
+  id: string;
+  name: string;
+  providerId: string;
+  modelId: string;
+  systemPrompt: string;
+  params: ModelParams;
+  createdAt: number;
+}
+
+export type ViewDensity = "compact" | "cozy" | "spacious";
+
 export interface AIPlaygroundSettings {
   selectedProviderId: string;
   selectedModelId: string;
@@ -46,6 +61,7 @@ export interface AIPlaygroundSettings {
   compareMode: boolean;
   compareProviderId: string;
   compareModelId: string;
+  viewDensity: ViewDensity;
 }
 
 interface CachedModels {
@@ -60,6 +76,12 @@ interface AIPlaygroundStore {
   // Conversations
   conversations: Conversation[];
   activeConversationId: string | null;
+
+  // Starred messages: conversationId -> messageId[]
+  starred: Record<string, string[]>;
+
+  // Saved model profiles
+  profiles: ModelProfile[];
 
   // Settings
   settings: AIPlaygroundSettings;
@@ -82,6 +104,17 @@ interface AIPlaygroundStore {
   forkConversation: (conversationId: string, fromMessageId: string) => string;
   clearConversationMessages: (conversationId: string) => void;
   deleteMessagesAfter: (conversationId: string, messageId: string) => void;
+  toggleReaction: (conversationId: string, messageId: string, emoji: EmojiReaction) => void;
+
+  // Actions - starred messages
+  starMessage: (conversationId: string, messageId: string) => void;
+  unstarMessage: (conversationId: string, messageId: string) => void;
+  isStarred: (conversationId: string, messageId: string) => boolean;
+
+  // Actions - profiles
+  saveProfile: (profile: Omit<ModelProfile, "id" | "createdAt">) => string;
+  deleteProfile: (id: string) => void;
+  applyProfile: (id: string) => void;
 
   // Actions - settings
   updateSettings: (patch: Partial<AIPlaygroundSettings>) => void;
@@ -118,6 +151,7 @@ const DEFAULT_SETTINGS: AIPlaygroundSettings = {
   compareMode: false,
   compareProviderId: "anthropic",
   compareModelId: "claude-sonnet-4-5",
+  viewDensity: "cozy",
 };
 
 function genId(): string {
@@ -129,6 +163,8 @@ export const useAIPlaygroundStore = create<AIPlaygroundStore>()(
     (set, get) => ({
       conversations: [],
       activeConversationId: null,
+      starred: {},
+      profiles: [],
       settings: DEFAULT_SETTINGS,
       cachedModels: {},
       sessionUsage: {},
@@ -291,6 +327,77 @@ export const useAIPlaygroundStore = create<AIPlaygroundStore>()(
         return id;
       },
 
+      toggleReaction: (conversationId, messageId, emoji) => {
+        set((s) => ({
+          conversations: s.conversations.map((c) =>
+            c.id === conversationId
+              ? {
+                  ...c,
+                  messages: c.messages.map((m) => {
+                    if (m.id !== messageId) return m;
+                    const existing = m.reactions || [];
+                    const has = existing.includes(emoji);
+                    return {
+                      ...m,
+                      reactions: has
+                        ? existing.filter((r) => r !== emoji)
+                        : [...existing, emoji],
+                    };
+                  }),
+                }
+              : c
+          ),
+        }));
+      },
+
+      starMessage: (conversationId, messageId) => {
+        set((s) => {
+          const current = s.starred[conversationId] || [];
+          if (current.includes(messageId)) return s;
+          return {
+            starred: { ...s.starred, [conversationId]: [...current, messageId] },
+          };
+        });
+      },
+
+      unstarMessage: (conversationId, messageId) => {
+        set((s) => {
+          const current = s.starred[conversationId] || [];
+          return {
+            starred: {
+              ...s.starred,
+              [conversationId]: current.filter((id) => id !== messageId),
+            },
+          };
+        });
+      },
+
+      isStarred: (conversationId, messageId) => {
+        return (get().starred[conversationId] || []).includes(messageId);
+      },
+
+      saveProfile: (profile) => {
+        const id = genId();
+        const newProfile: ModelProfile = { ...profile, id, createdAt: Date.now() };
+        set((s) => ({ profiles: [...s.profiles, newProfile] }));
+        return id;
+      },
+
+      deleteProfile: (id) => {
+        set((s) => ({ profiles: s.profiles.filter((p) => p.id !== id) }));
+      },
+
+      applyProfile: (id) => {
+        const profile = get().profiles.find((p) => p.id === id);
+        if (!profile) return;
+        get().updateSettings({
+          selectedProviderId: profile.providerId,
+          selectedModelId: profile.modelId,
+          systemPrompt: profile.systemPrompt,
+          params: profile.params,
+        });
+      },
+
       updateSettings: (patch) => {
         set((s) => ({ settings: { ...s.settings, ...patch } }));
       },
@@ -320,10 +427,11 @@ export const useAIPlaygroundStore = create<AIPlaygroundStore>()(
     }),
     {
       name: "ai-playground-store",
-      // Don't persist session usage or cached models
       partialize: (s) => ({
         conversations: s.conversations,
         activeConversationId: s.activeConversationId,
+        starred: s.starred,
+        profiles: s.profiles,
         settings: s.settings,
         cachedModels: s.cachedModels,
       }),

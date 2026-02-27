@@ -4,8 +4,10 @@ import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { useAIPlaygroundStore, ChatMessage } from "@/store/aiPlayground";
+import { useAIPlaygroundStore, ChatMessage, EmojiReaction } from "@/store/aiPlayground";
 import { detectArtifact } from "@/hooks/useArtifact";
+import { EmailCard, parseEmail } from "./EmailCard";
+import { CalendarCard, parseCalendarEvent } from "./CalendarCard";
 import {
   Copy,
   Check,
@@ -20,10 +22,15 @@ import {
   Pencil,
   X,
   RefreshCw,
+  Star,
+  Quote,
+  GitFork,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { formatDistanceToNow, format } from "date-fns";
+
+const REACTIONS: EmojiReaction[] = ["🔥", "💡", "⭐", "❤️", "👀"];
 
 interface MessageItemProps {
   message: ChatMessage;
@@ -37,6 +44,23 @@ interface MessageItemProps {
   onStopSpeak?: () => void;
   onEditAndRerun?: (messageId: string, newContent: string) => void;
   onRetry?: () => void;
+  onQuote?: (text: string) => void;
+  viewDensity?: "compact" | "cozy" | "spacious";
+  searchQuery?: string;
+}
+
+function highlight(text: string, query: string): React.ReactNode {
+  if (!query) return text;
+  const parts = text.split(new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi"));
+  return parts.map((part, i) =>
+    part.toLowerCase() === query.toLowerCase() ? (
+      <mark key={i} className="bg-yellow-300 dark:bg-yellow-600 rounded px-0.5">
+        {part}
+      </mark>
+    ) : (
+      part
+    )
+  );
 }
 
 function CodeBlock({
@@ -62,7 +86,6 @@ function CodeBlock({
 
   return (
     <div className="relative group my-2 rounded-lg overflow-hidden border bg-zinc-950 dark:bg-zinc-900">
-      {/* Header */}
       <div className="flex items-center justify-between px-3 py-1.5 bg-zinc-800 border-b border-zinc-700">
         <span className="text-xs text-zinc-400 font-mono">{language || "code"}</span>
         <div className="flex gap-1">
@@ -98,7 +121,6 @@ function CodeBlock({
           </Button>
         </div>
       </div>
-      {/* Code with line numbers */}
       <div className="flex overflow-x-auto text-sm leading-relaxed">
         <div
           className="select-none text-right pr-3 pl-3 py-3 text-zinc-600 font-mono text-xs border-r border-zinc-800 flex-shrink-0"
@@ -128,13 +150,26 @@ export function MessageItem({
   onStopSpeak,
   onEditAndRerun,
   onRetry,
+  onQuote,
+  viewDensity = "cozy",
+  searchQuery = "",
 }: MessageItemProps) {
   const [copied, setCopied] = useState(false);
-  const [showTimestamp, setShowTimestamp] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState("");
-  const { setThumbsRating, deleteMessage } = useAIPlaygroundStore();
 
+  const {
+    setThumbsRating,
+    deleteMessage,
+    toggleReaction,
+    starMessage,
+    unstarMessage,
+    isStarred,
+    forkConversation,
+    setActiveConversation,
+  } = useAIPlaygroundStore();
+
+  const starred = isStarred(conversationId, message.id);
   const isUser = message.role === "user";
   const isAssistant = message.role === "assistant";
 
@@ -153,6 +188,10 @@ export function MessageItem({
 
   const isError = isAssistant && textContent.startsWith("❌ Error:");
 
+  // Detect email or calendar in assistant messages
+  const detectedEmail = isAssistant && !isStreaming ? parseEmail(textContent) : null;
+  const detectedEvent = isAssistant && !isStreaming && !detectedEmail ? parseCalendarEvent(textContent) : null;
+
   const copy = useCallback(async () => {
     await navigator.clipboard.writeText(textContent);
     setCopied(true);
@@ -161,16 +200,10 @@ export function MessageItem({
   }, [textContent]);
 
   const handleThumb = (rating: "up" | "down") => {
-    setThumbsRating(
-      conversationId,
-      message.id,
-      message.thumbs === rating ? null : rating
-    );
+    setThumbsRating(conversationId, message.id, message.thumbs === rating ? null : rating);
   };
 
-  const handleDelete = () => {
-    deleteMessage(conversationId, message.id);
-  };
+  const handleDelete = () => deleteMessage(conversationId, message.id);
 
   const startEdit = () => {
     setEditText(textContent);
@@ -190,6 +223,41 @@ export function MessageItem({
     setEditText("");
   };
 
+  const handleStar = () => {
+    if (starred) {
+      unstarMessage(conversationId, message.id);
+      toast.success("Removed from starred");
+    } else {
+      starMessage(conversationId, message.id);
+      toast.success("Message starred");
+    }
+  };
+
+  const handleQuote = () => {
+    const quoted = textContent
+      .split("\n")
+      .map((line) => `> ${line}`)
+      .join("\n");
+    onQuote?.(quoted + "\n\n");
+  };
+
+  const handleFork = () => {
+    const newId = forkConversation(conversationId, message.id);
+    setActiveConversation(newId);
+    toast.success("Forked conversation from this message");
+  };
+
+  const handleReaction = (emoji: EmojiReaction) => {
+    toggleReaction(conversationId, message.id, emoji);
+  };
+
+  const paddingClass =
+    viewDensity === "compact"
+      ? "px-3 py-1.5"
+      : viewDensity === "spacious"
+      ? "px-6 py-5"
+      : "px-4 py-3";
+
   if (message.role === "system") {
     return (
       <div className="flex justify-center py-2">
@@ -204,11 +272,13 @@ export function MessageItem({
   return (
     <div
       className={cn(
-        "group flex gap-3 px-4 py-3 hover:bg-muted/20 transition-colors",
-        isUser && "flex-row-reverse"
+        "group flex gap-3 hover:bg-muted/20 transition-colors",
+        paddingClass,
+        isUser && "flex-row-reverse",
+        searchQuery &&
+          textContent.toLowerCase().includes(searchQuery.toLowerCase()) &&
+          "ring-1 ring-yellow-400/50 bg-yellow-50/20 dark:bg-yellow-900/10"
       )}
-      onMouseEnter={() => setShowTimestamp(true)}
-      onMouseLeave={() => setShowTimestamp(false)}
     >
       {/* Avatar */}
       <div
@@ -266,10 +336,28 @@ export function MessageItem({
           </div>
         ) : (
           <>
+            {/* Timestamp (always shown in relative form, full on hover) */}
+            <div className={cn("flex items-center gap-1 mb-1", isUser && "justify-end")}>
+              <span
+                className="text-[10px] text-muted-foreground/60"
+                title={format(message.timestamp, "PPpp")}
+              >
+                {formatDistanceToNow(message.timestamp, { addSuffix: true })}
+              </span>
+              {starred && (
+                <Star className="w-2.5 h-2.5 text-amber-400 fill-current" />
+              )}
+            </div>
+
             {/* Text */}
             {isUser ? (
-              <div className="bg-primary text-primary-foreground rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-lg text-sm whitespace-pre-wrap">
-                {textContent}
+              <div
+                className={cn(
+                  "bg-primary text-primary-foreground rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-lg text-sm whitespace-pre-wrap",
+                  viewDensity === "compact" && "text-xs py-1.5 px-3"
+                )}
+              >
+                {searchQuery ? highlight(textContent, searchQuery) : textContent}
               </div>
             ) : (
               <div className="prose prose-sm dark:prose-invert max-w-none">
@@ -283,66 +371,97 @@ export function MessageItem({
                     <span className="text-xs text-muted-foreground">Generating…</span>
                   </div>
                 ) : (
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    components={{
-                      code({ className, children, ...props }) {
-                        const match = /language-(\w+)/.exec(className || "");
-                        const isBlock = !props.style && match;
-                        if (isBlock && match) {
+                  <>
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        code({ className, children, ...props }) {
+                          const match = /language-(\w+)/.exec(className || "");
+                          const isBlock = !props.style && match;
+                          if (isBlock && match) {
+                            return (
+                              <CodeBlock
+                                code={String(children).replace(/\n$/, "")}
+                                language={match[1]}
+                                onArtifactOpen={onArtifactOpen}
+                              />
+                            );
+                          }
                           return (
-                            <CodeBlock
-                              code={String(children).replace(/\n$/, "")}
-                              language={match[1]}
-                              onArtifactOpen={onArtifactOpen}
-                            />
+                            <code
+                              className="bg-muted text-foreground px-1 py-0.5 rounded text-xs font-mono"
+                              {...props}
+                            >
+                              {children}
+                            </code>
                           );
-                        }
-                        return (
-                          <code
-                            className="bg-muted text-foreground px-1 py-0.5 rounded text-xs font-mono"
-                            {...props}
-                          >
-                            {children}
-                          </code>
-                        );
-                      },
-                      table({ children }) {
-                        return (
-                          <div className="overflow-x-auto my-2">
-                            <table className="w-full border-collapse text-sm border">{children}</table>
-                          </div>
-                        );
-                      },
-                      th({ children }) {
-                        return (
-                          <th className="border px-3 py-2 bg-muted text-left font-medium text-xs">
-                            {children}
-                          </th>
-                        );
-                      },
-                      td({ children }) {
-                        return <td className="border px-3 py-2 text-xs">{children}</td>;
-                      },
-                      a({ href, children }) {
-                        return (
-                          <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                            {children}
-                          </a>
-                        );
-                      },
-                      blockquote({ children }) {
-                        return (
-                          <blockquote className="border-l-4 border-primary/40 pl-4 my-2 text-muted-foreground italic">
-                            {children}
-                          </blockquote>
-                        );
-                      },
-                    }}
-                  >
-                    {textContent}
-                  </ReactMarkdown>
+                        },
+                        table({ children }) {
+                          return (
+                            <div className="overflow-x-auto my-2">
+                              <table className="w-full border-collapse text-sm border">
+                                {children}
+                              </table>
+                            </div>
+                          );
+                        },
+                        th({ children }) {
+                          return (
+                            <th className="border px-3 py-2 bg-muted text-left font-medium text-xs">
+                              {children}
+                            </th>
+                          );
+                        },
+                        td({ children }) {
+                          return <td className="border px-3 py-2 text-xs">{children}</td>;
+                        },
+                        a({ href, children }) {
+                          return (
+                            <a
+                              href={href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-500 hover:underline"
+                            >
+                              {children}
+                            </a>
+                          );
+                        },
+                        blockquote({ children }) {
+                          return (
+                            <blockquote className="border-l-4 border-primary/40 pl-4 my-2 text-muted-foreground italic">
+                              {children}
+                            </blockquote>
+                          );
+                        },
+                      }}
+                    >
+                      {textContent}
+                    </ReactMarkdown>
+
+                    {/* Email card */}
+                    {detectedEmail && <EmailCard email={detectedEmail} />}
+
+                    {/* Calendar card */}
+                    {detectedEvent && <CalendarCard event={detectedEvent} />}
+                  </>
                 )}
+              </div>
+            )}
+
+            {/* Emoji reactions */}
+            {(message.reactions?.length ?? 0) > 0 && (
+              <div className="flex flex-wrap gap-1 mt-1.5">
+                {REACTIONS.filter((e) => message.reactions?.includes(e)).map((emoji) => (
+                  <button
+                    key={emoji}
+                    className="text-sm bg-muted rounded-full px-2 py-0.5 hover:bg-muted/80 border"
+                    onClick={() => handleReaction(emoji)}
+                    title="Remove reaction"
+                  >
+                    {emoji}
+                  </button>
+                ))}
               </div>
             )}
           </>
@@ -352,28 +471,78 @@ export function MessageItem({
         {(isAssistant || isUser) && !isEditing && (
           <div
             className={cn(
-              "flex items-center gap-1 mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity",
-              isUser && "justify-end"
+              "flex items-center gap-0.5 mt-1.5 flex-wrap",
+              isUser && "justify-end",
+              // Always show star; others on hover
             )}
           >
-            {showTimestamp && (
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
-                {format(message.timestamp, "HH:mm")}
-              </Badge>
-            )}
+            {/* Reaction picker (on hover) */}
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-0.5 mr-1">
+              {REACTIONS.map((emoji) => (
+                <button
+                  key={emoji}
+                  className={cn(
+                    "w-6 h-6 flex items-center justify-center rounded text-xs hover:bg-muted",
+                    message.reactions?.includes(emoji) && "bg-muted"
+                  )}
+                  onClick={() => handleReaction(emoji)}
+                  title={`React with ${emoji}`}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
 
+            {/* Divider on hover */}
+            <div className="opacity-0 group-hover:opacity-100 w-px h-4 bg-border mx-0.5 transition-opacity" />
+
+            {/* Copy */}
             <button
-              className="w-6 h-6 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+              className="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground"
               onClick={copy}
               title="Copy"
             >
               {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
             </button>
 
+            {/* Star (always visible when starred) */}
+            <button
+              className={cn(
+                "w-6 h-6 flex items-center justify-center rounded hover:bg-muted transition-opacity",
+                starred
+                  ? "text-amber-400 opacity-100"
+                  : "text-muted-foreground opacity-0 group-hover:opacity-100"
+              )}
+              onClick={handleStar}
+              title={starred ? "Remove star" : "Star message"}
+            >
+              <Star className={cn("w-3 h-3", starred && "fill-current")} />
+            </button>
+
+            {/* Quote (only if onQuote provided) */}
+            {onQuote && (
+              <button
+                className="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+                onClick={handleQuote}
+                title="Quote in reply"
+              >
+                <Quote className="w-3 h-3" />
+              </button>
+            )}
+
+            {/* Fork */}
+            <button
+              className="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+              onClick={handleFork}
+              title="Fork conversation from here"
+            >
+              <GitFork className="w-3 h-3" />
+            </button>
+
             {/* Edit button for user messages */}
             {isUser && onEditAndRerun && (
               <button
-                className="w-6 h-6 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+                className="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground"
                 onClick={startEdit}
                 title="Edit & re-run"
               >
@@ -386,7 +555,7 @@ export function MessageItem({
                 {/* Retry button for error messages */}
                 {isError && onRetry && (
                   <button
-                    className="w-6 h-6 flex items-center justify-center rounded hover:bg-muted text-orange-500 hover:text-orange-600"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 flex items-center justify-center rounded hover:bg-muted text-orange-500 hover:text-orange-600"
                     onClick={onRetry}
                     title="Retry request"
                   >
@@ -396,7 +565,7 @@ export function MessageItem({
 
                 {onSpeak && !isSpeaking && (
                   <button
-                    className="w-6 h-6 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground"
                     onClick={() => onSpeak(textContent)}
                     title="Read aloud"
                   >
@@ -405,7 +574,7 @@ export function MessageItem({
                 )}
                 {isSpeaking && onStopSpeak && (
                   <button
-                    className="w-6 h-6 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground"
                     onClick={onStopSpeak}
                     title="Stop reading"
                   >
@@ -414,8 +583,10 @@ export function MessageItem({
                 )}
                 <button
                   className={cn(
-                    "w-6 h-6 flex items-center justify-center rounded hover:bg-muted",
-                    message.thumbs === "up" ? "text-green-500" : "text-muted-foreground hover:text-foreground"
+                    "opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 flex items-center justify-center rounded hover:bg-muted",
+                    message.thumbs === "up"
+                      ? "text-green-500 !opacity-100"
+                      : "text-muted-foreground hover:text-foreground"
                   )}
                   onClick={() => handleThumb("up")}
                   title="Thumbs up"
@@ -424,8 +595,10 @@ export function MessageItem({
                 </button>
                 <button
                   className={cn(
-                    "w-6 h-6 flex items-center justify-center rounded hover:bg-muted",
-                    message.thumbs === "down" ? "text-red-500" : "text-muted-foreground hover:text-foreground"
+                    "opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 flex items-center justify-center rounded hover:bg-muted",
+                    message.thumbs === "down"
+                      ? "text-red-500 !opacity-100"
+                      : "text-muted-foreground hover:text-foreground"
                   )}
                   onClick={() => handleThumb("down")}
                   title="Thumbs down"
@@ -434,7 +607,7 @@ export function MessageItem({
                 </button>
                 {isLast && onRegenerate && !isError && (
                   <button
-                    className="w-6 h-6 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground"
                     onClick={onRegenerate}
                     title="Regenerate"
                   >
@@ -445,12 +618,21 @@ export function MessageItem({
             )}
 
             <button
-              className="w-6 h-6 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-red-500"
+              className="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-red-500"
               onClick={handleDelete}
               title="Delete message"
             >
               <Trash2 className="w-3 h-3" />
             </button>
+
+            {/* Timestamp badge */}
+            <Badge
+              variant="outline"
+              className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] px-1.5 py-0 h-4 ml-1"
+              title={format(message.timestamp, "PPpp")}
+            >
+              {format(message.timestamp, "HH:mm")}
+            </Badge>
           </div>
         )}
       </div>
