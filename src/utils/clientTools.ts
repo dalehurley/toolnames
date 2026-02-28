@@ -5,6 +5,7 @@
 
 // Using mathjs for calculations & unit conversions
 // Using qrcode for QR generation (dynamically imported to keep bundle lean)
+import { requestHumanInput } from "@/utils/humanInput";
 
 export type ToolResultType =
   | "calculator"
@@ -16,7 +17,8 @@ export type ToolResultType =
   | "image_generation"
   | "text_hash"
   | "regex_tester"
-  | "base64";
+  | "base64"
+  | "ask_human";
 
 export interface ClientToolResult {
   type: ToolResultType;
@@ -34,7 +36,7 @@ export interface ClientTool {
   };
   execute: (args: Record<string, unknown>) => Promise<ClientToolResult>;
   icon: string;
-  category: "math" | "text" | "generate" | "format" | "security";
+  category: "math" | "text" | "generate" | "format" | "security" | "interact";
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -386,6 +388,71 @@ export const CLIENT_TOOLS: ClientTool[] = [
     category: "text",
   },
 ];
+
+// ── ask_human — special tool that pauses the agent loop for user input ────────
+
+async function askHuman(args: Record<string, unknown>): Promise<ClientToolResult> {
+  const question = String(args.question || "What would you like me to do?");
+  const inputType = (String(args.input_type || "text")) as "text" | "select" | "radio" | "checkbox";
+  const options = Array.isArray(args.options) ? args.options.map(String) : undefined;
+  const placeholder = args.placeholder ? String(args.placeholder) : undefined;
+
+  const fields = [
+    {
+      key: "answer",
+      type: inputType,
+      label: question,
+      options,
+      placeholder,
+      required: true,
+    },
+  ];
+
+  const answer = await requestHumanInput(question, fields);
+  const value = answer["answer"];
+  const text = Array.isArray(value) ? value.join(", ") : String(value || "");
+
+  return {
+    type: "ask_human",
+    data: { question, answer: text, input_type: inputType },
+    text: `User responded: ${text}`,
+  };
+}
+
+CLIENT_TOOLS.push({
+  name: "ask_human",
+  description:
+    "Pause the agent loop and ask the human user a question. Use this when you need clarification, a user decision, or information only the human can provide. " +
+    "For open-ended answers use input_type 'text'. For a single choice from a list use 'radio'. For a dropdown use 'select'. For multiple selections use 'checkbox'. " +
+    "Always prefer asking one clear question at a time.",
+  parameters: {
+    type: "object",
+    properties: {
+      question: {
+        type: "string",
+        description: "The question or prompt shown to the user as the card title",
+      },
+      input_type: {
+        type: "string",
+        enum: ["text", "select", "radio", "checkbox"],
+        description: "Type of input: text (free input), radio (pick one), select (dropdown pick one), checkbox (pick many)",
+      },
+      options: {
+        type: "array",
+        items: { type: "string" },
+        description: "List of options for select/radio/checkbox input types",
+      },
+      placeholder: {
+        type: "string",
+        description: "Placeholder text for text input type",
+      },
+    },
+    required: ["question", "input_type"],
+  },
+  execute: askHuman,
+  icon: "🙋",
+  category: "interact",
+});
 
 export const TOOL_BY_NAME = Object.fromEntries(CLIENT_TOOLS.map((t) => [t.name, t]));
 

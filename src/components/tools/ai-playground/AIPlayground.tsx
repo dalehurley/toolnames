@@ -20,6 +20,8 @@ import { PromptLibrary } from "./PromptLibrary";
 import { BookmarksPanel } from "./BookmarksPanel";
 import { ProfilesPanel } from "./ProfilesPanel";
 import { AgentSkillsPanel, BUILTIN_SKILLS } from "./AgentSkillsPanel";
+import { AgenticFlowPanel, AGENTIC_PROMPTS, AgenticConfig } from "./AgenticFlowPanel";
+import { HumanInputCardContainer } from "./HumanInputCard";
 
 import { useAIPlaygroundStore } from "@/store/aiPlayground";
 import { useStream, ToolCallRecord } from "@/hooks/useStream";
@@ -53,6 +55,7 @@ import {
   FileText,
   Wrench,
   Zap,
+  Workflow,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -63,7 +66,7 @@ interface OpenArtifact {
   title?: string;
 }
 
-type RightPanel = "artifact" | "prompts" | "bookmarks" | "profiles" | "skills" | "tools" | null;
+type RightPanel = "artifact" | "prompts" | "bookmarks" | "profiles" | "skills" | "tools" | "agentic" | null;
 
 const STARTERS = [
   { icon: "💻", title: "Debug my code", prompt: "Help me debug this code: " },
@@ -299,22 +302,32 @@ export function AIPlayground() {
     [sendStream, settings, updateConversationTitle]
   );
 
-  // Compute system prompt additions from active skills
+  // Compute system prompt additions from active skills + agentic mode
   const skillsSystemPromptAddition = useCallback((): string => {
     const activeSkills = BUILTIN_SKILLS.filter((s) =>
       settings.enabledSkillIds.includes(s.id)
     );
-    if (activeSkills.length === 0) return "";
-    return "\n\n---\n" + activeSkills.map((s) => s.systemPromptAddition).join("\n\n");
-  }, [settings.enabledSkillIds]);
+    const skillsText = activeSkills.length > 0
+      ? "\n\n---\n" + activeSkills.map((s) => s.systemPromptAddition).join("\n\n")
+      : "";
+    const agenticText =
+      settings.agenticMode !== "none"
+        ? "\n\n---\n" + AGENTIC_PROMPTS[settings.agenticMode]
+        : "";
+    return skillsText + agenticText;
+  }, [settings.enabledSkillIds, settings.agenticMode]);
 
-  // Compute enabled tools from active skills + manual tool selections
+  // Compute enabled tools from active skills + manual tool selections + agentic ask_human
   const computeEnabledTools = useCallback((): string[] => {
     const fromSkills = BUILTIN_SKILLS
       .filter((s) => settings.enabledSkillIds.includes(s.id))
       .flatMap((s) => s.enabledTools || []);
-    return Array.from(new Set([...settings.enabledToolNames, ...fromSkills]));
-  }, [settings.enabledSkillIds, settings.enabledToolNames]);
+    const agenticTools =
+      settings.agenticMode !== "none" && settings.agenticAutoAskHuman
+        ? ["ask_human"]
+        : [];
+    return Array.from(new Set([...settings.enabledToolNames, ...fromSkills, ...agenticTools]));
+  }, [settings.enabledSkillIds, settings.enabledToolNames, settings.agenticMode, settings.agenticAutoAskHuman]);
 
   const handleSend = useCallback(
     async (text: string, attachments: AttachedFile[]) => {
@@ -357,6 +370,8 @@ export function AIPlayground() {
         messages: apiMessages,
         systemPrompt: fullSystemPrompt,
         enabledToolNames: enabledTools,
+        agenticMode: settings.agenticMode,
+        agenticMaxIterations: settings.agenticMaxIterations,
         onDone: (fullText, toolCalls) => {
           setIsStreamingActive(false);
 
@@ -767,6 +782,26 @@ export function AIPlayground() {
               <TooltipContent>Client-side Tools</TooltipContent>
             </Tooltip>
 
+            {/* Agentic Flow */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={rightPanel === "agentic" ? "default" : settings.agenticMode !== "none" ? "secondary" : "ghost"}
+                  size="icon"
+                  className="h-8 w-8 relative"
+                  onClick={() => toggleRightPanel("agentic")}
+                >
+                  <Workflow className="w-3.5 h-3.5" />
+                  {settings.agenticMode !== "none" && (
+                    <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-orange-400 text-white text-[8px] rounded-full flex items-center justify-center font-bold">
+                      ✓
+                    </span>
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Agentic Flow ({settings.agenticMode === "none" ? "off" : settings.agenticMode.replace("_", " ")})</TooltipContent>
+            </Tooltip>
+
             {/* Compare mode */}
             <Tooltip>
               <TooltipTrigger asChild>
@@ -1111,6 +1146,9 @@ export function AIPlayground() {
                   </div>
                 )}
 
+                {/* Human input card — shown when AI calls ask_human */}
+                <HumanInputCardContainer />
+
                 {/* Input bar */}
                 <InputBar
                   onSend={handleSend}
@@ -1167,6 +1205,25 @@ export function AIPlayground() {
                           ? [...settings.enabledSkillIds, id]
                           : settings.enabledSkillIds.filter((s) => s !== id);
                         updateSettings({ enabledSkillIds: next });
+                      }}
+                      onClose={() => setRightPanel(null)}
+                    />
+                  )}
+                  {rightPanel === "agentic" && (
+                    <AgenticFlowPanel
+                      config={{
+                        mode: settings.agenticMode,
+                        maxIterations: settings.agenticMaxIterations,
+                        showThoughts: settings.agenticShowThoughts,
+                        autoAskHuman: settings.agenticAutoAskHuman,
+                      }}
+                      onChange={(patch: Partial<AgenticConfig>) => {
+                        const next: Record<string, unknown> = {};
+                        if (patch.mode !== undefined) next.agenticMode = patch.mode;
+                        if (patch.maxIterations !== undefined) next.agenticMaxIterations = patch.maxIterations;
+                        if (patch.showThoughts !== undefined) next.agenticShowThoughts = patch.showThoughts;
+                        if (patch.autoAskHuman !== undefined) next.agenticAutoAskHuman = patch.autoAskHuman;
+                        updateSettings(next as Parameters<typeof updateSettings>[0]);
                       }}
                       onClose={() => setRightPanel(null)}
                     />

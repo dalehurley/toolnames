@@ -265,6 +265,24 @@ function ResultContent({
     );
   }
 
+  if (result.type === "ask_human") {
+    const { question, answer } = result.data as Record<string, string>;
+    return (
+      <div className="space-y-1.5">
+        <div className="text-[11px] text-muted-foreground">
+          <span className="font-medium">Question:</span> {question}
+        </div>
+        <div className="flex items-center gap-2 bg-violet-50 dark:bg-violet-950/40 border border-violet-200 dark:border-violet-800 rounded-lg px-3 py-2">
+          <span className="text-sm">💬</span>
+          <span className="text-xs font-medium text-violet-800 dark:text-violet-200 flex-1">{answer}</span>
+          <button onClick={() => copy(answer, "human")} className="flex-shrink-0">
+            {copiedField === "human" ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3 text-muted-foreground hover:text-foreground" />}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Fallback: show raw text
   return (
     <div className="text-xs text-muted-foreground font-mono whitespace-pre-wrap max-h-32 overflow-y-auto">
@@ -292,6 +310,7 @@ function getToolIcon(name: string): string {
     generate_color_palette: "🎨",
     test_regex: "🔍",
     base64: "🔢",
+    ask_human: "🙋",
   };
   return icons[name] || "⚙️";
 }
@@ -306,6 +325,7 @@ function getToolLabel(name: string): string {
     generate_color_palette: "Color Palette",
     test_regex: "Regex Tester",
     base64: "Base64 Encoder/Decoder",
+    ask_human: "Human Input",
   };
   return labels[name] || name.replace(/_/g, " ");
 }

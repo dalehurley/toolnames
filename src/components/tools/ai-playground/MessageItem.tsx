@@ -12,6 +12,7 @@ import { ToolCallsSummary } from "./ToolCallWidget";
 import { SpreadsheetWidget, extractMarkdownTable, parseMarkdownTable } from "./SpreadsheetWidget";
 import { MermaidBlock } from "./MermaidBlock";
 import { buildAndDownloadDocx } from "@/utils/docxBuilder";
+import { ThoughtBlock, parseThinkingBlocks, hasThinkingBlocks } from "./ThoughtBlock";
 import type { ToolCallRecord } from "@/hooks/useStream";
 import {
   Copy,
@@ -68,6 +69,82 @@ function highlight(text: string, query: string): React.ReactNode {
     ) : (
       part
     )
+  );
+}
+
+/** Reusable ReactMarkdown renderer extracted so ThoughtBlock segments can use it */
+function MarkdownContent({
+  content,
+  onArtifactOpen,
+}: {
+  content: string;
+  onArtifactOpen?: (code: string, type: string, language: string) => void;
+}) {
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      components={{
+        code({ className, children, ...props }) {
+          const match = /language-(\w+)/.exec(className || "");
+          const isBlock = !props.style && match;
+          if (isBlock && match) {
+            const lang = match[1].toLowerCase();
+            const codeStr = String(children).replace(/\n$/, "");
+            if (lang === "mermaid") {
+              return <MermaidBlock code={codeStr} />;
+            }
+            return (
+              <CodeBlock
+                code={codeStr}
+                language={lang}
+                onArtifactOpen={onArtifactOpen}
+              />
+            );
+          }
+          return (
+            <code
+              className="bg-muted text-foreground px-1 py-0.5 rounded text-xs font-mono"
+              {...props}
+            >
+              {children}
+            </code>
+          );
+        },
+        table({ children }) {
+          return (
+            <div className="overflow-x-auto my-2">
+              <table className="w-full border-collapse text-sm border">{children}</table>
+            </div>
+          );
+        },
+        th({ children }) {
+          return (
+            <th className="border px-3 py-2 bg-muted text-left font-medium text-xs">
+              {children}
+            </th>
+          );
+        },
+        td({ children }) {
+          return <td className="border px-3 py-2 text-xs">{children}</td>;
+        },
+        a({ href, children }) {
+          return (
+            <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+              {children}
+            </a>
+          );
+        },
+        blockquote({ children }) {
+          return (
+            <blockquote className="border-l-4 border-primary/40 pl-4 my-2 text-muted-foreground italic">
+              {children}
+            </blockquote>
+          );
+        },
+      }}
+    >
+      {content}
+    </ReactMarkdown>
   );
 }
 
@@ -196,6 +273,12 @@ export function MessageItem({
       : message.content.filter((p) => p.type === "image_url");
 
   const isError = isAssistant && textContent.startsWith("❌ Error:");
+
+  // Parse <thinking> blocks for agentic modes
+  const showThoughts = useAIPlaygroundStore.getState().settings.agenticShowThoughts;
+  const thinkingSegments = isAssistant && showThoughts && hasThinkingBlocks(textContent)
+    ? parseThinkingBlocks(textContent)
+    : null;
 
   // Detect email or calendar in assistant messages
   const detectedEmail = isAssistant && !isStreaming ? parseEmail(textContent) : null;
@@ -389,78 +472,29 @@ export function MessageItem({
                   </div>
                 ) : (
                   <>
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      components={{
-                        code({ className, children, ...props }) {
-                          const match = /language-(\w+)/.exec(className || "");
-                          const isBlock = !props.style && match;
-                          if (isBlock && match) {
-                            const lang = match[1].toLowerCase();
-                            const codeStr = String(children).replace(/\n$/, "");
-                            // Render Mermaid diagrams inline
-                            if (lang === "mermaid") {
-                              return <MermaidBlock code={codeStr} />;
-                            }
-                            return (
-                              <CodeBlock
-                                code={codeStr}
-                                language={lang}
-                                onArtifactOpen={onArtifactOpen}
-                              />
-                            );
-                          }
-                          return (
-                            <code
-                              className="bg-muted text-foreground px-1 py-0.5 rounded text-xs font-mono"
-                              {...props}
-                            >
-                              {children}
-                            </code>
-                          );
-                        },
-                        table({ children }) {
-                          return (
-                            <div className="overflow-x-auto my-2">
-                              <table className="w-full border-collapse text-sm border">
-                                {children}
-                              </table>
-                            </div>
-                          );
-                        },
-                        th({ children }) {
-                          return (
-                            <th className="border px-3 py-2 bg-muted text-left font-medium text-xs">
-                              {children}
-                            </th>
-                          );
-                        },
-                        td({ children }) {
-                          return <td className="border px-3 py-2 text-xs">{children}</td>;
-                        },
-                        a({ href, children }) {
-                          return (
-                            <a
-                              href={href}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-500 hover:underline"
-                            >
-                              {children}
-                            </a>
-                          );
-                        },
-                        blockquote({ children }) {
-                          return (
-                            <blockquote className="border-l-4 border-primary/40 pl-4 my-2 text-muted-foreground italic">
-                              {children}
-                            </blockquote>
-                          );
-                        },
-                      }}
-                    >
-                      {textContent}
-                    </ReactMarkdown>
+                    {/* Render thinking segments or plain markdown */}
+                    {thinkingSegments ? (
+                      thinkingSegments.map((seg, i) =>
+                        seg.type === "thinking" ? (
+                          <ThoughtBlock
+                            key={i}
+                            content={seg.content}
+                            isStreaming={isStreaming}
+                          />
+                        ) : (
+                          <MarkdownContent
+                            key={i}
+                            content={seg.content}
+                            onArtifactOpen={onArtifactOpen}
+                          />
+                        )
+                      )
+                    ) : (
+                      <MarkdownContent
+                        content={textContent}
+                        onArtifactOpen={onArtifactOpen}
+                      />
+                    )}
 
                     {/* Email card */}
                     {detectedEmail && <EmailCard email={detectedEmail} />}

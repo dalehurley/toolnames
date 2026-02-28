@@ -48,6 +48,7 @@ export interface ModelProfile {
 }
 
 export type ViewDensity = "compact" | "cozy" | "spacious";
+export type AgenticMode = "none" | "react" | "plan_execute" | "chain_of_thought" | "tree_of_thought";
 
 export interface AIPlaygroundSettings {
   selectedProviderId: string;
@@ -64,6 +65,11 @@ export interface AIPlaygroundSettings {
   viewDensity: ViewDensity;
   enabledSkillIds: string[];
   enabledToolNames: string[];
+  // Agentic flow
+  agenticMode: AgenticMode;
+  agenticMaxIterations: number;
+  agenticShowThoughts: boolean;
+  agenticAutoAskHuman: boolean;
 }
 
 interface CachedModels {
@@ -156,6 +162,10 @@ const DEFAULT_SETTINGS: AIPlaygroundSettings = {
   viewDensity: "cozy",
   enabledSkillIds: [],
   enabledToolNames: [],
+  agenticMode: "none",
+  agenticMaxIterations: 8,
+  agenticShowThoughts: true,
+  agenticAutoAskHuman: true,
 };
 
 function genId(): string {
