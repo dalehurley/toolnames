@@ -50,6 +50,15 @@ export interface ModelProfile {
 export type ViewDensity = "compact" | "cozy" | "spacious";
 export type AgenticMode = "none" | "react" | "plan_execute" | "chain_of_thought" | "tree_of_thought";
 
+export interface CustomSkill {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  systemPromptAddition: string;
+  createdAt: number;
+}
+
 export interface AIPlaygroundSettings {
   selectedProviderId: string;
   selectedModelId: string;
@@ -65,6 +74,7 @@ export interface AIPlaygroundSettings {
   viewDensity: ViewDensity;
   enabledSkillIds: string[];
   enabledToolNames: string[];
+  customSkills: CustomSkill[];
   // Agentic flow
   agenticMode: AgenticMode;
   agenticMaxIterations: number;
@@ -127,6 +137,10 @@ interface AIPlaygroundStore {
   // Actions - settings
   updateSettings: (patch: Partial<AIPlaygroundSettings>) => void;
 
+  // Actions - custom skills
+  saveCustomSkill: (skill: Omit<CustomSkill, "id" | "createdAt">) => string;
+  deleteCustomSkill: (id: string) => void;
+
   // Actions - models cache
   setCachedModels: (providerId: string, models: ModelConfig[]) => void;
 
@@ -162,6 +176,7 @@ const DEFAULT_SETTINGS: AIPlaygroundSettings = {
   viewDensity: "cozy",
   enabledSkillIds: [],
   enabledToolNames: [],
+  customSkills: [],
   agenticMode: "none",
   agenticMaxIterations: 8,
   agenticShowThoughts: true,
@@ -414,6 +429,28 @@ export const useAIPlaygroundStore = create<AIPlaygroundStore>()(
 
       updateSettings: (patch) => {
         set((s) => ({ settings: { ...s.settings, ...patch } }));
+      },
+
+      saveCustomSkill: (skill) => {
+        const id = genId();
+        const newSkill: CustomSkill = { ...skill, id, createdAt: Date.now() };
+        set((s) => ({
+          settings: {
+            ...s.settings,
+            customSkills: [...s.settings.customSkills, newSkill],
+          },
+        }));
+        return id;
+      },
+
+      deleteCustomSkill: (id) => {
+        set((s) => ({
+          settings: {
+            ...s.settings,
+            customSkills: s.settings.customSkills.filter((sk) => sk.id !== id),
+            enabledSkillIds: s.settings.enabledSkillIds.filter((sid) => sid !== id),
+          },
+        }));
       },
 
       setCachedModels: (providerId, models) => {

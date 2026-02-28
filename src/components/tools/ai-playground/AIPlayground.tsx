@@ -30,6 +30,7 @@ import { detectArtifact, ArtifactType } from "@/hooks/useArtifact";
 import { buildMessageContent, AttachedFile } from "@/utils/aiFileReader";
 import { PROVIDER_MAP, NO_SYSTEM_PROMPT_MODELS } from "@/providers/ai";
 import { CLIENT_TOOLS } from "@/utils/clientTools";
+import { executeSlashCommand } from "@/utils/slashCommands";
 import { toast } from "sonner";
 import {
   Settings,
@@ -139,6 +140,8 @@ export function AIPlayground() {
     sessionUsage,
     deleteMessagesAfter,
     setActiveConversation,
+    saveCustomSkill,
+    deleteCustomSkill,
   } = useAIPlaygroundStore();
 
   const { sendStream, stop } = useStream();
@@ -302,20 +305,24 @@ export function AIPlayground() {
     [sendStream, settings, updateConversationTitle]
   );
 
-  // Compute system prompt additions from active skills + agentic mode
+  // Compute system prompt additions from active skills + custom skills + agentic mode
   const skillsSystemPromptAddition = useCallback((): string => {
-    const activeSkills = BUILTIN_SKILLS.filter((s) =>
+    const activeBuiltin = BUILTIN_SKILLS.filter((s) =>
       settings.enabledSkillIds.includes(s.id)
     );
-    const skillsText = activeSkills.length > 0
-      ? "\n\n---\n" + activeSkills.map((s) => s.systemPromptAddition).join("\n\n")
+    const activeCustom = settings.customSkills.filter((s) =>
+      settings.enabledSkillIds.includes(s.id)
+    );
+    const allActive = [...activeBuiltin, ...activeCustom];
+    const skillsText = allActive.length > 0
+      ? "\n\n---\n" + allActive.map((s) => s.systemPromptAddition).join("\n\n")
       : "";
     const agenticText =
       settings.agenticMode !== "none"
         ? "\n\n---\n" + AGENTIC_PROMPTS[settings.agenticMode]
         : "";
     return skillsText + agenticText;
-  }, [settings.enabledSkillIds, settings.agenticMode]);
+  }, [settings.enabledSkillIds, settings.agenticMode, settings.customSkills]);
 
   // Compute enabled tools from active skills + manual tool selections + agentic ask_human
   const computeEnabledTools = useCallback((): string[] => {
@@ -336,6 +343,18 @@ export function AIPlayground() {
 
       setQuotedText(null);
       setFollowUpSuggestions([]);
+
+      // Handle slash commands locally without calling the AI
+      if (attachments.length === 0) {
+        const slashResult = executeSlashCommand(combinedText);
+        if (slashResult !== null) {
+          let convId = activeConversationId;
+          if (!convId) convId = createConversation();
+          addMessage(convId, { role: "user", content: combinedText });
+          addMessage(convId, { role: "assistant", content: slashResult });
+          return;
+        }
+      }
 
       let convId = activeConversationId;
       if (!convId) {
@@ -1207,6 +1226,9 @@ export function AIPlayground() {
                         updateSettings({ enabledSkillIds: next });
                       }}
                       onClose={() => setRightPanel(null)}
+                      customSkills={settings.customSkills}
+                      onSaveCustomSkill={saveCustomSkill}
+                      onDeleteCustomSkill={deleteCustomSkill}
                     />
                   )}
                   {rightPanel === "agentic" && (

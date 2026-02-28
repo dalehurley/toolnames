@@ -4,6 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { readFile, AttachedFile } from "@/utils/aiFileReader";
 import { useVoice } from "@/hooks/useVoice";
+import { SLASH_COMMANDS, SlashCommand } from "@/utils/slashCommands";
 import {
   Paperclip,
   Mic,
@@ -13,6 +14,7 @@ import {
   X,
   Image as ImageIcon,
   FileText,
+  Terminal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -29,6 +31,8 @@ export function InputBar({ onSend, onStop, isStreaming, disabled, visionSupporte
   const [text, setText] = useState("");
   const [attachments, setAttachments] = useState<AttachedFile[]>([]);
   const [dragging, setDragging] = useState(false);
+  const [slashHint, setSlashHint] = useState<SlashCommand[]>([]);
+  const [slashSelected, setSlashSelected] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -47,11 +51,56 @@ export function InputBar({ onSend, onStop, isStreaming, disabled, visionSupporte
     onSend(trimmed, attachments);
     setText("");
     setAttachments([]);
+    setSlashHint([]);
     prevTranscript.current = "";
     textareaRef.current?.focus();
   }, [text, attachments, onSend]);
 
+  const handleTextChange = (val: string) => {
+    setText(val);
+    // Slash command autocomplete
+    if (val.startsWith("/") && !val.includes("\n")) {
+      const lower = val.toLowerCase();
+      const matches = SLASH_COMMANDS.filter((c) =>
+        c.command.startsWith(lower.split(" ")[0])
+      );
+      setSlashHint(matches.slice(0, 6));
+      setSlashSelected(0);
+    } else {
+      setSlashHint([]);
+    }
+  };
+
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    // Navigate slash command autocomplete
+    if (slashHint.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setSlashSelected((i) => Math.min(i + 1, slashHint.length - 1));
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setSlashSelected((i) => Math.max(i - 1, 0));
+        return;
+      }
+      if (e.key === "Tab" || e.key === "Enter") {
+        const selected = slashHint[slashSelected];
+        if (selected) {
+          e.preventDefault();
+          const completed = selected.hasArgs
+            ? selected.command + " "
+            : selected.command;
+          setText(completed);
+          setSlashHint([]);
+          return;
+        }
+      }
+      if (e.key === "Escape") {
+        setSlashHint([]);
+        return;
+      }
+    }
     if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
       e.preventDefault();
       handleSend();
@@ -108,7 +157,7 @@ export function InputBar({ onSend, onStop, isStreaming, disabled, visionSupporte
   return (
     <div
       className={cn(
-        "border-t bg-background p-3",
+        "border-t bg-background p-3 relative",
         dragging && "ring-2 ring-primary ring-inset"
       )}
       onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
@@ -193,7 +242,7 @@ export function InputBar({ onSend, onStop, isStreaming, disabled, visionSupporte
         <Textarea
           ref={textareaRef}
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => handleTextChange(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={
             dragging
@@ -232,15 +281,52 @@ export function InputBar({ onSend, onStop, isStreaming, disabled, visionSupporte
         )}
       </div>
 
-      {/* Token count hint */}
+      {/* Slash command autocomplete dropdown */}
+      {slashHint.length > 0 && (
+        <div className="absolute bottom-full left-3 mb-1 z-50 w-80 rounded-lg border bg-popover shadow-lg overflow-hidden">
+          <div className="flex items-center gap-1.5 px-2 py-1.5 border-b bg-muted/30">
+            <Terminal className="w-3 h-3 text-primary" />
+            <span className="text-[10px] font-medium text-muted-foreground">Slash commands · Tab to complete</span>
+          </div>
+          {slashHint.map((cmd, i) => (
+            <button
+              key={cmd.command}
+              className={cn(
+                "flex items-start gap-2 w-full px-3 py-2 text-left text-xs hover:bg-muted/60 transition-colors",
+                i === slashSelected && "bg-muted/60"
+              )}
+              onMouseEnter={() => setSlashSelected(i)}
+              onClick={() => {
+                const completed = cmd.hasArgs ? cmd.command + " " : cmd.command;
+                setText(completed);
+                setSlashHint([]);
+                textareaRef.current?.focus();
+              }}
+            >
+              <code className="text-primary font-mono font-semibold flex-shrink-0 pt-px">{cmd.command}</code>
+              {cmd.argHint && <span className="text-muted-foreground font-mono flex-shrink-0">{cmd.argHint}</span>}
+              <span className="text-muted-foreground flex-1 truncate">{cmd.description}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Footer stats + hints */}
       <div className="flex justify-between items-center mt-1.5">
         <p className="text-[10px] text-muted-foreground">
-          Ctrl+Enter to send · Esc to stop
+          {text.startsWith("/")
+            ? "↑↓ navigate · Tab complete · Enter run"
+            : "Ctrl+Enter to send · Esc to stop · type / for commands"}
         </p>
         {text.length > 0 && (
-          <Badge variant="outline" className="text-[10px] h-4 px-1">
-            ~{Math.ceil(text.split(/\s+/).length * 1.3)} tokens
-          </Badge>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] text-muted-foreground">
+              {text.trim().split(/\s+/).filter(Boolean).length}w · {text.length}c
+            </span>
+            <Badge variant="outline" className="text-[10px] h-4 px-1">
+              ~{Math.ceil(text.split(/\s+/).length * 1.3)} tokens
+            </Badge>
+          </div>
         )}
       </div>
     </div>

@@ -13,6 +13,7 @@ import { SpreadsheetWidget, extractMarkdownTable, parseMarkdownTable } from "./S
 import { MermaidBlock } from "./MermaidBlock";
 import { buildAndDownloadDocx } from "@/utils/docxBuilder";
 import { ThoughtBlock, parseThinkingBlocks, hasThinkingBlocks } from "./ThoughtBlock";
+import { ToolElicitCard, parseToolElicitBlocks } from "./ToolElicitCard";
 import type { ToolCallRecord } from "@/hooks/useStream";
 import {
   Copy,
@@ -280,6 +281,11 @@ export function MessageItem({
     ? parseThinkingBlocks(textContent)
     : null;
 
+  // Parse tool_elicit blocks
+  const toolElicitRequests = isAssistant && !isStreaming
+    ? parseToolElicitBlocks(textContent)
+    : [];
+
   // Detect email or calendar in assistant messages
   const detectedEmail = isAssistant && !isStreaming ? parseEmail(textContent) : null;
   const detectedEvent = isAssistant && !isStreaming && !detectedEmail ? parseCalendarEvent(textContent) : null;
@@ -495,6 +501,11 @@ export function MessageItem({
                         onArtifactOpen={onArtifactOpen}
                       />
                     )}
+
+                    {/* Tool elicit cards */}
+                    {toolElicitRequests.map((req, i) => (
+                      <ToolElicitCard key={i} request={req} />
+                    ))}
 
                     {/* Email card */}
                     {detectedEmail && <EmailCard email={detectedEmail} />}

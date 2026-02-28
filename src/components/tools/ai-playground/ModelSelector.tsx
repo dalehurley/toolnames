@@ -160,6 +160,21 @@ export function ModelSelector() {
         </DropdownMenu>
       </div>
 
+      {/* Current model capability badges */}
+      {currentModel?.tags && currentModel.tags.length > 0 && (
+        <div className="flex items-center gap-1 flex-wrap pl-0.5">
+          {currentModel.tags.map((tag: ModelTag) => (
+            <Badge
+              key={tag}
+              variant="secondary"
+              className="text-[10px] px-1.5 py-0 h-4 font-normal"
+            >
+              {TAG_LABELS[tag]}
+            </Badge>
+          ))}
+        </div>
+      )}
+
       {/* Context window progress bar */}
       {contextWindow > 0 && usedTokens > 0 && (
         <Tooltip>
