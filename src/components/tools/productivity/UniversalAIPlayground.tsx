@@ -118,6 +118,19 @@ interface AskHumanCard {
   fields: AskHumanField[];
 }
 
+interface ToolElicitCard {
+  id: string;
+  title: string;
+  prompt: string;
+  suggestedCommand: string;
+}
+
+interface LoopState {
+  active: boolean;
+  status: "idle" | "running" | "paused_human" | "paused_tool" | "ready_to_resume";
+  note?: string;
+}
+
 interface Attachment {
   kind: "image" | "text";
   name: string;
@@ -212,6 +225,24 @@ const parseAskHumanCards = (text: string): AskHumanCard[] => {
   });
 };
 
+const parseToolElicitCards = (text: string): ToolElicitCard[] => {
+  const blocks = [...text.matchAll(/```tool_elicit\n([\s\S]*?)```/gi)].map((m) => m[1]);
+  return blocks.flatMap((block, idx) => {
+    try {
+      const parsed = JSON.parse(block);
+      const items = Array.isArray(parsed) ? parsed : [parsed];
+      return items.map((item: any, i: number) => ({
+        id: item.id || `tool-elicit-${idx}-${i}`,
+        title: item.title || "Tool input needed",
+        prompt: item.prompt || "Please run a tool and continue.",
+        suggestedCommand: item.suggestedCommand || item.command || "/date",
+      }));
+    } catch {
+      return [];
+    }
+  });
+};
+
 const agenticInstructionFor = (mode: AgenticMode) => {
   if (mode === "react") return "Use a ReAct-style loop: Thought (concise), Action, Observation, and Final Answer. Keep thoughts short and practical.";
   if (mode === "plan-execute") return "Use a Plan-Execute loop: provide a numbered plan, execute each step, and conclude with a compact outcome summary.";
@@ -269,6 +300,7 @@ export const UniversalAIPlayground = () => {
   const [toolEvents, setToolEvents] = useState<ToolEvent[]>([]);
   const [agenticMode, setAgenticMode] = useState<AgenticMode>("direct");
   const [askHumanAnswers, setAskHumanAnswers] = useState<Record<string, Record<string, string | string[]>>>({});
+  const [loopState, setLoopState] = useState<LoopState>({ active: false, status: "idle" });
   const [wordDoc, setWordDoc] = useState("<h2>Project Notes</h2><p>Start writing your draft here...</p>");
   const [sheet, setSheet] = useState<string[][]>(() => buildSheet());
   const [csvBuffer, setCsvBuffer] = useState("");
@@ -520,7 +552,18 @@ export const UniversalAIPlayground = () => {
     const responseText = `Human response for \"${card.title}\":\n${summary}`;
     const message: ChatMessage = { id: messageId(), role: "user", content: responseText, ts: new Date().toISOString() };
     updateMessages([...messages, message]);
-    setInput(responseText);
+    setInput(`${responseText}\n\nContinue the ${agenticMode} loop from this point.`);
+    if (loopState.active) setLoopState({ active: true, status: "ready_to_resume", note: "Human response captured. Resume when ready." });
+  };
+
+  const runToolElicit = (card: ToolElicitCard) => {
+    const output = executeClientTool(card.suggestedCommand);
+    if (output === null) return;
+    const responseText = `Tool elicitation result for \"${card.title}\" using ${card.suggestedCommand}:\n${output}`;
+    updateMessages([...messages, { id: messageId(), role: "user", content: responseText, ts: new Date().toISOString() }]);
+    setToolEvents((prev) => [{ id: messageId(), command: card.suggestedCommand, output, ts: new Date().toISOString() }, ...prev].slice(0, 30));
+    setInput(`${responseText}\n\nContinue the ${agenticMode} loop from this point.`);
+    if (loopState.active) setLoopState({ active: true, status: "ready_to_resume", note: "Tool result captured. Resume when ready." });
   };
 
   const headersFor = (target: ProviderId, key: string) => {
@@ -602,6 +645,7 @@ export const UniversalAIPlayground = () => {
   const send = async () => {
     if (!activeThreadId || (!input.trim() && !attachment)) return;
     setStreaming(true);
+    if (agenticMode !== "direct") setLoopState({ active: true, status: "running", note: `Running ${agenticMode} loop...` });
 
     const userText = input.trim() || "Attachment analysis request";
     const userMessage: ChatMessage = { id: messageId(), role: "user", content: userText, ts: new Date().toISOString() };
@@ -672,6 +716,18 @@ export const UniversalAIPlayground = () => {
       const parsed = parseAssistant(response);
       updateMessages(pendingMessages.map((m) => m.id === assistantId ? { ...m, content: parsed.text, media: parsed.media } : m));
 
+      const askCards = parseAskHumanCards(parsed.text);
+      const toolCards = parseToolElicitCards(parsed.text);
+      if (agenticMode !== "direct" && askCards.length) {
+        setLoopState({ active: true, status: "paused_human", note: "Loop paused for AskHuman response." });
+      } else if (agenticMode !== "direct" && toolCards.length) {
+        setLoopState({ active: true, status: "paused_tool", note: "Loop paused for tool elicitation." });
+      } else if (agenticMode !== "direct") {
+        setLoopState({ active: true, status: "running", note: `Continue ${agenticMode} loop or finish with direct reply.` });
+      } else {
+        setLoopState({ active: false, status: "idle" });
+      }
+
       const artifact = artifactFrom(parsed.text);
       if (artifact) {
         setArtifactCode(artifact.code);
@@ -682,6 +738,7 @@ export const UniversalAIPlayground = () => {
       if (speechEnabled) window.speechSynthesis.speak(new SpeechSynthesisUtterance(parsed.text.slice(0, 500)));
     } catch (error: any) {
       updateMessages(pendingMessages.map((m) => (m.id === assistantId ? { ...m, content: `Error: ${error.message || "Failed to get response."}` } : m)));
+      if (agenticMode !== "direct") setLoopState({ active: true, status: "ready_to_resume", note: "Loop interrupted by error; adjust and resume." });
     } finally {
       setStreaming(false);
       setAttachment(null);
@@ -854,6 +911,7 @@ export const UniversalAIPlayground = () => {
               <Textarea value={systemPrompt} onChange={(e) => setSystemPrompt(e.target.value)} disabled={!useSystemPrompt || !canUseSystemPrompt} rows={2} />
               {!!enabledSkillInstructions && <p className="text-xs text-muted-foreground">{skills.filter((s) => s.enabled).length} skill(s) will be appended to the system prompt at send-time.</p>}
               {agenticMode !== "direct" && <p className="text-xs text-muted-foreground">Agentic mode active: <strong>{agenticMode}</strong> strategy instructions are appended to this thread.</p>}
+              {loopState.active && <p className="text-xs text-muted-foreground">Loop status: <strong>{loopState.status}</strong>{loopState.note ? ` — ${loopState.note}` : ""}</p>}
               <div className="flex flex-wrap gap-2">
                 <Button size="sm" variant="outline" onClick={() => setInput("Summarize this as action items with owners and due dates.")}>Action items</Button>
                 <Button size="sm" variant="outline" onClick={() => setInput("Draft a concise follow-up email in To/Subject/Body format.")}>Draft email</Button>
@@ -929,6 +987,17 @@ export const UniversalAIPlayground = () => {
                         </div>
                       );
                     })}
+                    {m.role === "assistant" && parseToolElicitCards(m.content).map((card) => (
+                      <div key={card.id} className="mt-3 rounded-md border bg-background p-3 space-y-2">
+                        <div className="text-sm font-semibold">🧰 {card.title}</div>
+                        <p className="text-sm text-muted-foreground">{card.prompt}</p>
+                        <div className="rounded border p-2 font-mono text-xs">{card.suggestedCommand}</div>
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={() => runToolElicit(card)}>Run suggested tool</Button>
+                          <Button size="sm" variant="outline" onClick={() => setInput(`${card.suggestedCommand}\n\nContinue the ${agenticMode} loop from this point.`)}>Copy to composer</Button>
+                        </div>
+                      </div>
+                    ))}
                     {m.role === "assistant" && (() => {
                       const draft = extractEmailDraft(m.content);
                       if (!draft) return null;
@@ -973,6 +1042,8 @@ export const UniversalAIPlayground = () => {
                 }}>Rename</Button>}
                 {activeThread && <Button size="sm" variant="ghost" onClick={() => deleteChat(activeThread.id)}><Trash2 className="h-3 w-3" /> Delete</Button>}
                 <Button size="sm" variant="ghost" onClick={clearAllChats}>Clear all</Button>
+                {loopState.active && <Button size="sm" variant="ghost" onClick={() => setLoopState({ active: false, status: "idle", note: "Loop stopped by user." })}>Stop loop</Button>}
+                {loopState.status === "ready_to_resume" && <Button size="sm" variant="ghost" onClick={send}>Resume loop</Button>}
               </div>
               {attachment && <p className="text-xs text-muted-foreground">Attached: {attachment.name} ({attachment.kind})</p>}
               <div className="flex gap-2 items-end">
@@ -1064,6 +1135,7 @@ export const UniversalAIPlayground = () => {
               <div className="rounded border p-3 text-sm space-y-2">
                 <p><strong>Flow modes:</strong> Direct, ReAct, Plan-Execute, Chain-of-Thought, Tree-of-Thoughts.</p>
                 <p className="text-muted-foreground">These strategies are injected into the effective system prompt to drive more agentic behavior.</p>
+                <p className="text-muted-foreground">Loops can pause on <code>askhuman</code> or <code>tool_elicit</code>, then resume after human answers or tool outputs are captured.</p>
               </div>
               <Textarea
                 rows={8}
