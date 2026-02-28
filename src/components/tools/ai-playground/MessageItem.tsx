@@ -8,6 +8,11 @@ import { useAIPlaygroundStore, ChatMessage, EmojiReaction } from "@/store/aiPlay
 import { detectArtifact } from "@/hooks/useArtifact";
 import { EmailCard, parseEmail } from "./EmailCard";
 import { CalendarCard, parseCalendarEvent } from "./CalendarCard";
+import { ToolCallsSummary } from "./ToolCallWidget";
+import { SpreadsheetWidget, extractMarkdownTable, parseMarkdownTable } from "./SpreadsheetWidget";
+import { MermaidBlock } from "./MermaidBlock";
+import { buildAndDownloadDocx } from "@/utils/docxBuilder";
+import type { ToolCallRecord } from "@/hooks/useStream";
 import {
   Copy,
   Check,
@@ -25,6 +30,8 @@ import {
   Star,
   Quote,
   GitFork,
+  FileText,
+  Sheet,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -47,6 +54,7 @@ interface MessageItemProps {
   onQuote?: (text: string) => void;
   viewDensity?: "compact" | "cozy" | "spacious";
   searchQuery?: string;
+  toolCalls?: ToolCallRecord[];
 }
 
 function highlight(text: string, query: string): React.ReactNode {
@@ -153,6 +161,7 @@ export function MessageItem({
   onQuote,
   viewDensity = "cozy",
   searchQuery = "",
+  toolCalls,
 }: MessageItemProps) {
   const [copied, setCopied] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -191,6 +200,14 @@ export function MessageItem({
   // Detect email or calendar in assistant messages
   const detectedEmail = isAssistant && !isStreaming ? parseEmail(textContent) : null;
   const detectedEvent = isAssistant && !isStreaming && !detectedEmail ? parseCalendarEvent(textContent) : null;
+
+  // Detect markdown tables for spreadsheet widget
+  const tableMarkdown = isAssistant && !isStreaming ? extractMarkdownTable(textContent) : null;
+  const parsedTable = tableMarkdown ? parseMarkdownTable(tableMarkdown) : null;
+  const [showSpreadsheet, setShowSpreadsheet] = useState(false);
+
+  // Detect if message is long enough to offer docx export
+  const isDocumentLength = isAssistant && textContent.length > 300;
 
   const copy = useCallback(async () => {
     await navigator.clipboard.writeText(textContent);
@@ -379,10 +396,16 @@ export function MessageItem({
                           const match = /language-(\w+)/.exec(className || "");
                           const isBlock = !props.style && match;
                           if (isBlock && match) {
+                            const lang = match[1].toLowerCase();
+                            const codeStr = String(children).replace(/\n$/, "");
+                            // Render Mermaid diagrams inline
+                            if (lang === "mermaid") {
+                              return <MermaidBlock code={codeStr} />;
+                            }
                             return (
                               <CodeBlock
-                                code={String(children).replace(/\n$/, "")}
-                                language={match[1]}
+                                code={codeStr}
+                                language={lang}
                                 onArtifactOpen={onArtifactOpen}
                               />
                             );
@@ -444,6 +467,68 @@ export function MessageItem({
 
                     {/* Calendar card */}
                     {detectedEvent && <CalendarCard event={detectedEvent} />}
+
+                    {/* Tool call results */}
+                    {toolCalls && toolCalls.length > 0 && (
+                      <ToolCallsSummary toolCalls={toolCalls} />
+                    )}
+
+                    {/* Spreadsheet / table view */}
+                    {parsedTable && (
+                      <div className="mt-2">
+                        {!showSpreadsheet ? (
+                          <button
+                            className="flex items-center gap-1.5 text-[11px] text-green-700 dark:text-green-400 hover:underline"
+                            onClick={() => setShowSpreadsheet(true)}
+                          >
+                            <Sheet className="w-3.5 h-3.5" />
+                            Open as editable spreadsheet
+                          </button>
+                        ) : (
+                          <SpreadsheetWidget
+                            initialHeaders={parsedTable.headers}
+                            initialRows={parsedTable.rows}
+                          />
+                        )}
+                      </div>
+                    )}
+
+                    {/* Document export buttons */}
+                    {isDocumentLength && !isStreaming && (
+                      <div className="flex gap-2 mt-3 pt-3 border-t border-dashed border-border/50">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-[11px] gap-1.5"
+                          onClick={() => {
+                            const title = textContent.split("\n")[0].replace(/^#+\s*/, "").slice(0, 60) || "Document";
+                            buildAndDownloadDocx(textContent, title);
+                            toast.success("Word document downloaded");
+                          }}
+                        >
+                          <FileText className="w-3 h-3" />
+                          Export as Word (.docx)
+                        </Button>
+                        {parsedTable && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-[11px] gap-1.5 text-green-700 border-green-300"
+                            onClick={async () => {
+                              const XLSX = await import("xlsx");
+                              const ws = XLSX.utils.aoa_to_sheet([parsedTable.headers, ...parsedTable.rows]);
+                              const wb = XLSX.utils.book_new();
+                              XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+                              XLSX.writeFile(wb, "data.xlsx");
+                              toast.success("Excel file downloaded");
+                            }}
+                          >
+                            <Sheet className="w-3 h-3" />
+                            Export as Excel (.xlsx)
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </>
                 )}
               </div>
@@ -615,6 +700,21 @@ export function MessageItem({
                   </button>
                 )}
               </>
+            )}
+
+            {/* Export as Word */}
+            {isAssistant && isDocumentLength && (
+              <button
+                className="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-blue-500"
+                onClick={() => {
+                  const title = textContent.split("\n")[0].replace(/^#+\s*/, "").slice(0, 60) || "Document";
+                  buildAndDownloadDocx(textContent, title);
+                  toast.success("Word document downloaded");
+                }}
+                title="Export as Word (.docx)"
+              >
+                <FileText className="w-3 h-3" />
+              </button>
             )}
 
             <button

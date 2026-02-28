@@ -62,6 +62,8 @@ export interface AIPlaygroundSettings {
   compareProviderId: string;
   compareModelId: string;
   viewDensity: ViewDensity;
+  enabledSkillIds: string[];
+  enabledToolNames: string[];
 }
 
 interface CachedModels {
@@ -152,6 +154,8 @@ const DEFAULT_SETTINGS: AIPlaygroundSettings = {
   compareProviderId: "anthropic",
   compareModelId: "claude-sonnet-4-5",
   viewDensity: "cozy",
+  enabledSkillIds: [],
+  enabledToolNames: [],
 };
 
 function genId(): string {

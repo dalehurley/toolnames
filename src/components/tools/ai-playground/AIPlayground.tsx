@@ -19,13 +19,15 @@ import { ArtifactPanel } from "./ArtifactPanel";
 import { PromptLibrary } from "./PromptLibrary";
 import { BookmarksPanel } from "./BookmarksPanel";
 import { ProfilesPanel } from "./ProfilesPanel";
+import { AgentSkillsPanel, BUILTIN_SKILLS } from "./AgentSkillsPanel";
 
 import { useAIPlaygroundStore } from "@/store/aiPlayground";
-import { useStream } from "@/hooks/useStream";
+import { useStream, ToolCallRecord } from "@/hooks/useStream";
 import { useVoice } from "@/hooks/useVoice";
 import { detectArtifact, ArtifactType } from "@/hooks/useArtifact";
 import { buildMessageContent, AttachedFile } from "@/utils/aiFileReader";
 import { PROVIDER_MAP, NO_SYSTEM_PROMPT_MODELS } from "@/providers/ai";
+import { CLIENT_TOOLS } from "@/utils/clientTools";
 import { toast } from "sonner";
 import {
   Settings,
@@ -49,6 +51,8 @@ import {
   LayoutList,
   Sparkles,
   FileText,
+  Wrench,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -59,7 +63,7 @@ interface OpenArtifact {
   title?: string;
 }
 
-type RightPanel = "artifact" | "prompts" | "bookmarks" | "profiles" | null;
+type RightPanel = "artifact" | "prompts" | "bookmarks" | "profiles" | "skills" | "tools" | null;
 
 const STARTERS = [
   { icon: "💻", title: "Debug my code", prompt: "Help me debug this code: " },
@@ -153,6 +157,9 @@ export function AIPlayground() {
   // In-chat search
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Tool calls per message (messageId -> ToolCallRecord[])
+  const [messageToolCalls, setMessageToolCalls] = useState<Record<string, ToolCallRecord[]>>({});
 
   // Quote-reply
   const [quotedText, setQuotedText] = useState<string | null>(null);
@@ -292,6 +299,23 @@ export function AIPlayground() {
     [sendStream, settings, updateConversationTitle]
   );
 
+  // Compute system prompt additions from active skills
+  const skillsSystemPromptAddition = useCallback((): string => {
+    const activeSkills = BUILTIN_SKILLS.filter((s) =>
+      settings.enabledSkillIds.includes(s.id)
+    );
+    if (activeSkills.length === 0) return "";
+    return "\n\n---\n" + activeSkills.map((s) => s.systemPromptAddition).join("\n\n");
+  }, [settings.enabledSkillIds]);
+
+  // Compute enabled tools from active skills + manual tool selections
+  const computeEnabledTools = useCallback((): string[] => {
+    const fromSkills = BUILTIN_SKILLS
+      .filter((s) => settings.enabledSkillIds.includes(s.id))
+      .flatMap((s) => s.enabledTools || []);
+    return Array.from(new Set([...settings.enabledToolNames, ...fromSkills]));
+  }, [settings.enabledSkillIds, settings.enabledToolNames]);
+
   const handleSend = useCallback(
     async (text: string, attachments: AttachedFile[]) => {
       const combinedText = quotedText ? `${quotedText}${text}` : text;
@@ -316,14 +340,39 @@ export function AIPlayground() {
       const conv = useAIPlaygroundStore.getState().conversations.find((c) => c.id === convId);
       const apiMessages = conv?.messages || [];
 
+      const baseSystemPrompt = noSystemPrompt ? undefined : settings.systemPrompt;
+      const skillsAddition = skillsSystemPromptAddition();
+      const fullSystemPrompt = baseSystemPrompt
+        ? baseSystemPrompt + skillsAddition
+        : skillsAddition || undefined;
+      const enabledTools = computeEnabledTools();
+
+      // Track which assistant message ID gets the tool calls
+      let assistantMsgIdForTools: string | null = null;
+
       await sendStream({
         conversationId: convId,
         providerId: settings.selectedProviderId,
         modelId: settings.selectedModelId,
         messages: apiMessages,
-        systemPrompt: noSystemPrompt ? undefined : settings.systemPrompt,
-        onDone: (fullText) => {
+        systemPrompt: fullSystemPrompt,
+        enabledToolNames: enabledTools,
+        onDone: (fullText, toolCalls) => {
           setIsStreamingActive(false);
+
+          // Store tool calls for the last assistant message
+          if (toolCalls && toolCalls.length > 0) {
+            const freshConv = useAIPlaygroundStore.getState().conversations.find((c) => c.id === convId);
+            const lastAssistant = freshConv?.messages.filter((m) => m.role === "assistant").pop();
+            if (lastAssistant) {
+              setMessageToolCalls((prev) => ({
+                ...prev,
+                [lastAssistant.id]: toolCalls,
+              }));
+            }
+          }
+          void assistantMsgIdForTools; // avoid unused warning
+
           // Auto-detect artifact
           const detected = detectArtifact(fullText);
           if (detected) {
@@ -354,6 +403,8 @@ export function AIPlayground() {
       speak,
       quotedText,
       autoTitle,
+      skillsSystemPromptAddition,
+      computeEnabledTools,
     ]
   );
 
@@ -478,7 +529,9 @@ export function AIPlayground() {
   };
 
   const totalTokens = Object.values(sessionUsage).reduce((a, b) => a + b, 0);
-  const showRightPanel = rightPanel !== null && (rightPanel !== "artifact" || artifact !== null);
+  const showRightPanel =
+    rightPanel !== null &&
+    (rightPanel !== "artifact" || artifact !== null);
 
   return (
     <TooltipProvider>
@@ -672,6 +725,46 @@ export function AIPlayground() {
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Model profiles</TooltipContent>
+            </Tooltip>
+
+            {/* Agent Skills */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={rightPanel === "skills" ? "default" : "ghost"}
+                  size="icon"
+                  className="h-8 w-8 relative"
+                  onClick={() => toggleRightPanel("skills")}
+                >
+                  <Zap className="w-3.5 h-3.5" />
+                  {settings.enabledSkillIds.length > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-violet-500 text-white text-[8px] rounded-full flex items-center justify-center font-bold">
+                      {settings.enabledSkillIds.length}
+                    </span>
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Agent Skills</TooltipContent>
+            </Tooltip>
+
+            {/* Tools */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={rightPanel === "tools" ? "default" : "ghost"}
+                  size="icon"
+                  className="h-8 w-8 relative"
+                  onClick={() => toggleRightPanel("tools")}
+                >
+                  <Wrench className="w-3.5 h-3.5" />
+                  {settings.enabledToolNames.length > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-orange-500 text-white text-[8px] rounded-full flex items-center justify-center font-bold">
+                      {settings.enabledToolNames.length}
+                    </span>
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Client-side Tools</TooltipContent>
             </Tooltip>
 
             {/* Compare mode */}
@@ -962,6 +1055,7 @@ export function AIPlayground() {
                           onQuote={(text) => setQuotedText(text)}
                           viewDensity={settings.viewDensity}
                           searchQuery={searchQuery}
+                          toolCalls={messageToolCalls[msg.id]}
                         />
                       ))}
 
@@ -1064,6 +1158,72 @@ export function AIPlayground() {
                   )}
                   {rightPanel === "profiles" && (
                     <ProfilesPanel onClose={() => setRightPanel(null)} />
+                  )}
+                  {rightPanel === "skills" && (
+                    <AgentSkillsPanel
+                      enabledSkillIds={settings.enabledSkillIds}
+                      onToggleSkill={(id, enabled) => {
+                        const next = enabled
+                          ? [...settings.enabledSkillIds, id]
+                          : settings.enabledSkillIds.filter((s) => s !== id);
+                        updateSettings({ enabledSkillIds: next });
+                      }}
+                      onClose={() => setRightPanel(null)}
+                    />
+                  )}
+                  {rightPanel === "tools" && (
+                    <div className="flex flex-col h-full border-l bg-background">
+                      <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/20">
+                        <div className="flex items-center gap-2">
+                          <Wrench className="w-4 h-4 text-orange-500" />
+                          <span className="text-sm font-medium">Client-side Tools</span>
+                        </div>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setRightPanel(null)}>
+                          <X className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                      <div className="p-2 text-[11px] text-muted-foreground bg-orange-50/30 dark:bg-orange-950/20 border-b px-3 py-1.5">
+                        Enabled tools can be called by the AI in real-time. Results render as interactive widgets inline.
+                      </div>
+                      <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
+                        {CLIENT_TOOLS.map((tool) => {
+                          const isOn = settings.enabledToolNames.includes(tool.name);
+                          return (
+                            <div
+                              key={tool.name}
+                              className={`flex items-start gap-2 p-2.5 rounded-lg border cursor-pointer transition-colors ${isOn ? "border-orange-400/60 bg-orange-50/30 dark:bg-orange-950/20" : "hover:bg-muted/20"}`}
+                              onClick={() => {
+                                const next = isOn
+                                  ? settings.enabledToolNames.filter((t) => t !== tool.name)
+                                  : [...settings.enabledToolNames, tool.name];
+                                updateSettings({ enabledToolNames: next });
+                              }}
+                            >
+                              <span className="text-base flex-shrink-0">{tool.icon}</span>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs font-medium">{tool.name.replace(/_/g, " ")}</span>
+                                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${isOn ? "bg-orange-500 text-white" : "bg-muted text-muted-foreground"}`}>
+                                    {isOn ? "ON" : "OFF"}
+                                  </span>
+                                </div>
+                                <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2">{tool.description}</p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {settings.enabledToolNames.length > 0 && (
+                        <div className="p-2 border-t">
+                          <button
+                            className="text-[11px] text-destructive hover:underline w-full text-left px-1"
+                            onClick={() => updateSettings({ enabledToolNames: [] })}
+                          >
+                            Disable all tools
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </Panel>
               </>
