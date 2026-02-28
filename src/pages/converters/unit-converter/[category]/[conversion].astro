@@ -1,0 +1,37 @@
+---
+import type { GetStaticPaths } from "astro";
+import MainLayout from "@/layouts/MainLayout.astro";
+import { UnitConverterPage } from "@/pages/converters/_UnitConverterPage";
+import { unitConverterRoutes } from "@/data/unitConverterRoutes";
+
+export const getStaticPaths: GetStaticPaths = () => {
+  return unitConverterRoutes.map((route) => ({
+    params: {
+      category: route.category,
+      conversion: `${route.from}-to-${route.to}`,
+    },
+    props: {
+      fromUnit: route.from,
+      toUnit: route.to,
+      category: route.category,
+    },
+  }));
+};
+
+const { fromUnit, toUnit, category } = Astro.props;
+
+const capitalize = (s: string) =>
+  s.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+const title = `Convert ${capitalize(fromUnit)} to ${capitalize(toUnit)} — Free ${capitalize(category)} Converter | ToolNames`;
+const description = `Free online ${capitalize(fromUnit)} to ${capitalize(toUnit)} converter. Instant, accurate results calculated locally in your browser. No sign-up required.`;
+---
+
+<MainLayout title={title} description={description}>
+  <UnitConverterPage
+    fromUnit={fromUnit}
+    toUnit={toUnit}
+    category={category}
+    client:only="react"
+  />
+</MainLayout>

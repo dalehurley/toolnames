@@ -1,0 +1,11 @@
+---
+import MainLayout from "@/layouts/MainLayout.astro";
+import ToolGrid from "@/components/ToolGrid";
+---
+
+<MainLayout
+  title="Color Theory Tools | ToolNames"
+  description="Explore color theory concepts: color wheels, harmonies, contrast ratios, palette building, and color blindness simulation — all interactive and browser-based."
+>
+  <ToolGrid initialCategory="color-theory" client:only="react" />
+</MainLayout>

@@ -1,0 +1,11 @@
+---
+import MainLayout from "@/layouts/MainLayout.astro";
+import ToolGrid from "@/components/ToolGrid";
+---
+
+<MainLayout
+  title="Free CSS & Design Tools | ToolNames"
+  description="CSS flexbox and grid generators, color palette explorer, gradient builder, animation generator, typography scale, color blindness simulator, and more."
+>
+  <ToolGrid initialCategory="design" client:only="react" />
+</MainLayout>

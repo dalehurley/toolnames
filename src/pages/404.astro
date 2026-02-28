@@ -1,0 +1,37 @@
+---
+import MainLayout from "@/layouts/MainLayout.astro";
+---
+
+<MainLayout
+  title="Page Not Found | ToolNames"
+  description="The page you're looking for doesn't exist. Browse our free browser-based tools for calculators, converters, generators, and more."
+>
+  <div class="flex flex-col items-center justify-center py-24 text-center">
+    <h1 class="text-8xl font-bold text-primary mb-4">404</h1>
+    <h2 class="text-3xl font-semibold mb-4">Page Not Found</h2>
+    <p class="text-muted-foreground mb-8 max-w-md">
+      The page you're looking for doesn't exist or may have moved. Browse our
+      collection of free browser-based tools instead.
+    </p>
+    <div class="flex flex-col sm:flex-row gap-4">
+      <a
+        href="/"
+        class="inline-flex items-center justify-center rounded-md bg-primary text-primary-foreground px-6 py-3 font-medium hover:bg-primary/90 transition-colors"
+      >
+        Browse All Tools
+      </a>
+      <a
+        href="/calculators"
+        class="inline-flex items-center justify-center rounded-md border border-input bg-background px-6 py-3 font-medium hover:bg-accent transition-colors"
+      >
+        Calculators
+      </a>
+      <a
+        href="/converters"
+        class="inline-flex items-center justify-center rounded-md border border-input bg-background px-6 py-3 font-medium hover:bg-accent transition-colors"
+      >
+        Converters
+      </a>
+    </div>
+  </div>
+</MainLayout>

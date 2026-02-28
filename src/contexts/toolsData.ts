@@ -25,7 +25,7 @@ import { TemperatureConverter } from "@/components/tools/converters/TemperatureC
 import { CharacterCounter } from "@/components/tools/utilities/CharacterCounter";
 import { SchemaVisualizer } from "@/components/tools/utilities/SchemaVisualizer";
 import { ChartBuilder } from "@/components/tools/utilities/ChartBuilder";
-import CSVExplorer from "@/pages/CSVExplorer";
+import CSVExplorer from "@/components/tools/file-tools/CSVExplorer";
 import { JSONSchemaCreator } from "@/components/tools/utilities/JSONSchemaCreator";
 import { ColorPaletteExplorer } from "@/components/tools/design/ColorPaletteExplorer";
 import { TimeZoneConverter } from "@/components/tools/converters/TimeZoneConverter";

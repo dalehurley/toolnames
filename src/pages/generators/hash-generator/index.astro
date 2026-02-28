@@ -1,0 +1,11 @@
+---
+import MainLayout from "@/layouts/MainLayout.astro";
+import { HashGenerator } from "@/components/tools/generators/HashGenerator";
+---
+
+<MainLayout
+  title="Free Hash Generator: SHA-1, SHA-256, SHA-384, SHA-512 | ToolNames"
+  description="Generate cryptographic hashes (SHA-1, SHA-256, SHA-384, SHA-512) from text instantly in your browser. Free, private, no data leaves your device."
+>
+  <HashGenerator client:only="react" />
+</MainLayout>

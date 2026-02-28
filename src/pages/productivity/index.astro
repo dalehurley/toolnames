@@ -1,0 +1,11 @@
+---
+import MainLayout from "@/layouts/MainLayout.astro";
+import ToolGrid from "@/components/ToolGrid";
+---
+
+<MainLayout
+  title="Free Productivity Tools | ToolNames"
+  description="Pomodoro timer, Kanban board, habit tracker, note taking, time-blocking calendar, stopwatch, countdown timer, and more — all private and browser-based."
+>
+  <ToolGrid initialCategory="productivity" client:only="react" />
+</MainLayout>

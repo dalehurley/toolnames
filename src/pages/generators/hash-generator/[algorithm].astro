@@ -1,0 +1,19 @@
+---
+import type { GetStaticPaths } from "astro";
+import MainLayout from "@/layouts/MainLayout.astro";
+import { HashGenerator } from "@/components/tools/generators/HashGenerator";
+import { hashAlgorithms, hashAlgorithmMeta } from "@/data/hashAlgorithms";
+
+export const getStaticPaths: GetStaticPaths = () => {
+  return hashAlgorithms.map((algorithm) => ({
+    params: { algorithm },
+    props: { algorithm, ...hashAlgorithmMeta[algorithm] },
+  }));
+};
+
+const { algorithm, pageTitle, metaDescription } = Astro.props;
+---
+
+<MainLayout title={pageTitle} description={metaDescription}>
+  <HashGenerator initialAlgorithm={algorithm} client:only="react" />
+</MainLayout>

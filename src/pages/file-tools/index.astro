@@ -1,0 +1,11 @@
+---
+import MainLayout from "@/layouts/MainLayout.astro";
+import ToolGrid from "@/components/ToolGrid";
+---
+
+<MainLayout
+  title="Free File & Image Tools | ToolNames"
+  description="Convert images between JPG, PNG, WebP, GIF. Explore CSV data, view image metadata, convert audio files — all processing done locally in your browser."
+>
+  <ToolGrid initialCategory="file-tools" client:only="react" />
+</MainLayout>

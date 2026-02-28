@@ -1,0 +1,135 @@
+---
+const year = new Date().getFullYear();
+
+const categories = [
+  { label: "Calculators", href: "/calculators" },
+  { label: "Converters", href: "/converters" },
+  { label: "Generators", href: "/generators" },
+  { label: "Utilities", href: "/utilities" },
+  { label: "File Tools", href: "/file-tools" },
+  { label: "SEO Tools", href: "/seo" },
+  { label: "Design", href: "/design" },
+  { label: "Productivity", href: "/productivity" },
+  { label: "Lottery", href: "/lottery" },
+  { label: "HTML5 API Tools", href: "/html5-apis" },
+];
+---
+
+<footer class="border-t py-8 bg-background">
+  <div class="container mx-auto px-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-8">
+      <!-- ToolNames Info -->
+      <div>
+        <h3 class="font-semibold text-foreground mb-3">ToolNames</h3>
+        <p class="text-sm text-muted-foreground mb-2">
+          Free client-side tools for everyday tasks
+        </p>
+        <p class="text-xs text-muted-foreground mb-3">
+          All tools run entirely in your browser - your data never leaves your device
+        </p>
+        <a href="/sitemap" class="text-primary hover:underline text-sm block">Browse All Tools</a>
+      </div>
+
+      <!-- Tool Categories -->
+      <div>
+        <h3 class="font-semibold text-foreground mb-3">Tool Categories</h3>
+        <div class="space-y-1.5">
+          {categories.map((item) => (
+            <a
+              href={item.href}
+              class="text-sm text-muted-foreground hover:text-primary transition-colors block"
+            >
+              {item.label}
+            </a>
+          ))}
+        </div>
+      </div>
+
+      <!-- Dale Hurley Projects -->
+      <div>
+        <h3 class="font-semibold text-foreground mb-3">
+          <a href="https://www.dalehurley.com" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">
+            Dale Hurley Projects
+          </a>
+        </h3>
+        <div class="space-y-3">
+          <div>
+            <h4 class="text-sm font-medium">
+              <a href="https://spotfillr.com" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">Spotfillr</a>
+            </h4>
+            <p class="text-xs text-muted-foreground">Childcare management platform for filling casual spots.</p>
+          </div>
+          <div>
+            <h4 class="text-sm font-medium">
+              <a href="https://full.cx" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">Full.CX</a>
+            </h4>
+            <p class="text-xs text-muted-foreground">AI-driven tools for product teams and requirements.</p>
+          </div>
+          <div>
+            <h4 class="text-sm font-medium">
+              <a href="https://customhomeworkmaker.com" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">Custom Homework Maker</a>
+            </h4>
+            <p class="text-xs text-muted-foreground">AI-powered personalized homework assignments.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- More Tools -->
+      <div>
+        <h3 class="font-semibold text-foreground mb-3">More Tools</h3>
+        <div class="space-y-3">
+          <div>
+            <h4 class="text-sm font-medium">
+              <a href="https://www.1to5app.com" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">1 to 5 App</a>
+            </h4>
+            <p class="text-xs text-muted-foreground">Emotional learning tool for children aged 4-10.</p>
+          </div>
+          <div>
+            <h4 class="text-sm font-medium">
+              <a href="https://rapidreportcard.com" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">RapidReportCard</a>
+            </h4>
+            <p class="text-xs text-muted-foreground">Performance management tools for businesses.</p>
+          </div>
+          <div>
+            <h4 class="text-sm font-medium">
+              <a href="https://www.risks.io" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">Risks.io</a>
+            </h4>
+            <p class="text-xs text-muted-foreground">Project risk identification and mitigation tools.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Apps & APIs -->
+      <div>
+        <h3 class="font-semibold text-foreground mb-3">Apps & APIs</h3>
+        <div class="space-y-3">
+          <div>
+            <h4 class="text-sm font-medium">
+              <a href="https://speedbrain.app" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">SpeedBrain</a>
+            </h4>
+            <p class="text-xs text-muted-foreground">Quiz app with quick-fire questions and leaderboards.</p>
+          </div>
+          <div>
+            <h4 class="text-sm font-medium">
+              <a href="https://timelodge.com" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">TimeLodge</a>
+            </h4>
+            <p class="text-xs text-muted-foreground">Time tracking and client invoicing platform.</p>
+          </div>
+          <div>
+            <h4 class="text-sm font-medium">
+              <a href="https://github.com/claude-php/claude-3-api" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">Claude 3 API PHP</a>
+            </h4>
+            <p class="text-xs text-muted-foreground">PHP package for Claude 3 API integration.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Copyright -->
+    <div class="border-t pt-6 text-center text-muted-foreground">
+      <p class="text-sm">
+        © {year} ToolNames.com - Free client-side tools for everyday tasks
+      </p>
+    </div>
+  </div>
+</footer>

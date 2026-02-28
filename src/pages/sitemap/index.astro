@@ -1,0 +1,11 @@
+---
+import MainLayout from "@/layouts/MainLayout.astro";
+import ToolGrid from "@/components/ToolGrid";
+---
+
+<MainLayout
+  title="All Tools — Sitemap | ToolNames"
+  description="Browse all 100+ free browser-based tools on ToolNames. Calculators, converters, generators, utilities, design tools, SEO tools, productivity apps, and more."
+>
+  <ToolGrid client:only="react" />
+</MainLayout>

@@ -1,0 +1,38 @@
+---
+import type { GetStaticPaths } from "astro";
+import MainLayout from "@/layouts/MainLayout.astro";
+import ToolPageWrapper from "@/components/ToolPageWrapper";
+import { availableTools } from "@/contexts/toolsData";
+
+export const getStaticPaths: GetStaticPaths = () => {
+  return availableTools
+    .filter((tool) => {
+      const segments = tool.url.split("/").filter(Boolean);
+      // Only 2-segment URLs: /category/tool-slug
+      // Exclude tools that have deeper routes (unit-converter, hash-generator sub-routes)
+      return (
+        segments.length === 2 &&
+        !tool.url.includes("/unit-converter/") &&
+        !tool.url.includes("/hash-generator/")
+      );
+    })
+    .map((tool) => {
+      const [, category, toolSlug] = tool.url.split("/");
+      return {
+        params: { category, tool: toolSlug },
+        props: { toolId: tool.id, pageTitle: tool.pageTitle, metaDescription: tool.metaDescription },
+      };
+    });
+};
+
+const { toolId, pageTitle, metaDescription } = Astro.props;
+---
+
+<MainLayout
+  title={pageTitle}
+  description={metaDescription}
+  ogTitle={pageTitle}
+  ogDescription={metaDescription}
+>
+  <ToolPageWrapper toolId={toolId} client:only="react" />
+</MainLayout>
