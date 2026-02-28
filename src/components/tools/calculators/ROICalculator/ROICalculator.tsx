@@ -1,5 +1,4 @@
 import { useState, useMemo } from "react";
-import { useSEO } from "@/hooks/useSEO";
 import {
   Card,
   CardContent,
@@ -28,14 +27,6 @@ const INITIAL_STATE: ROIInputs = {
 };
 
 export function ROICalculator() {
-  useSEO({
-    title: "ROI Calculator: Calculate Return on Investment | ToolNames",
-    description:
-      "Free ROI calculator to calculate return on investment percentage, annualized returns, and compare investment scenarios.",
-    keywords:
-      "roi calculator, return on investment, investment return, calculator, investment",
-  });
-
   const [inputs, setInputs] = useState<ROIInputs>(INITIAL_STATE);
   const [activeTab, setActiveTab] = useState("simple");
 

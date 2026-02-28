@@ -27,7 +27,6 @@ import {
   Wand2,
 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useSEO } from '@/hooks/useSEO';
 import { YAMLEditor } from './YAMLEditor';
 import {
   validateYAML,
@@ -55,14 +54,6 @@ export function YAMLValidator() {
   });
   const [convertError, setConvertError] = useState<string | null>(null);
 
-  // SEO integration
-  useSEO({
-    title: 'YAML Validator: Validate & Format YAML | ToolNames',
-    description:
-      'Free YAML validator. Validate YAML syntax, format YAML documents, and convert between YAML and JSON with real-time error detection.',
-    keywords:
-      'YAML validator, YAML formatter, YAML to JSON, validate YAML syntax, online YAML checker',
-  });
 
   // Validate YAML on input change
   useEffect(() => {

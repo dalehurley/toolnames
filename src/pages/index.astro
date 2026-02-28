@@ -1,0 +1,13 @@
+---
+import MainLayout from "@/layouts/MainLayout.astro";
+import ToolGrid from "@/components/ToolGrid";
+---
+
+<MainLayout
+  title="ToolNames - Free Browser-Based Tools"
+  description="Free, privacy-focused browser tools — calculators, converters, generators, utilities, and SEO tools. No data leaves your device."
+  ogTitle="ToolNames: Free & Private Online Tools for Every Need"
+  ogDescription="Boost your productivity with 100+ free, secure, browser-based tools. Calculators, converters, generators, HTML5 API demos, and more."
+>
+  <ToolGrid client:only="react" />
+</MainLayout>

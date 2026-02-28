@@ -1,0 +1,11 @@
+---
+import MainLayout from "@/layouts/MainLayout.astro";
+import ToolGrid from "@/components/ToolGrid";
+---
+
+<MainLayout
+  title="Free Lottery Tools | ToolNames"
+  description="Lottery number generators, odds calculators, historical data analyzers, frequency visualizers, and wheeling systems — all free and browser-based."
+>
+  <ToolGrid initialCategory="lottery" client:only="react" />
+</MainLayout>

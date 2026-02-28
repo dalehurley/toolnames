@@ -1,0 +1,11 @@
+---
+import MainLayout from "@/layouts/MainLayout.astro";
+import ToolGrid from "@/components/ToolGrid";
+---
+
+<MainLayout
+  title="Free Online Calculators | ToolNames"
+  description="Browse 30+ free calculators for finance, health, math, and more. Mortgage, BMI, compound interest, tip, and retirement calculators — all private, browser-based."
+>
+  <ToolGrid initialCategory="calculators" client:only="react" />
+</MainLayout>

@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from "react";
-import { useSEO } from "@/hooks/useSEO";
 import {
   Card,
   CardContent,
@@ -34,14 +33,6 @@ interface AudioFileState {
 }
 
 export function AudioFormatConverter() {
-  useSEO({
-    title: "Audio Format Converter: MP3, WAV, OGG, AAC | ToolNames",
-    description:
-      "Convert audio files between MP3, WAV, OGG, and AAC formats securely in your browser.",
-    keywords:
-      "audio converter, mp3 converter, wav converter, music converter, audio format",
-  });
-
   const [files, setFiles] = useState<AudioFileState[]>([]);
   const [format, setFormat] = useState("wav");
   const [quality, setQuality] = useState("192");

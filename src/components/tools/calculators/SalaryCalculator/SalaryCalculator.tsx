@@ -1,5 +1,4 @@
 import { useState, useMemo } from "react";
-import { useSEO } from "@/hooks/useSEO";
 import {
   Card,
   CardContent,
@@ -26,14 +25,6 @@ const INITIAL_STATE: SalaryInputs = {
 };
 
 export function SalaryCalculator() {
-  useSEO({
-    title: "Salary Calculator: Paycheck & Tax Estimator | ToolNames",
-    description:
-      "Convert your salary between hourly, annual, monthly formats and calculate take-home pay after federal & state taxes.",
-    keywords:
-      "salary calculator, paycheck calculator, take home pay, tax calculator, hourly to salary",
-  });
-
   const [inputs, setInputs] = useState<SalaryInputs>(INITIAL_STATE);
   const [activeTab, setActiveTab] = useState("overview");
 

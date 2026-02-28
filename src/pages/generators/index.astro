@@ -1,0 +1,11 @@
+---
+import MainLayout from "@/layouts/MainLayout.astro";
+import ToolGrid from "@/components/ToolGrid";
+---
+
+<MainLayout
+  title="Free Online Generators | ToolNames"
+  description="Generate passwords, QR codes, UUIDs, hashes, Lorem Ipsum text, random numbers, ASCII art, and color palettes. Free, secure, and browser-based."
+>
+  <ToolGrid initialCategory="generators" client:only="react" />
+</MainLayout>

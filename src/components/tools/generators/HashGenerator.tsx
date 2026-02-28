@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -64,8 +63,6 @@ const isValidAlgorithm = (alg?: string): alg is HashAlgorithm => {
 };
 
 export const HashGenerator = ({ initialAlgorithm }: HashGeneratorProps) => {
-  const location = useLocation();
-
   // Set the default algorithm value only once at component initialization
   const defaultAlgo = isValidAlgorithm(initialAlgorithm)
     ? initialAlgorithm
@@ -82,7 +79,7 @@ export const HashGenerator = ({ initialAlgorithm }: HashGeneratorProps) => {
     if (isValidAlgorithm(initialAlgorithm)) {
       setAlgorithm(initialAlgorithm);
     }
-  }, [initialAlgorithm, location.pathname]);
+  }, [initialAlgorithm]);
 
   // Generate hash when input or algorithm changes
   useEffect(() => {
@@ -312,30 +309,30 @@ export const HashGenerator = ({ initialAlgorithm }: HashGeneratorProps) => {
             Direct Links to Specific Hash Algorithms:
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            <Link
-              to="/generators/hash-generator/sha1"
+            <a
+              href="/generators/hash-generator/sha1"
               className="text-xs flex items-center p-2 border rounded-md hover:bg-muted"
             >
               SHA-1 Hash Generator <ExternalLink className="ml-1 h-3 w-3" />
-            </Link>
-            <Link
-              to="/generators/hash-generator/sha256"
+            </a>
+            <a
+              href="/generators/hash-generator/sha256"
               className="text-xs flex items-center p-2 border rounded-md hover:bg-muted"
             >
               SHA-256 Hash Generator <ExternalLink className="ml-1 h-3 w-3" />
-            </Link>
-            <Link
-              to="/generators/hash-generator/sha384"
+            </a>
+            <a
+              href="/generators/hash-generator/sha384"
               className="text-xs flex items-center p-2 border rounded-md hover:bg-muted"
             >
               SHA-384 Hash Generator <ExternalLink className="ml-1 h-3 w-3" />
-            </Link>
-            <Link
-              to="/generators/hash-generator/sha512"
+            </a>
+            <a
+              href="/generators/hash-generator/sha512"
               className="text-xs flex items-center p-2 border rounded-md hover:bg-muted"
             >
               SHA-512 Hash Generator <ExternalLink className="ml-1 h-3 w-3" />
-            </Link>
+            </a>
           </div>
         </div>
       </CardFooter>

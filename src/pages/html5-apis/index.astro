@@ -1,0 +1,11 @@
+---
+import MainLayout from "@/layouts/MainLayout.astro";
+import ToolGrid from "@/components/ToolGrid";
+---
+
+<MainLayout
+  title="Free HTML5 API Demo Tools | ToolNames"
+  description="Interactive demos for Web Audio, Geolocation, MediaRecorder, Canvas, Notifications, Clipboard, Device Orientation, and other browser APIs."
+>
+  <ToolGrid initialCategory="html5-apis" client:only="react" />
+</MainLayout>

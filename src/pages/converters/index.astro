@@ -1,0 +1,11 @@
+---
+import MainLayout from "@/layouts/MainLayout.astro";
+import ToolGrid from "@/components/ToolGrid";
+---
+
+<MainLayout
+  title="Free Online Converters | ToolNames"
+  description="Convert units, colors, images, audio, files, number bases, and more. All converters run in your browser — no uploads, no data sharing."
+>
+  <ToolGrid initialCategory="converters" client:only="react" />
+</MainLayout>

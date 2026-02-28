@@ -21,7 +21,6 @@ import {
 } from "@/components/ui/dialog";
 import { PiggyBank, Save, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import { useSEO } from "@/hooks/useSEO";
 import { RetirementInputs } from "./RetirementInputs";
 import { RetirementResults } from "./RetirementResults";
 import { RetirementCharts } from "./RetirementCharts";
@@ -53,28 +52,6 @@ export function RetirementCalculator() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // SEO Configuration
-  useSEO({
-    title: "Retirement Calculator: Plan Your Retirement Savings | ToolNames",
-    description:
-      "Free retirement calculator to plan your savings, withdrawal strategies, and compare scenarios. Calculate how much you need to retire comfortably.",
-    keywords:
-      "retirement calculator, retirement planning, 401k calculator, retirement savings, withdrawal strategy, 4% rule, financial planning",
-    canonical: window.location.href,
-    structuredData: {
-      "@context": "https://schema.org",
-      "@type": "WebApplication",
-      name: "Retirement Calculator",
-      description:
-        "Calculate retirement savings needs, withdrawal strategies, and compare scenarios.",
-      applicationCategory: "FinanceApplication",
-      offers: {
-        "@type": "Offer",
-        price: "0",
-        priceCurrency: "USD",
-      },
-    },
-  });
 
   // Load scenarios from localStorage
   useEffect(() => {

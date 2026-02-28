@@ -2,7 +2,7 @@ User-agent: *
 Allow: /
 
 # Allow all bots to access the sitemap
-Sitemap: https://toolnames.com/sitemap.xml
+Sitemap: https://toolnames.com/sitemap-index.xml
 
 # Allow indexing of all pages
 Allow: /calculators/

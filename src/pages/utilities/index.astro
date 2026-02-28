@@ -1,0 +1,11 @@
+---
+import MainLayout from "@/layouts/MainLayout.astro";
+import ToolGrid from "@/components/ToolGrid";
+---
+
+<MainLayout
+  title="Free Online Utilities & Text Tools | ToolNames"
+  description="JSON formatter, JWT decoder, Base64 encoder, regex tester, text case converter, character counter, diff checker, SQL formatter, and more — all browser-based."
+>
+  <ToolGrid initialCategory="utilities" client:only="react" />
+</MainLayout>
