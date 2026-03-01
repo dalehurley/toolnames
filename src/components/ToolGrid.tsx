@@ -163,6 +163,9 @@ const ToolGrid = ({ initialCategory }: { initialCategory?: string }) => {
     .map(id => availableTools.find(t => t.id === id))
     .filter((t): t is Tool => t !== undefined);
   const filteredTools = tools; // All tools shown on homepage
+  const categoryTools = initialCategory
+    ? tools.filter((t) => t.category === initialCategory.toLowerCase())
+    : [];
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Tool[]>([]);
   const [showBackToTop, setShowBackToTop] = useState(false);
@@ -261,7 +264,8 @@ const ToolGrid = ({ initialCategory }: { initialCategory?: string }) => {
       }
 
       const query = searchQuery.toLowerCase();
-      const results = tools
+      const searchPool = initialCategory ? categoryTools : tools;
+      const results = searchPool
         .filter(
           (tool) =>
             tool.title.toLowerCase().includes(query) ||
@@ -274,7 +278,7 @@ const ToolGrid = ({ initialCategory }: { initialCategory?: string }) => {
     }, 150); // Small debounce for better performance
 
     return () => clearTimeout(debounceTimer);
-  }, [searchQuery, tools]);
+  }, [searchQuery, tools, initialCategory, categoryTools]);
 
   const scrollToTop = useCallback(() => {
     window.scrollTo({
@@ -399,6 +403,156 @@ const ToolGrid = ({ initialCategory }: { initialCategory?: string }) => {
   ];
 
   const categoryCount = Object.keys(categoryColors).length;
+
+  const activeCategoryData = initialCategory
+    ? categories.find(
+        (c) => c.name.toLowerCase() === initialCategory.toLowerCase()
+      )
+    : undefined;
+
+  // ── Category page rendering ────────────────────────────────────────────────
+  if (initialCategory && activeCategoryData) {
+    const Icon = activeCategoryData.icon;
+    const displayName = activeCategoryData.name.replace("-", " ");
+    const otherCategories = categories.filter(
+      (c) => c.name.toLowerCase() !== initialCategory.toLowerCase()
+    );
+
+    return (
+      <>
+        <div className="space-y-10">
+          {/* Category Hero */}
+          <div className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 rounded-xl p-10 shadow-md relative overflow-hidden">
+            <div
+              className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 mix-blend-multiply dark:mix-blend-soft-light"
+              aria-hidden="true"
+            />
+            <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6 relative z-10">
+              <a href="/" className="hover:text-foreground transition-colors">Home</a>
+              <ChevronRight className="h-3 w-3" />
+              <span className="font-medium text-foreground">{displayName}</span>
+            </nav>
+            <div className="flex items-start gap-6 relative z-10">
+              <div className="bg-indigo-500/10 p-4 rounded-2xl shrink-0">
+                <Icon className="h-10 w-10 text-indigo-500" aria-hidden="true" />
+              </div>
+              <div className="space-y-3">
+                <h1 className="text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
+                  {displayName}
+                </h1>
+                <p className="text-lg text-muted-foreground max-w-2xl leading-relaxed">
+                  {activeCategoryData.description}
+                </p>
+                <span className="inline-block text-sm font-medium text-indigo-500 bg-indigo-500/10 px-3 py-1 rounded-full">
+                  {categoryTools.length} tools available
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Category-scoped search */}
+          <div className="relative max-w-2xl mx-auto">
+            <div className="relative">
+              <Input
+                ref={searchInputRef}
+                type="text"
+                placeholder={`Search ${displayName} tools...`}
+                className="w-full pl-12 pr-10 py-4 text-base border-indigo-200 dark:border-indigo-800/50 focus-visible:ring-indigo-400 shadow-md hover:shadow-lg transition-shadow rounded-full"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                aria-label={`Search ${displayName} tools`}
+              />
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 bg-indigo-100 dark:bg-indigo-900/30 p-2 rounded-full">
+                <Search className="h-5 w-5 text-indigo-500" aria-hidden="true" />
+              </div>
+              {searchQuery && (
+                <button
+                  onClick={clearSearch}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors"
+                  aria-label="Clear search"
+                >
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              )}
+            </div>
+            {searchResults.length > 0 && (
+              <div
+                className="absolute z-10 w-full mt-2 bg-background/90 backdrop-blur-sm rounded-lg shadow-lg border border-indigo-100 dark:border-indigo-800/20 overflow-hidden"
+                role="listbox"
+              >
+                {searchResults.map((tool, index) => (
+                  <SearchResult key={tool.id} tool={tool} index={index} onSelect={clearSearch} />
+                ))}
+                <div className="p-3 bg-muted/50 border-t border-indigo-100 dark:border-indigo-800/20 text-sm text-muted-foreground text-center">
+                  Found {searchResults.length} results
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* All tools in this category */}
+          <section className="space-y-4">
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+              All {displayName} Tools
+            </h2>
+            {categoryTools.length === 0 ? (
+              <p className="text-muted-foreground">No tools found in this category yet.</p>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {categoryTools.map((tool, index) => (
+                  <ToolCard key={tool.id} tool={tool} index={index} />
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Other Categories */}
+          <section className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                Explore Other Categories
+              </h2>
+              <a
+                href="/"
+                className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+              >
+                Back to Homepage <ChevronRight className="h-3 w-3" />
+              </a>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              {otherCategories.map((cat) => (
+                <CategoryCard
+                  key={cat.name}
+                  category={cat.name}
+                  icon={cat.icon}
+                  color={cat.color}
+                  description={cat.description}
+                  delay={cat.delay}
+                  toolCount={tools.filter(
+                    (t) => t.category === cat.name.toLowerCase()
+                  ).length}
+                  isNew={"isNew" in cat ? (cat as { isNew?: boolean }).isNew : false}
+                />
+              ))}
+            </div>
+          </section>
+        </div>
+
+        {showBackToTop && (
+          <Button
+            className="fixed bottom-6 right-6 rounded-full w-12 h-12 p-0 shadow-lg bg-gradient-to-tr from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 hover:shadow-md hover:shadow-indigo-500/20 transform hover:scale-110 transition-all duration-300 border-none"
+            onClick={scrollToTop}
+            aria-label="Back to top"
+          >
+            <ArrowUp className="h-5 w-5 text-white" aria-hidden="true" />
+          </Button>
+        )}
+      </>
+    );
+  }
+  // ── End category page rendering ────────────────────────────────────────────
 
   return (
     <>
