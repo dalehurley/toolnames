@@ -123,8 +123,9 @@ export default function ToolPageWrapper({ toolId }: Props) {
       </nav>
 
       {/* Tool header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-4">
+      <div className="space-y-3">
+        {/* Row 1: back navigation + action buttons */}
+        <div className="flex items-center justify-between gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -134,41 +135,41 @@ export default function ToolPageWrapper({ toolId }: Props) {
             <ChevronLeft className="h-4 w-4" />
             <span>Back</span>
           </Button>
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <tool.icon className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">{tool.title}</h1>
-              <p className="text-muted-foreground text-sm">{tool.description}</p>
-            </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => toggleFavorite(tool.id)}
+              aria-label={fav ? "Remove from favorites" : "Add to favorites"}
+            >
+              <Heart className={`h-4 w-4 ${fav ? "fill-red-500 text-red-500" : ""}`} />
+              <span className="ml-1.5 hidden sm:inline">{fav ? "Saved" : "Save"}</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleCopyUrl}
+              aria-label="Copy link to this tool"
+            >
+              {copied ? (
+                <Check className="h-4 w-4 text-green-500" />
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
+              <span className="ml-1.5 hidden sm:inline">{copied ? "Copied!" : "Share"}</span>
+            </Button>
           </div>
         </div>
 
-        {/* Action buttons */}
-        <div className="flex items-center gap-2 shrink-0">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => toggleFavorite(tool.id)}
-            aria-label={fav ? "Remove from favorites" : "Add to favorites"}
-          >
-            <Heart className={`h-4 w-4 ${fav ? "fill-red-500 text-red-500" : ""}`} />
-            <span className="ml-1.5 hidden sm:inline">{fav ? "Saved" : "Save"}</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleCopyUrl}
-            aria-label="Copy link to this tool"
-          >
-            {copied ? (
-              <Check className="h-4 w-4 text-green-500" />
-            ) : (
-              <Copy className="h-4 w-4" />
-            )}
-            <span className="ml-1.5 hidden sm:inline">{copied ? "Copied!" : "Share"}</span>
-          </Button>
+        {/* Row 2: icon + title + description (full width, no competition) */}
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10 shrink-0">
+            <tool.icon className="h-6 w-6 text-primary" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold leading-tight">{tool.title}</h1>
+            <p className="text-muted-foreground text-sm mt-0.5">{tool.description}</p>
+          </div>
         </div>
       </div>
 

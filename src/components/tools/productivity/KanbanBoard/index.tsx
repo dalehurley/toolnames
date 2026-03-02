@@ -891,15 +891,15 @@ const KanbanBoard = () => {
         <BoardStats board={board} onClose={() => setShowStats(false)} />
       )}
 
-      <div className="flex justify-end gap-2 mt-2">
+      <div className="flex justify-between sm:justify-end gap-2 mt-2">
         <Button
           variant="outline"
           size="sm"
           className="text-xs"
           onClick={() => setShowTemplateManager(true)}
         >
-          <Library className="h-4 w-4 mr-1" />
-          Manage Templates
+          <Library className="h-4 w-4 sm:mr-1" />
+          <span className="hidden sm:inline">Manage Templates</span>
         </Button>
 
         <Button
@@ -912,7 +912,7 @@ const KanbanBoard = () => {
         </Button>
       </div>
 
-      <div className="flex flex-1 overflow-x-auto pb-4 mt-4 gap-4">
+      <div className="flex flex-1 overflow-x-auto pb-4 mt-4 gap-4 scroll-smooth">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCorners}
@@ -1038,8 +1038,8 @@ const KanbanBoard = () => {
       </div>
 
       {showAddCard && targetColumn && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg w-full max-w-md">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-semibold mb-4">Add New Card</h3>
             <NewCardForm
               onSubmit={handleAddCard}

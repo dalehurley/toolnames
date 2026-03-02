@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PlusCircle, Trash2, RefreshCw, Search, Filter, X, Download, Upload, Edit2, Check } from "lucide-react";
+import { PlusCircle, Trash2, RefreshCw, Search, Filter, X, Download, Upload, Edit2, Check, MoreHorizontal } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -225,64 +225,110 @@ const BoardHeader = ({
           )}
         </div>
 
-        <div className="flex space-x-2">
+        <div className="flex items-center gap-2">
+          {/* Add Column: always visible */}
           <Button
             variant="outline"
             size="sm"
             className="text-xs"
             onClick={() => setShowAddColumn(true)}
           >
-            <PlusCircle className="h-4 w-4 mr-1" />
-            Add Column
+            <PlusCircle className="h-4 w-4 sm:mr-1" />
+            <span className="hidden sm:inline">Add Column</span>
           </Button>
 
-          {!hideLoadSample && (
+          {/* Secondary actions: expanded on sm+, collapsed into dropdown on mobile */}
+          <div className="hidden sm:flex items-center gap-2">
+            {!hideLoadSample && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                onClick={onLoadSample}
+              >
+                <RefreshCw className="h-4 w-4 mr-1" />
+                Load Sample
+              </Button>
+            )}
+
+            {onExportBoard && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                onClick={onExportBoard}
+                title="Export board as JSON"
+              >
+                <Download className="h-4 w-4 mr-1" />
+                Export
+              </Button>
+            )}
+
+            {onImportBoard && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                onClick={onImportBoard}
+                title="Import board from JSON"
+              >
+                <Upload className="h-4 w-4 mr-1" />
+                Import
+              </Button>
+            )}
+
             <Button
               variant="outline"
               size="sm"
-              className="text-xs"
-              onClick={onLoadSample}
+              className="text-xs text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
+              onClick={() => setShowConfirmClear(true)}
             >
-              <RefreshCw className="h-4 w-4 mr-1" />
-              Load Sample
+              <Trash2 className="h-4 w-4 mr-1" />
+              Clear Board
             </Button>
-          )}
+          </div>
 
-          {onExportBoard && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-xs"
-              onClick={onExportBoard}
-              title="Export board as JSON"
-            >
-              <Download className="h-4 w-4 mr-1" />
-              Export
-            </Button>
-          )}
-
-          {onImportBoard && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-xs"
-              onClick={onImportBoard}
-              title="Import board from JSON"
-            >
-              <Upload className="h-4 w-4 mr-1" />
-              Import
-            </Button>
-          )}
-
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-xs text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
-            onClick={() => setShowConfirmClear(true)}
-          >
-            <Trash2 className="h-4 w-4 mr-1" />
-            Clear Board
-          </Button>
+          {/* Mobile: overflow dropdown for secondary actions */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="sm:hidden px-2"
+                aria-label="More actions"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {!hideLoadSample && (
+                <DropdownMenuItem onClick={onLoadSample}>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Load Sample
+                </DropdownMenuItem>
+              )}
+              {onExportBoard && (
+                <DropdownMenuItem onClick={onExportBoard}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export
+                </DropdownMenuItem>
+              )}
+              {onImportBoard && (
+                <DropdownMenuItem onClick={onImportBoard}>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Import
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-red-500 focus:text-red-500"
+                onClick={() => setShowConfirmClear(true)}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Clear Board
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
