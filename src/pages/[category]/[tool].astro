@@ -20,12 +20,27 @@ export const getStaticPaths: GetStaticPaths = () => {
       const [, category, toolSlug] = tool.url.split("/");
       return {
         params: { category, tool: toolSlug },
-        props: { toolId: tool.id, pageTitle: tool.pageTitle, metaDescription: tool.metaDescription },
+        props: { toolId: tool.id, toolTitle: tool.title, toolUrl: tool.url, pageTitle: tool.pageTitle, metaDescription: tool.metaDescription },
       };
     });
 };
 
-const { toolId, pageTitle, metaDescription } = Astro.props;
+const { toolId, toolTitle, toolUrl, pageTitle, metaDescription } = Astro.props;
+
+const toolSchema = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": toolTitle,
+  "description": metaDescription,
+  "url": `https://toolnames.com${toolUrl}`,
+  "applicationCategory": "UtilityApplication",
+  "operatingSystem": "Web Browser",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  }
+});
 ---
 
 <MainLayout
@@ -33,6 +48,7 @@ const { toolId, pageTitle, metaDescription } = Astro.props;
   description={metaDescription}
   ogTitle={pageTitle}
   ogDescription={metaDescription}
+  jsonLd={toolSchema}
 >
   <ToolPageWrapper toolId={toolId} client:only="react" />
 </MainLayout>

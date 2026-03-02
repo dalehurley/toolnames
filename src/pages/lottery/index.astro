@@ -1,11 +1,33 @@
 ---
 import MainLayout from "@/layouts/MainLayout.astro";
 import ToolGrid from "@/components/ToolGrid";
+import { availableTools } from "@/contexts/toolsData";
+
+const title = "Free Lottery Tools | ToolNames";
+const description = "Lottery number generators, odds calculators, historical data analyzers, frequency visualizers, and wheeling systems — all free and browser-based.";
+const categoryTools = availableTools.filter((t) => t.category === "lottery");
+
+const collectionSchema = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": title,
+  "description": description,
+  "url": "https://toolnames.com/lottery",
+  "hasPart": categoryTools.map((t) => ({
+    "@type": "SoftwareApplication",
+    "name": t.title,
+    "url": `https://toolnames.com${t.url}`,
+    "applicationCategory": "UtilityApplication",
+    "operatingSystem": "Web Browser",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  }))
+});
 ---
 
 <MainLayout
-  title="Free Lottery Tools | ToolNames"
-  description="Lottery number generators, odds calculators, historical data analyzers, frequency visualizers, and wheeling systems — all free and browser-based."
+  title={title}
+  description={description}
+  jsonLd={collectionSchema}
 >
   <ToolGrid initialCategory="lottery" client:only="react" />
 </MainLayout>

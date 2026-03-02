@@ -1,11 +1,33 @@
 ---
 import MainLayout from "@/layouts/MainLayout.astro";
 import ToolGrid from "@/components/ToolGrid";
+import { availableTools } from "@/contexts/toolsData";
+
+const title = "Free Online Generators | ToolNames";
+const description = "Generate passwords, QR codes, UUIDs, hashes, Lorem Ipsum text, random numbers, ASCII art, and color palettes. Free, secure, and browser-based.";
+const categoryTools = availableTools.filter((t) => t.category === "generators");
+
+const collectionSchema = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": title,
+  "description": description,
+  "url": "https://toolnames.com/generators",
+  "hasPart": categoryTools.map((t) => ({
+    "@type": "SoftwareApplication",
+    "name": t.title,
+    "url": `https://toolnames.com${t.url}`,
+    "applicationCategory": "UtilityApplication",
+    "operatingSystem": "Web Browser",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  }))
+});
 ---
 
 <MainLayout
-  title="Free Online Generators | ToolNames"
-  description="Generate passwords, QR codes, UUIDs, hashes, Lorem Ipsum text, random numbers, ASCII art, and color palettes. Free, secure, and browser-based."
+  title={title}
+  description={description}
+  jsonLd={collectionSchema}
 >
   <ToolGrid initialCategory="generators" client:only="react" />
 </MainLayout>

@@ -1,11 +1,33 @@
 ---
 import MainLayout from "@/layouts/MainLayout.astro";
 import ToolGrid from "@/components/ToolGrid";
+import { availableTools } from "@/contexts/toolsData";
+
+const title = "Free Productivity Tools | ToolNames";
+const description = "Pomodoro timer, Kanban board, habit tracker, note taking, time-blocking calendar, stopwatch, countdown timer, and more — all private and browser-based.";
+const categoryTools = availableTools.filter((t) => t.category === "productivity");
+
+const collectionSchema = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": title,
+  "description": description,
+  "url": "https://toolnames.com/productivity",
+  "hasPart": categoryTools.map((t) => ({
+    "@type": "SoftwareApplication",
+    "name": t.title,
+    "url": `https://toolnames.com${t.url}`,
+    "applicationCategory": "UtilityApplication",
+    "operatingSystem": "Web Browser",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  }))
+});
 ---
 
 <MainLayout
-  title="Free Productivity Tools | ToolNames"
-  description="Pomodoro timer, Kanban board, habit tracker, note taking, time-blocking calendar, stopwatch, countdown timer, and more — all private and browser-based."
+  title={title}
+  description={description}
+  jsonLd={collectionSchema}
 >
   <ToolGrid initialCategory="productivity" client:only="react" />
 </MainLayout>
