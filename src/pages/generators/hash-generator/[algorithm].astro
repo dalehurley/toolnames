@@ -16,7 +16,7 @@ const { algorithm, pageTitle, metaDescription } = Astro.props;
 const toolSchema = JSON.stringify({
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
-  "name": `${algorithm.toUpperCase()} Hash Generator`,
+  "name": `${algorithm.replace(/^sha(\d+)$/, (_, n) => `SHA-${n}`)} Hash Generator`,
   "description": metaDescription,
   "url": `https://toolnames.com/generators/hash-generator/${algorithm}`,
   "applicationCategory": "UtilityApplication",

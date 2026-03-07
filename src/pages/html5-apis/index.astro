@@ -2,26 +2,13 @@
 import MainLayout from "@/layouts/MainLayout.astro";
 import ToolGrid from "@/components/ToolGrid";
 import { availableTools } from "@/contexts/toolsData";
+import { buildCollectionSchema } from "@/lib/schema";
 
 const title = "Free HTML5 API Demo Tools | ToolNames";
 const description = "Interactive demos for Web Audio, Geolocation, MediaRecorder, Canvas, Notifications, Clipboard, Device Orientation, and other browser APIs.";
 const categoryTools = availableTools.filter((t) => t.category === "html5-apis");
 
-const collectionSchema = JSON.stringify({
-  "@context": "https://schema.org",
-  "@type": "CollectionPage",
-  "name": title,
-  "description": description,
-  "url": "https://toolnames.com/html5-apis",
-  "hasPart": categoryTools.map((t) => ({
-    "@type": "SoftwareApplication",
-    "name": t.title,
-    "url": `https://toolnames.com${t.url}`,
-    "applicationCategory": "UtilityApplication",
-    "operatingSystem": "Web Browser",
-    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
-  }))
-});
+const collectionSchema = buildCollectionSchema(title, description, "https://toolnames.com/html5-apis", categoryTools);
 ---
 
 <MainLayout
