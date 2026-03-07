@@ -1,6 +1,22 @@
 ---
 import MainLayout from "@/layouts/MainLayout.astro";
 import ToolGrid from "@/components/ToolGrid";
+
+const websiteSchema = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "ToolNames",
+  "url": "https://toolnames.com",
+  "description": "Free, privacy-focused browser tools — calculators, converters, generators, utilities, and SEO tools. No data leaves your device.",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": {
+      "@type": "EntryPoint",
+      "urlTemplate": "https://toolnames.com/sitemap?q={search_term_string}"
+    },
+    "query-input": "required name=search_term_string"
+  }
+});
 ---
 
 <MainLayout
@@ -8,6 +24,7 @@ import ToolGrid from "@/components/ToolGrid";
   description="Free, privacy-focused browser tools — calculators, converters, generators, utilities, and SEO tools. No data leaves your device."
   ogTitle="ToolNames: Free & Private Online Tools for Every Need"
   ogDescription="Boost your productivity with 100+ free, secure, browser-based tools. Calculators, converters, generators, HTML5 API demos, and more."
+  jsonLd={websiteSchema}
 >
   <ToolGrid client:only="react" />
 </MainLayout>

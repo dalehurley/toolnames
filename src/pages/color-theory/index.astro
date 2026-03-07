@@ -1,11 +1,20 @@
 ---
 import MainLayout from "@/layouts/MainLayout.astro";
 import ToolGrid from "@/components/ToolGrid";
+import { availableTools } from "@/contexts/toolsData";
+import { buildCollectionSchema } from "@/lib/schema";
+
+const title = "Color Theory Tools | ToolNames";
+const description = "Explore color theory concepts: color wheels, harmonies, contrast ratios, palette building, and color blindness simulation — all interactive and browser-based.";
+const categoryTools = availableTools.filter((t) => t.category === "color-theory");
+
+const collectionSchema = buildCollectionSchema(title, description, "https://toolnames.com/color-theory", categoryTools);
 ---
 
 <MainLayout
-  title="Color Theory Tools | ToolNames"
-  description="Explore color theory concepts: color wheels, harmonies, contrast ratios, palette building, and color blindness simulation — all interactive and browser-based."
+  title={title}
+  description={description}
+  jsonLd={collectionSchema}
 >
   <ToolGrid initialCategory="color-theory" client:only="react" />
 </MainLayout>

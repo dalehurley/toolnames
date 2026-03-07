@@ -1,11 +1,20 @@
 ---
 import MainLayout from "@/layouts/MainLayout.astro";
 import ToolGrid from "@/components/ToolGrid";
+import { availableTools } from "@/contexts/toolsData";
+import { buildCollectionSchema } from "@/lib/schema";
+
+const title = "Free Online Utilities & Text Tools | ToolNames";
+const description = "JSON formatter, JWT decoder, Base64 encoder, regex tester, text case converter, character counter, diff checker, SQL formatter, and more — all browser-based.";
+const categoryTools = availableTools.filter((t) => t.category === "utilities");
+
+const collectionSchema = buildCollectionSchema(title, description, "https://toolnames.com/utilities", categoryTools);
 ---
 
 <MainLayout
-  title="Free Online Utilities & Text Tools | ToolNames"
-  description="JSON formatter, JWT decoder, Base64 encoder, regex tester, text case converter, character counter, diff checker, SQL formatter, and more — all browser-based."
+  title={title}
+  description={description}
+  jsonLd={collectionSchema}
 >
   <ToolGrid initialCategory="utilities" client:only="react" />
 </MainLayout>

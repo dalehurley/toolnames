@@ -7,9 +7,10 @@ interface Props {
   canonical?: string;
   ogTitle?: string;
   ogDescription?: string;
+  jsonLd?: string;
 }
 
-const { title, description, ogTitle, ogDescription } = Astro.props;
+const { title, description, ogTitle, ogDescription, jsonLd } = Astro.props;
 const canonical =
   Astro.props.canonical ??
   new URL(Astro.url.pathname, Astro.site).toString();
@@ -41,6 +42,9 @@ const ogImage = new URL("/og-image.png", Astro.site).toString();
 
     <!-- Canonical -->
     <link rel="canonical" href={canonical} />
+
+    <!-- JSON-LD Structured Data -->
+    {jsonLd && <script type="application/ld+json" set:html={jsonLd} />}
 
     <!-- Favicon & PWA -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />

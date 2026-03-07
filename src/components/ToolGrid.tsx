@@ -197,6 +197,11 @@ const ToolGrid = ({ initialCategory }: { initialCategory?: string }) => {
   ].filter(Boolean) as Tool[];
 
   useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("q");
+    if (q) setSearchQuery(q);
+  }, []);
+
+  useEffect(() => {
     // Set greeting based on time of day
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 12) {

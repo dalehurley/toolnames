@@ -1,11 +1,20 @@
 ---
 import MainLayout from "@/layouts/MainLayout.astro";
 import ToolGrid from "@/components/ToolGrid";
+import { availableTools } from "@/contexts/toolsData";
+import { buildCollectionSchema } from "@/lib/schema";
+
+const title = "Free SEO Analysis Tools | ToolNames";
+const description = "Analyze keyword density, meta tags, heading structure, alt text, and internal links to improve your site's SEO — all private and browser-based.";
+const categoryTools = availableTools.filter((t) => t.category === "seo");
+
+const collectionSchema = buildCollectionSchema(title, description, "https://toolnames.com/seo", categoryTools);
 ---
 
 <MainLayout
-  title="Free SEO Analysis Tools | ToolNames"
-  description="Analyze keyword density, meta tags, heading structure, alt text, and internal links to improve your site's SEO — all private and browser-based."
+  title={title}
+  description={description}
+  jsonLd={collectionSchema}
 >
   <ToolGrid initialCategory="seo" client:only="react" />
 </MainLayout>

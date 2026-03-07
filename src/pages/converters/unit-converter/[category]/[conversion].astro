@@ -25,9 +25,20 @@ const capitalize = (s: string) =>
 
 const title = `Convert ${capitalize(fromUnit)} to ${capitalize(toUnit)} — Free ${capitalize(category)} Converter | ToolNames`;
 const description = `Free online ${capitalize(fromUnit)} to ${capitalize(toUnit)} converter. Instant, accurate results calculated locally in your browser. No sign-up required.`;
+
+const toolSchema = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": `${capitalize(fromUnit)} to ${capitalize(toUnit)} Converter`,
+  "description": description,
+  "url": `https://toolnames.com/converters/unit-converter/${category}/${fromUnit}-to-${toUnit}`,
+  "applicationCategory": "UtilityApplication",
+  "operatingSystem": "Web Browser",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+});
 ---
 
-<MainLayout title={title} description={description}>
+<MainLayout title={title} description={description} jsonLd={toolSchema}>
   <UnitConverterPage
     fromUnit={fromUnit}
     toUnit={toUnit}
