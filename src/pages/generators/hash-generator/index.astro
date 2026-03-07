@@ -1,11 +1,22 @@
 ---
 import MainLayout from "@/layouts/MainLayout.astro";
 import { HashGenerator } from "@/components/tools/generators/HashGenerator";
+
+const title = "Free Hash Generator: SHA-1, SHA-256, SHA-384, SHA-512 | ToolNames";
+const description = "Generate cryptographic hashes (SHA-1, SHA-256, SHA-384, SHA-512) from text instantly in your browser. Free, private, no data leaves your device.";
+
+const toolSchema = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Hash Generator",
+  "description": description,
+  "url": "https://toolnames.com/generators/hash-generator",
+  "applicationCategory": "UtilityApplication",
+  "operatingSystem": "Web Browser",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+});
 ---
 
-<MainLayout
-  title="Free Hash Generator: SHA-1, SHA-256, SHA-384, SHA-512 | ToolNames"
-  description="Generate cryptographic hashes (SHA-1, SHA-256, SHA-384, SHA-512) from text instantly in your browser. Free, private, no data leaves your device."
->
+<MainLayout title={title} description={description} jsonLd={toolSchema}>
   <HashGenerator client:only="react" />
 </MainLayout>

@@ -12,8 +12,19 @@ export const getStaticPaths: GetStaticPaths = () => {
 };
 
 const { algorithm, pageTitle, metaDescription } = Astro.props;
+
+const toolSchema = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": `${algorithm.toUpperCase()} Hash Generator`,
+  "description": metaDescription,
+  "url": `https://toolnames.com/generators/hash-generator/${algorithm}`,
+  "applicationCategory": "UtilityApplication",
+  "operatingSystem": "Web Browser",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+});
 ---
 
-<MainLayout title={pageTitle} description={metaDescription}>
+<MainLayout title={pageTitle} description={metaDescription} jsonLd={toolSchema}>
   <HashGenerator initialAlgorithm={algorithm} client:only="react" />
 </MainLayout>
