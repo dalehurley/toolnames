@@ -28,6 +28,7 @@ import { ChartBuilder } from "@/components/tools/utilities/ChartBuilder";
 import CSVExplorer from "@/components/tools/file-tools/CSVExplorer";
 import { JSONSchemaCreator } from "@/components/tools/utilities/JSONSchemaCreator";
 import { ColorPaletteExplorer } from "@/components/tools/design/ColorPaletteExplorer";
+import { SVGPatternGenerator } from "@/components/tools/design/SVGPatternGenerator";
 import { TimeZoneConverter } from "@/components/tools/converters/TimeZoneConverter";
 import { FlexboxGenerator } from "@/components/tools/design/FlexboxGenerator";
 import { CSSGridGenerator } from "@/components/tools/design/CSSGridGenerator";
@@ -100,6 +101,7 @@ import {
   Lock,
   BotMessageSquare,
   Bot,
+  Layers,
 } from "lucide-react";
 import { AIPlayground } from "@/components/tools/ai-playground/AIPlayground";
 import { NetworkLatencySimulator } from "@/components/tools/utilities/NetworkLatencySimulator";
@@ -1014,6 +1016,17 @@ export const availableTools: Tool[] = [
     url: "/design/css-pattern-generator",
     pageTitle: "CSS Pattern Generator: Create Custom Background Patterns | ToolNames",
     metaDescription: "Generate seamless CSS background patterns (stripes, dots, grids, geometric) with our free online tool. Live preview and code export for your web projects.",
+  },
+  {
+    id: "svg-pattern-generator",
+    title: "SVG Background Pattern Generator",
+    description: "Generate seamless SVG background patterns — polka dots, hexagons, chevrons, topographic lines, and more. Export as SVG, CSS, or React code.",
+    icon: Layers,
+    category: "design",
+    component: SVGPatternGenerator,
+    url: "/design/svg-pattern-generator",
+    pageTitle: "SVG Background Pattern Generator: Free Seamless Patterns Online | ToolNames",
+    metaDescription: "Create beautiful seamless SVG background patterns for your website. 12 pattern types including hexagons, topographic, chevrons, stars, and more. Export as SVG, CSS, or React code. Free and private.",
   },
   {
     id: "time-zone-converter",
